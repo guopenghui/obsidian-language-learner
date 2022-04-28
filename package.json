@@ -1,0 +1,40 @@
+{
+	"name": "obsidian-sample-plugin",
+	"version": "1.0.1",
+	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"main": "main.js",
+	"scripts": {
+		"dev": "node esbuild.config.mjs",
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"version": "node version-bump.mjs && git add manifest.json versions.json",
+		"minify": "node node_modules\\esbuild\\bin\\esbuild --minify --outfile=main.min.js main.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "MIT",
+	"dependencies": {
+		"echarts": "^5.3.2",
+		"monkey-around": "^2.3.0",
+		"nlcst-to-string": "^3.1.0",
+		"parse-english": "^5.0.0",
+		"retext-english": "^4.1.0",
+		"unified": "^10.1.2",
+		"unist-util-modify-children": "^3.0.0",
+		"unist-util-visit": "^4.1.0",
+		"vue": "^3.2.31"
+	},
+	"devDependencies": {
+		"@types/node": "^16.11.6",
+		"@typescript-eslint/eslint-plugin": "^5.2.0",
+		"@typescript-eslint/parser": "^5.2.0",
+		"@vue/compiler-sfc": "^3.2.31",
+		"builtin-modules": "^3.2.0",
+		"esbuild": "0.13.12",
+		"esbuild-plugin-vue3": "^0.3.0",
+		"hash-sum": "^2.0.0",
+		"naive-ui": "^2.28.2",
+		"obsidian": "latest",
+		"tslib": "2.3.1",
+		"typescript": "4.4.4"
+	}
+}

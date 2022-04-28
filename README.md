@@ -1,0 +1,1 @@
+## Learn language in Obsidian!
