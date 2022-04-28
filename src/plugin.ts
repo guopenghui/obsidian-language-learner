@@ -93,7 +93,22 @@ export default class LanguageLearner extends Plugin {
 				}
 				let db = dataBase as TFile
 				let words = await getExpressionSimple(false)
-				let text = words.map((w) => `${w.expression} , ${w.meaning}`).join("\n")
+
+
+				let classified: number[][] = Array(5).fill(0).map(_ => [])
+				words.forEach((word, i) => {
+					classified[word.status].push(i)
+				})
+
+				const statusMap = [t("Ignore"), t("Learning"), t("Familiar"), t("Known"), t("Learned")]
+				let classified_texts = classified.map((w, idx) => {
+					return `#### ${statusMap[idx]}\n`
+						+ w.map(i => `${words[i].expression} , ${words[i].meaning}`).join("\n")
+						+ "\n"
+				})
+				classified_texts.shift()
+				let text = classified_texts.join("\n")
+
 				this.app.vault.modify(db, text)
 			}
 		})

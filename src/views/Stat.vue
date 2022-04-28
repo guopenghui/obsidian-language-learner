@@ -95,6 +95,7 @@ option = {
       name: t("Accumulated"),
       data: [],
       type: 'line',
+      smooth: true,
       emphasis: {
         focus: 'series'
       },

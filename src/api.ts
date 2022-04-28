@@ -1,9 +1,8 @@
 import { requestUrl, RequestUrlParam, moment } from "obsidian";
 
 export let option = {
-    PORT: 2222
-}
-
+    PORT: 2222,
+};
 
 interface ArticleWords {
     article: string;
@@ -160,6 +159,23 @@ export async function postIgnoreWords(payload: string[]) {
     }
 }
 
+// 尝试查询已存在的例句
+export async function tryGetSen(text: string) {
+    let request: RequestUrlParam = {
+        url: `http://localhost:${option.PORT}/sentence`,
+        method: "POST",
+        body: JSON.stringify(text),
+        contentType: "application/json",
+    };
+
+    try {
+        let res = await requestUrl(request);
+        return res.json;
+    } catch (e) {
+        console.warn("Error trying to get sentence" + e);
+    }
+}
+
 // 统计部分
 // 获取各种类型的单词/词组类型
 interface CountInfo {
@@ -194,7 +210,6 @@ interface WordCount {
 export async function count_seven(): Promise<WordCount[]> {
     let spans: Span[] = [];
 
-
     spans = [0, 1, 2, 3, 4, 5, 6].map((i) => {
         let start = moment().subtract(6, "days").startOf("day");
         let from = start.add(i, "days");
@@ -209,15 +224,11 @@ export async function count_seven(): Promise<WordCount[]> {
         method: "POST",
         body: JSON.stringify(spans),
         contentType: "application/json",
-    }
+    };
 
     try {
         let res = await requestUrl(request);
 
-        return res.json
-    } catch (e) {
-
-    }
-
-
+        return res.json;
+    } catch (e) { }
 }

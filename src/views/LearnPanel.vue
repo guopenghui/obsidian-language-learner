@@ -187,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, StyleValue, h, onMounted, onUnmounted } from "vue";
+import { ref, StyleValue, onMounted, onUnmounted, getCurrentInstance } from "vue";
 import { Notice } from "obsidian";
 import {
 	NForm,
@@ -204,12 +204,22 @@ import {
 	darkTheme,
 } from "naive-ui";
 
-import { getTags, postExpression, getExpression, ExpressionInfo } from "../api";
+import {
+	getTags,
+	postExpression,
+	getExpression,
+	ExpressionInfo,
+	tryGetSen,
+} from "../api";
 import { t } from "../lang/helper";
+import { LearnPanelView } from "./LearnPanelView";
+import { ReadingView } from "./ReadingView";
 
 onMounted(() => {
 	let el = document.getElementById("nima");
 });
+
+const view: LearnPanelView = getCurrentInstance().appContext.config.globalProperties.view
 
 // 切换明亮/黑暗模式
 const theme = document.body.hasClass("theme-dark") ? darkTheme : null;
@@ -359,26 +369,46 @@ async function onSearch(evt: CustomEvent) {
 	let expr = await getExpression(selection);
 
 	let target = evt.detail.target as HTMLElement;
+	
+	if(!target) {
+		model.value = {
+			expression: selection,
+			meaning: "",
+			status: 1,
+			t: "WORD",
+			tags: [],
+			notes: [],
+			sentences: [],
+		}
+		return;
+	}
+
 	if (!expr) {
 		let sentenceEl = target.parentElement.hasClass("stns")
 			? target.parentElement
 			: target.parentElement.parentElement;
 		let sentenceText = sentenceEl.textContent;
 
+		let storedSen = await tryGetSen(sentenceText);
+		
+		let reading = view.app.workspace.getActiveViewOfType(ReadingView);
+
+		let defaultOrigin: string = null;
+		if(reading) {
+			let presetOrigin = view.app.metadataCache.getFileCache(reading.file).frontmatter["langr-origin"];
+			defaultOrigin = presetOrigin? presetOrigin: reading.file.name
+		}
+
 		model.value = {
 			expression: selection,
 			meaning: "",
-			status: 0,
+			status: 1,
 			t: "WORD",
 			tags: [],
 			notes: [],
-			sentences: [
-				{
-					text: sentenceText,
-					trans: null,
-					origin: null,
-				},
-			],
+			sentences: storedSen
+				? [storedSen]
+				: [{ text: sentenceText, trans: null, origin: defaultOrigin }],
 		};
 		return;
 	}
