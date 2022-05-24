@@ -158,7 +158,7 @@ export class ReadingView extends TextFileView {
                 let el = startEl as any
                 let container: Element[] = []
                 for (let word of words) {
-                    if (!el || el.textContent !== word) {
+                    if (!el || el.textContent.toLowerCase() !== word) {
                         return null
                     }
                     container.push(el)

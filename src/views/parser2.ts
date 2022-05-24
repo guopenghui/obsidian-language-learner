@@ -22,9 +22,9 @@ export async function text2HTML(text: string) {
     pIdx = 0;
     words.clear();
 
-    // 获取词组，提供给ast的构造
+    // 先解析文本获取词组，提供给ast构造PhraseNode
     phrases = await (
-        await getStoredWords({ article: text, words: [] })
+        await getStoredWords({ article: text.toLowerCase(), words: [] })
     ).phrases;
     const ast = processor.parse(text);
 
@@ -33,7 +33,8 @@ export async function text2HTML(text: string) {
         wordSet.add(toString(word).toLowerCase());
     });
 
-    let stored = await getStoredWords({ article: text, words: [...wordSet] });
+    // ast解析出文本中的WordNode后，再查询这些word的status
+    let stored = await getStoredWords({ article: "", words: [...wordSet] });
 
     stored.words.forEach((w) => words.set(w.text, w));
 
@@ -71,6 +72,7 @@ function wrapWord2Phrase(node: Content, index: number, parent: Parent) {
                 child.position.end.offset ===
                 phrases[pIdx].offset + phrases[pIdx].text.length
         );
+
         if (q === -1) {
             pIdx++;
             return;

@@ -8,6 +8,7 @@ export default {
     "Open as Reading View": "Open as Reading View",
     "Search word": "Search word",
     "Refresh Word Database": "Refresh Word Database",
+    "Refresh Review Database": "Refresh Review Database",
 
     // SearchPanelView.ts
     "Search Panel": "Search Panel",
@@ -52,7 +53,9 @@ export default {
     "Submit": "Submit",
 
     // Stat.vue
-    "Single day": "Single day",
+    "Day Ignore": "Day Ignore",
+    "Day Non-Ignore": "Day Non-Ignore",
+    // "Single day": "Single day",
     "Accumulated": "Accumulated",
     "Expression is empty!": "Expression is empty",
     "Statistics": "Statistics",

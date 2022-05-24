@@ -78,15 +78,34 @@ export async function getExpression(
         method: "POST",
         body: JSON.stringify(expression.toLowerCase()),
         contentType: "application/json",
-    };
+    }
 
     try {
         let response = await requestUrl(request);
         return response.json;
     } catch (e) {
-        console.warn("Error while getting data to server." + e);
+        console.warn("Error while getting data from server." + e);
     }
 }
+
+// 获取某一时间之后的所有单词的详细信息
+export async function getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
+    let unixStamp = moment.utc(time).unix()
+    let request: RequestUrlParam = {
+        url: `http://localhost:${option.PORT}/words/after`,
+        method: "POST",
+        body: JSON.stringify(unixStamp),
+        contentType: "application/json",
+    }
+    let x = 10;
+    try {
+        let response = await requestUrl(request)
+        return response.json
+    } catch (e) {
+        console.warn("Error getting exprs after time from server" + e)
+    }
+}
+
 
 // 通过status查询单词/词组,获取简略信息
 export async function getExpressionSimple(
@@ -202,8 +221,8 @@ interface Span {
 }
 
 interface WordCount {
-    today: number;
-    accumulated: number;
+    today: number[];
+    accumulated: number[];
 }
 
 // 获取包括今天在内的7天内每一天的新单词量和累计单词量

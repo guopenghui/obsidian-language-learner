@@ -8,6 +8,7 @@ export default {
     "Open as Reading View": "打开为阅读模式",
     "Search word": "查找单词/短语",
     "Refresh Word Database": "刷新单词数据库",
+    "Refresh Review Database": "刷新复习数据库",
 
     // SearchPanelView.ts
     "Search Panel": "查词面板",
@@ -53,7 +54,9 @@ export default {
     "Submit": "提交",
 
     // Test.vue
-    "Single day": "单日",
+    "Day Ignore": "单日-无视",
+    "Day Non-Ignore": "单日-学习",
+    // "Single day": "单日",
     "Accumulated": "累计",
     "Statistics": "统计",
 }

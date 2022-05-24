@@ -102,8 +102,8 @@
 								v-model:value="model.notes[index]"
 						/></template>
 					</NDynamicInput>
-					<!-- 可选,例句也可以记多条 -->
 				</NFormItem>
+				<!-- 可选,例句也可以记多条 -->
 				<div style="margin-bottom: 8px">
 					<label for="Sentences" :style="[labelStyle]">{{
 						t("Sentences")
@@ -365,25 +365,26 @@ async function submit() {
 // 查询词汇填充表单
 async function onSearch(evt: CustomEvent) {
 	let selection = evt.detail.selection;
-
 	let expr = await getExpression(selection);
 
-	let target = evt.detail.target as HTMLElement;
-	
-	if(!target) {
-		model.value = {
-			expression: selection,
-			meaning: "",
-			status: 1,
-			t: "WORD",
-			tags: [],
-			notes: [],
-			sentences: [],
-		}
+	if(expr) {
+		model.value = expr;
 		return;
-	}
+	}else {
+		let target = evt.detail.target as HTMLElement;
+		if(!target) {
+			model.value = {
+				expression: selection,
+				meaning: "",
+				status: 1,
+				t: "WORD",
+				tags: [],
+				notes: [],
+				sentences: [],
+			}
+			return;
+		}
 
-	if (!expr) {
 		let sentenceEl = target.parentElement.hasClass("stns")
 			? target.parentElement
 			: target.parentElement.parentElement;
@@ -410,10 +411,7 @@ async function onSearch(evt: CustomEvent) {
 				? [storedSen]
 				: [{ text: sentenceText, trans: null, origin: defaultOrigin }],
 		};
-		return;
 	}
-
-	model.value = expr;
 }
 
 onMounted(() => {
