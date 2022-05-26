@@ -5,10 +5,8 @@
 <script setup lang="ts">
 import { moment } from "obsidian";
 import { computed, ref, onMounted, onUnmounted, getCurrentInstance } from "vue";
-import { count_seven } from "../api";
 import { t } from "../lang/helper";
-import { unified } from "unified";
-import retextEnglish from "retext-english";
+import LanguageLearner from "../plugin"
 
 import * as echarts from "echarts/core";
 
@@ -23,7 +21,8 @@ import {
 import { LineChart, LineSeriesOption } from "echarts/charts";
 import { UniversalTransition } from "echarts/features";
 import { CanvasRenderer } from "echarts/renderers";
-import { words } from "lodash";
+
+
 
 echarts.use([
 	GridComponent,
@@ -41,7 +40,8 @@ type EChartsOption = echarts.ComposeOption<
 	| TitleComponentOption
 >;
 
-const container =
+const plugin: LanguageLearner = getCurrentInstance().appContext.config.globalProperties.plugin
+const container: HTMLElement =
 	getCurrentInstance().appContext.config.globalProperties.container;
 
 let charDom: HTMLElement;
@@ -120,8 +120,9 @@ option = {
 	],
 };
 
+
 async function updateChart() {
-	let data = await count_seven();
+	let data = await  plugin.db.countSeven();
 	let dayIgnoreWords = data.map((d) => d.today[0]);
 	let dayNoIgnoreWords = data.map((d) =>
 		d.today.slice(1).reduce((a, b) => a + b)

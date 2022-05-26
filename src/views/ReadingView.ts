@@ -1,7 +1,6 @@
 import { Menu, TextFileView, WorkspaceLeaf, Notice } from 'obsidian'
 import LanguageLearner from '../plugin'
-import parse from './parser'
-import { postIgnoreWords } from "../api"
+// import parse from './parser'
 import { t } from "../lang/helper"
 
 
@@ -28,7 +27,7 @@ export class ReadingView extends TextFileView {
     async setViewData(data: string, clear?: boolean) {
         this.data = data
 
-        data = await parse(data)
+        data = await this.plugin.parser.parse(data)
 
         let frontMatter = this.plugin.app.metadataCache.getFileCache(this.file).frontmatter
         let audio = ""
@@ -80,7 +79,7 @@ export class ReadingView extends TextFileView {
                     ignore_words.push(el.textContent.toLowerCase())
                 })
 
-                await postIgnoreWords(ignore_words)
+                await this.plugin.db.postIgnoreWords(ignore_words)
                 this.setViewData(this.data)
                 dispatchEvent(new CustomEvent("obsidian-langr-refresh-stat"))
             })

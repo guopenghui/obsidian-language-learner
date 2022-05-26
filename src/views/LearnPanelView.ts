@@ -31,6 +31,7 @@ export class LearnPanelView extends ItemView {
         })
         this.vueapp = createApp(LearnPanel)
         this.vueapp.config.globalProperties.view = this
+        this.vueapp.config.globalProperties.plugin = this.plugin
         this.vueapp.mount(contentEl)
     }
     async onClose() {

@@ -187,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, StyleValue, onMounted, onUnmounted, getCurrentInstance } from "vue";
+import { ref, StyleValue, onMounted, onUnmounted, getCurrentInstance, toRaw } from "vue";
 import { Notice } from "obsidian";
 import {
 	NForm,
@@ -204,22 +204,27 @@ import {
 	darkTheme,
 } from "naive-ui";
 
+// import {
+// 	getTags,
+// 	postExpression,
+// 	getExpression,
+// 	tryGetSen,
+// } from "../db/api";
 import {
-	getTags,
-	postExpression,
-	getExpression,
 	ExpressionInfo,
-	tryGetSen,
-} from "../api";
+} from "../db/interface"
 import { t } from "../lang/helper";
 import { LearnPanelView } from "./LearnPanelView";
 import { ReadingView } from "./ReadingView";
+import Plugin from "../plugin"
 
 onMounted(() => {
 	let el = document.getElementById("nima");
 });
 
 const view: LearnPanelView = getCurrentInstance().appContext.config.globalProperties.view
+const plugin: Plugin = getCurrentInstance().appContext.config.globalProperties.plugin
+
 
 // 切换明亮/黑暗模式
 const theme = document.body.hasClass("theme-dark") ? darkTheme : null;
@@ -304,7 +309,7 @@ let tags: string[] = [];
 async function tagSearch(query: string) {
 	tagLoading.value = true;
 	if (query.length < 2) {
-		tags = await getTags();
+		tags = await plugin.db.getTags();
 	}
 	tagLoading.value = false;
 	if (!query.length) {
@@ -342,7 +347,7 @@ async function submit() {
 	}
 
 	submitLoading.value = true;
-	let statusCode = await postExpression(model.value);
+	let statusCode = await plugin.db.postExpression(toRaw(model.value));
 	submitLoading.value = false;
 
 	if (statusCode !== 200) {
@@ -365,7 +370,7 @@ async function submit() {
 // 查询词汇填充表单
 async function onSearch(evt: CustomEvent) {
 	let selection = evt.detail.selection;
-	let expr = await getExpression(selection);
+	let expr = await plugin.db.getExpression(selection);
 
 	if(expr) {
 		model.value = expr;
@@ -390,7 +395,7 @@ async function onSearch(evt: CustomEvent) {
 			: target.parentElement.parentElement;
 		let sentenceText = sentenceEl.textContent;
 
-		let storedSen = await tryGetSen(sentenceText);
+		let storedSen = await plugin.db.tryGetSen(sentenceText);
 		
 		let reading = view.app.workspace.getActiveViewOfType(ReadingView);
 

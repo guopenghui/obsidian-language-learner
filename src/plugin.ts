@@ -24,7 +24,10 @@ import { LearnPanelView, LEARN_PANEL_VIEW } from "./views/LearnPanelView";
 import { StatView, STAT_VIEW_TYPE } from "./views/StatView";
 
 import { t } from "./lang/helper";
-import { option, getExpressionSimple, getExpressionAfter } from "./api";
+import DbProvider from "./db/base"
+import { WebDb } from "./db/web_db";
+import { LocalDb } from "./db/local_db"
+import { TextParser } from "./views/parser"
 import { DEFAULT_SETTINGS, MyPluginSettings, SettingTab } from "./settings";
 
 export const FRONT_MATTER_KEY: string = "langr";
@@ -33,13 +36,20 @@ export const FRONT_MATTER_KEY: string = "langr";
 export default class LanguageLearner extends Plugin {
 	settings: MyPluginSettings;
 	appEl: HTMLElement;
+	db: DbProvider;
+	parser: TextParser;
 
 	async onload() {
 		const pluginSelf = this;
 
 		await this.loadSettings();
 
-		option.PORT = this.settings.port;
+		this.db = this.settings.use_server ?
+			new WebDb(this.settings.port) :
+			new LocalDb()
+
+		this.parser = new TextParser(this)
+
 		this.addSettingTab(new SettingTab(this.app, this));
 
 		//注册测试视图
@@ -140,7 +150,7 @@ export default class LanguageLearner extends Plugin {
 			return;
 		}
 		let db = dataBase as TFile;
-		let words = await getExpressionSimple(false);
+		let words = await this.db.getExpressionSimple(false);
 
 		let classified: number[][] = Array(5)
 			.fill(0)
@@ -179,7 +189,7 @@ export default class LanguageLearner extends Plugin {
 	}
 
 	refreshReviewDb = async () => {
-		let data = await getExpressionAfter(this.settings.last_sync)
+		let data = await this.db.getExpressionAfter(this.settings.last_sync)
 		if (data.length === 0) {
 			new Notice("Nothing new")
 			return

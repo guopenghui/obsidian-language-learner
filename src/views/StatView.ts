@@ -30,6 +30,7 @@ export class StatView extends ItemView {
 
         this.vueApp = createApp(Stat)
         this.vueApp.config.globalProperties.container = content
+        this.vueApp.config.globalProperties.plugin = this.plugin
         this.vueApp.mount(content)
     }
     async onClose() {
