@@ -110,6 +110,7 @@ export class ReadingView extends TextFileView {
 
     }
 
+    // 新词面板中提交后，刷新阅读页面中单词的状态
     refresh = (evt?: CustomEvent) => {
         let expression: string = evt.detail.expression.toLowerCase()
         let type: string = evt.detail.type

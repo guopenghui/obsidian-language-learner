@@ -59,4 +59,22 @@ export default {
     "Accumulated": "Accumulated",
     "Expression is empty!": "Expression is empty",
     "Statistics": "Statistics",
+
+    // settings
+    "Use Server": "Use Server",
+    "Use a seperated backend server": "Use a seperated backend server",
+    "Server Port": "Server Port",
+    'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
+        'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server',
+    "Wrong port format": "Wrong port format",
+    "Word Database Path": "Word Database Path",
+    "Choose a md file as word database for auto-completion": "Choose a md file as word database for auto-completion",
+    "Review Database Path": "Review Database Path",
+    "Choose a md file as review database for spaced-repetition": "Choose a md file as review database for spaced-repetition",
+    "Last review sync": "Last review sync",
+    "Last time the review database was updated": "Last time the review database was updated",
+    "Destroy Database": "Destroy Database",
+    "Destroy all stuff and start over": "Destroy all stuff and start over",
+    "Destroy": "Destroy",
+    "No!!!": "No!!!",
 }

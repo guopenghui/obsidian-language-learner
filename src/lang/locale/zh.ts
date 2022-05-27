@@ -59,4 +59,22 @@ export default {
     // "Single day": "单日",
     "Accumulated": "累计",
     "Statistics": "统计",
+
+    // settings
+    "Use Server": "使用服务器",
+    "Use a seperated backend server": "使用单独的后端服务器",
+    "Server Port": "服务器端口",
+    'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
+        '一个介于1024-65532之间的整数.这应该和服务器.env文件中的PORT字段一致',
+    "Wrong port format": "端口格式不对",
+    "Word Database Path": "单词数据库路径",
+    "Choose a md file as word database for auto-completion": "选择一个md文件作为单词数据库以自动补全",
+    "Review Database Path": "复习数据库路径",
+    "Choose a md file as review database for spaced-repetition": "选择一个md文件作为复习数据库以间隔复习",
+    "Last review sync": "上次更新时间",
+    "Last time the review database was updated": "上次更新复习数据库的时间",
+    "Destroy Database": "销毁数据库",
+    "Destroy all stuff and start over": "销毁一切从头开始",
+    "Destroy": "销毁",
+    "No!!!": "不要!!!",
 }

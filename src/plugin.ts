@@ -10,10 +10,8 @@ import {
 	TFile,
 	moment,
 } from "obsidian";
-import { createApp } from "vue";
 import { around } from "monkey-around";
 
-import LangrApp from "./views/App.vue";
 import { SearchPanelView, SEARCH_PANEL_VIEW } from "./views/SearchPanelView";
 import {
 	READING_VIEW_TYPE,
@@ -40,37 +38,19 @@ export default class LanguageLearner extends Plugin {
 	parser: TextParser;
 
 	async onload() {
-		const pluginSelf = this;
-
 		await this.loadSettings();
+		this.addSettingTab(new SettingTab(this.app, this));
 
 		this.db = this.settings.use_server ?
 			new WebDb(this.settings.port) :
 			new LocalDb()
-
 		this.parser = new TextParser(this)
-
-		this.addSettingTab(new SettingTab(this.app, this));
-
-		//注册测试视图
-		this.registerView(STAT_VIEW_TYPE, (leaf) => new StatView(leaf, this));
 
 		// 注册查词面板视图
 		this.registerView(
 			SEARCH_PANEL_VIEW,
 			(leaf) => new SearchPanelView(leaf, this)
 		);
-		// 注册新词面板视图
-		this.registerView(
-			LEARN_PANEL_VIEW,
-			(leaf) => new LearnPanelView(leaf, this)
-		);
-		// 注册阅读视图
-		this.registerView(
-			READING_VIEW_TYPE,
-			(leaf) => new ReadingView(leaf, this)
-		);
-
 		this.addRibbonIcon(
 			"logo-crystal",
 			t("Open word search panel"),
@@ -79,6 +59,11 @@ export default class LanguageLearner extends Plugin {
 			}
 		);
 
+		// 注册新词面板视图
+		this.registerView(
+			LEARN_PANEL_VIEW,
+			(leaf) => new LearnPanelView(leaf, this)
+		);
 		this.addRibbonIcon(
 			"reading-glasses",
 			t("Open new word panel"),
@@ -87,18 +72,26 @@ export default class LanguageLearner extends Plugin {
 			}
 		);
 
+		// 注册阅读视图
+		this.registerView(
+			READING_VIEW_TYPE,
+			(leaf) => new ReadingView(leaf, this)
+		);
+
+		//注册统计视图
+		this.registerView(STAT_VIEW_TYPE, (leaf) => new StatView(leaf, this));
 		this.addRibbonIcon("paper-plane", t("Open statistics"), async (evt) => {
 			this.activateView(STAT_VIEW_TYPE);
 		});
 
-		// 刷新单词数据库
+		// 刷新单词数据库命令
 		this.addCommand({
 			id: "langr-refresh-word-database",
 			name: t("Refresh Word Database"),
 			callback: this.refreshWordDb
 		});
 
-		// 刷新复习数据库
+		// 刷新复习数据库命令
 		this.addCommand({
 			id: "langr-refresh-review-database",
 			name: t("Refresh Review Database"),
@@ -108,18 +101,10 @@ export default class LanguageLearner extends Plugin {
 		this.registerReadingToggle()
 		this.registerContextMenu();
 		this.registerLeftClick();
-		//this.mountApp()
 	}
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(SEARCH_PANEL_VIEW);
-	}
-
-	mountApp() {
-		createApp(LangrApp).mount(
-			this.appEl ??
-			(this.appEl = document.body.createDiv({ cls: "langr-app" }))
-		);
 	}
 
 	async setMarkdownView(leaf: WorkspaceLeaf, focus: boolean = true) {
@@ -132,6 +117,7 @@ export default class LanguageLearner extends Plugin {
 			{ focus }
 		);
 	}
+
 	async setReadingView(leaf: WorkspaceLeaf) {
 		await leaf.setViewState({
 			type: READING_VIEW_TYPE,
@@ -140,16 +126,15 @@ export default class LanguageLearner extends Plugin {
 		} as ViewState);
 	}
 
-
 	refreshWordDb = async () => {
 		let dataBase = this.app.vault.getAbstractFileByPath(
 			this.settings.word_database
-		);
+		)
 		if (!dataBase || dataBase.hasOwnProperty("children")) {
 			new Notice("Invalid database path");
 			return;
 		}
-		let db = dataBase as TFile;
+		// 获取所有非无视单词的简略信息
 		let words = await this.db.getExpressionSimple(false);
 
 		let classified: number[][] = Array(5)
@@ -166,6 +151,7 @@ export default class LanguageLearner extends Plugin {
 			t("Known"),
 			t("Learned"),
 		];
+		// 正向查询
 		let classified_texts = classified.map((w, idx) => {
 			return (
 				`#### ${statusMap[idx]}\n` +
@@ -173,9 +159,10 @@ export default class LanguageLearner extends Plugin {
 				"\n"
 			);
 		});
-
 		classified_texts.shift();
 		let word2Meaning = classified_texts.join("\n");
+
+		// 反向查询
 		let meaning2Word = classified
 			.flat()
 			.map(
@@ -185,6 +172,7 @@ export default class LanguageLearner extends Plugin {
 
 		let text =
 			word2Meaning + "\n\n" + "#### 反向查询\n" + meaning2Word;
+		let db = dataBase as TFile;
 		this.app.vault.modify(db, text);
 	}
 
@@ -216,6 +204,7 @@ export default class LanguageLearner extends Plugin {
 		}).join("\n")
 
 		let dataBase = this.app.vault.getAbstractFileByPath(this.settings.review_database)
+
 		if (!dataBase || "children" in dataBase) {
 			new Notice("Invalid database path")
 			return
@@ -223,6 +212,7 @@ export default class LanguageLearner extends Plugin {
 
 		let db = dataBase as TFile
 		await this.app.vault.append(db, appendData)
+
 		this.settings.last_sync = moment.utc().format()
 		this.saveSettings()
 	}
@@ -270,7 +260,6 @@ export default class LanguageLearner extends Plugin {
 				item.setTitle(t("Search word"))
 					.setIcon("info")
 					.onClick(async () => {
-						//new Notice("你好，开发者!")
 						await this.activateView(SEARCH_PANEL_VIEW);
 						const view = this.app.workspace.getLeavesOfType(
 							SEARCH_PANEL_VIEW
@@ -294,7 +283,6 @@ export default class LanguageLearner extends Plugin {
 				}
 			)
 		);
-
 		// markdown 预览模式 右键菜单
 		this.registerDomEvent(document.body, "contextmenu", (evt) => {
 			if (
@@ -366,47 +354,33 @@ export default class LanguageLearner extends Plugin {
 		});
 	}
 
+	// 管理所有的鼠标左击
 	registerLeftClick() {
 		this.registerDomEvent(document.body, "click", (evt) => {
 			let target = evt.target as HTMLElement;
-			if (target.classList.contains("word")) {
-				// new Notice("单词: " + target.textContent)
+			if (target.classList.contains("word") ||
+				target.classList.contains("select") ||
+				target.classList.contains("phrase")
+			) {
 				dispatchEvent(
 					new CustomEvent("obsidian-langr-search", {
 						detail: { selection: target.innerText, target },
 					})
-				);
-			} else if (target.classList.contains("select")) {
-				// new Notice("选择: " + target.textContent)
-				dispatchEvent(
-					new CustomEvent("obsidian-langr-search", {
-						detail: { selection: target.innerText, target },
-					})
-				);
-			} else if (target.classList.contains("phrase")) {
-				// new Notice("短语: " + target.textContent)
-				dispatchEvent(
-					new CustomEvent("obsidian-langr-search", {
-						detail: { selection: target.innerText, target },
-					})
-				);
-			} else {
-				if (target.matchParent(".text-area")) { }
-				if (
-					(!!target.matchParent(".text-area") &&
-						!target.matchParent(".stns"))
-				) {
-					let selection = window.getSelection()
-					if (!selection.isCollapsed) {
-						selection.collapseToStart()
-					}
+				)
+			} else if (
+				!!target.matchParent(".text-area") &&
+				!target.matchParent(".stns")
+			) {
+				let selection = window.getSelection()
+				if (!selection.isCollapsed) {
+					selection.collapseToStart()
+				}
 
-					// 消除select块
-					let view =
-						this.app.workspace.getActiveViewOfType(ReadingView)
-					if (view) {
-						view.removeSelect()
-					}
+				// 消除select块
+				let view =
+					this.app.workspace.getActiveViewOfType(ReadingView)
+				if (view) {
+					view.removeSelect()
 				}
 			}
 		});

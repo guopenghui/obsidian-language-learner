@@ -5,7 +5,6 @@ import { modifyChildren } from "unist-util-modify-children";
 import { visit } from "unist-util-visit";
 import { toString } from "nlcst-to-string";
 
-// import { getStoredWords } from "../db/web_db";
 import { Phrase, Word } from "../db/interface"
 import Plugin from "../plugin";
 
@@ -45,18 +44,19 @@ export class TextParser {
         this.pIdx = 0;
         this.words.clear();
 
-        // 先解析文本获取词组，提供给ast构造PhraseNode
+        // 查找文本中的已知词组，用于构造ast中的PhraseNode
         this.phrases = (
             await this.plugin.db.getStoredWords({ article: text.toLowerCase(), words: [] })
         ).phrases;
 
         const ast = this.processor.parse(text);
+        // 获得文章中去重后的单词
         let wordSet: Set<string> = new Set();
         visit(ast, "WordNode", (word) => {
             wordSet.add(toString(word).toLowerCase());
         });
 
-        // ast解析出文本中的WordNode后，再查询这些word的status
+        // 查询这些单词的status
         let stored = await this.plugin.db.getStoredWords({ article: "", words: [...wordSet] });
 
         stored.words.forEach((w) => this.words.set(w.text, w));
@@ -135,8 +135,6 @@ export class TextParser {
         return this.toHTMLString(tree);
     }
 
-
-
     toHTMLString(node: AnyNode): string {
         if (node.hasOwnProperty("value")) {
             return (node as Literal).value;
@@ -146,21 +144,24 @@ export class TextParser {
             switch (n.type) {
                 case "WordNode": {
                     let text = toString(n.children);
-                    let status = this.words.has(text.toLowerCase())
-                        ? STATUS_MAP[this.words.get(text.toLowerCase()).status]
+                    let textLower = text.toLowerCase();
+                    let status = this.words.has(textLower)
+                        ? STATUS_MAP[this.words.get(textLower).status]
                         : "new";
-                    return /^[0-9]+$/.test(text)
+
+                    return /^[0-9]+$/.test(text)  // 不把数字当做单词
                         ? `<span>${text}</span>`
                         : `<span class="word ${status}">${text}</span>`;
                 }
                 case "PhraseNode": {
-                    //测试
                     let childText = toString(n.children);
                     let text = this.toHTMLString(n.children);
+                    // 获取词组的status
                     let phrase = this.phrases.find(
                         (p) => p.text === childText.toLowerCase()
                     );
                     let status = STATUS_MAP[phrase.status];
+
                     return `<span class="phrase ${status}">${text}</span>`;
                 }
                 case "SentenceNode": {

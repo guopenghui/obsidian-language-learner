@@ -1,5 +1,4 @@
 <template>
-	<div id="nima"></div>
 	<div id="langr-learn-panel">
 		<NConfigProvider :theme="theme">
 			<NForm
@@ -72,7 +71,6 @@
 					:label-style="labelStyle"
 					path="tags"
 				>
-					<!-- <NDynamicTags v-model:value="model.tags"/> -->
 					<NSelect
 						v-model:value="model.tags"
 						filterable
@@ -170,6 +168,7 @@
 					</template>
 				</NDynamicInput>
 			</NForm>
+			<!-- 提交按钮 -->
 			<div style="margin-top: 10px">
 				<NButton
 					style="--n-width: 100%"
@@ -182,13 +181,12 @@
 				>
 			</div>
 		</NConfigProvider>
-		<!-- <div>{{ model }}</div> -->
 	</div>
 </template>
 
 <script setup lang="ts">
-import { ref, StyleValue, onMounted, onUnmounted, getCurrentInstance, toRaw } from "vue";
-import { Notice } from "obsidian";
+import { ref, StyleValue, onMounted, onUnmounted, getCurrentInstance, toRaw } from "vue"
+import { Notice } from "obsidian"
 import {
 	NForm,
 	NFormItem,
@@ -202,32 +200,19 @@ import {
 	SelectOption,
 	NConfigProvider,
 	darkTheme,
-} from "naive-ui";
+} from "naive-ui"
 
-// import {
-// 	getTags,
-// 	postExpression,
-// 	getExpression,
-// 	tryGetSen,
-// } from "../db/api";
-import {
-	ExpressionInfo,
-} from "../db/interface"
-import { t } from "../lang/helper";
-import { LearnPanelView } from "./LearnPanelView";
-import { ReadingView } from "./ReadingView";
+import { ExpressionInfo } from "../db/interface"
+import { t } from "../lang/helper"
+import { LearnPanelView } from "./LearnPanelView"
+import { ReadingView } from "./ReadingView"
 import Plugin from "../plugin"
-
-onMounted(() => {
-	let el = document.getElementById("nima");
-});
 
 const view: LearnPanelView = getCurrentInstance().appContext.config.globalProperties.view
 const plugin: Plugin = getCurrentInstance().appContext.config.globalProperties.plugin
 
-
 // 切换明亮/黑暗模式
-const theme = document.body.hasClass("theme-dark") ? darkTheme : null;
+const theme = document.body.hasClass("theme-dark") ? darkTheme : null
 
 //表单数据
 let model = ref<ExpressionInfo>({
@@ -238,7 +223,7 @@ let model = ref<ExpressionInfo>({
 	tags: [],
 	notes: [],
 	sentences: [],
-});
+})
 
 // 表单检查规则
 let rules = {
@@ -260,99 +245,96 @@ let rules = {
 	status: {
 		required: true,
 	},
-};
+}
 
 let sourceRule = {
 	required: true,
 	trigger: ["blur", "input"],
 	message: "At least input a source sentence",
-};
+}
 
 let labelStyle: StyleValue = {
 	fontSize: "16px",
 	fontWeight: "bold",
 	padding: "0 0 8px 2px",
-};
+}
 
 function onCreateSentence() {
 	return {
 		text: "",
 		trans: "",
 		origin: "",
-	};
+	}
 }
 
 // 单词状态样式
-const basicStyle = {};
-
+const basicStyle = {}
 const learningStyle = {
 	backgroundColor: "#ff980055",
-};
-
+}
 const familiarStyle = {
 	backgroundColor: "#ffeb3c55",
-};
-
+}
 const knownStyle = {
 	backgroundColor: "#9eda5855",
-};
-
+}
 const LearnedStyle = {
 	backgroundColor: "#4cb05155",
-};
+}
 
-// 异步获取数据中所有tag
-let tagOptions = ref<SelectOption[]>([]);
-let tagLoading = ref(false);
-let tags: string[] = [];
+// 异步获取数据库中所有tag
+let tagOptions = ref<SelectOption[]>([])
+let tagLoading = ref(false)
+let tags: string[] = []
 
 async function tagSearch(query: string) {
-	tagLoading.value = true;
+	tagLoading.value = true
 	if (query.length < 2) {
-		tags = await plugin.db.getTags();
+		tags = await plugin.db.getTags()
 	}
-	tagLoading.value = false;
+	tagLoading.value = false
+
 	if (!query.length) {
 		tagOptions.value = tags.map((v) => {
-			return { label: v, value: v };
-		});
-		return;
+			return { label: v, value: v }
+		})
+		return
 	}
 	tagOptions.value = tags
 		.filter((v) => ~v.indexOf(query))
 		.map((v) => {
-			return { label: v, value: v };
-		});
+			return { label: v, value: v }
+		})
 }
 
-// 提交信息到服务器
-let submitLoading = ref(false);
+// 提交信息到数据库的加载状态
+let submitLoading = ref(false)
 
 async function submit() {
 	// 表单内容检查
 	if (!model.value.expression) {
-		new Notice(t("Expression is empty!"));
-		return;
+		new Notice(t("Expression is empty!"))
+		return
 	}
 	if (!model.value.meaning) {
-		new Notice(t("Meaning is empty!"));
-		return;
+		new Notice(t("Meaning is empty!"))
+		return
 	}
 	if (
 		model.value.expression.trim().split(" ").length > 1 &&
 		model.value.t === "WORD"
 	) {
-		new Notice(t("It looks more like a PHRASE than a WORD"));
-		return;
+		new Notice(t("It looks more like a PHRASE than a WORD"))
+		return
 	}
 
-	submitLoading.value = true;
-	let statusCode = await plugin.db.postExpression(toRaw(model.value));
-	submitLoading.value = false;
+	submitLoading.value = true
+	let statusCode = await plugin.db.postExpression(toRaw(model.value))
+	submitLoading.value = false
 
 	if (statusCode !== 200) {
-		new Notice("Submit failed");
-		console.warn("Submit failed, please check server status");
+		new Notice("Submit failed")
+		console.warn("Submit failed, please check server status")
 	}
 
 	dispatchEvent(
@@ -363,20 +345,20 @@ async function submit() {
 				status: model.value.status,
 			},
 		})
-	);
-	dispatchEvent(new CustomEvent("obsidian-langr-refresh-stat"));
+	)
+	dispatchEvent(new CustomEvent("obsidian-langr-refresh-stat"))
 }
 
-// 查询词汇填充表单
+// 查询词汇时自动填充新词表单
 async function onSearch(evt: CustomEvent) {
-	let selection = evt.detail.selection;
-	let expr = await plugin.db.getExpression(selection);
+	let selection = evt.detail.selection
+	let expr = await plugin.db.getExpression(selection)
 
 	if(expr) {
-		model.value = expr;
-		return;
+		model.value = expr
+		return
 	}else {
-		let target = evt.detail.target as HTMLElement;
+		let target = evt.detail.target as HTMLElement
 		if(!target) {
 			model.value = {
 				expression: selection,
@@ -387,21 +369,21 @@ async function onSearch(evt: CustomEvent) {
 				notes: [],
 				sentences: [],
 			}
-			return;
+			return
 		}
 
 		let sentenceEl = target.parentElement.hasClass("stns")
 			? target.parentElement
-			: target.parentElement.parentElement;
-		let sentenceText = sentenceEl.textContent;
+			: target.parentElement.parentElement
+		let sentenceText = sentenceEl.textContent
 
-		let storedSen = await plugin.db.tryGetSen(sentenceText);
+		let storedSen = await plugin.db.tryGetSen(sentenceText)
 		
-		let reading = view.app.workspace.getActiveViewOfType(ReadingView);
+		let reading = view.app.workspace.getActiveViewOfType(ReadingView)
 
-		let defaultOrigin: string = null;
+		let defaultOrigin: string = null
 		if(reading) {
-			let presetOrigin = view.app.metadataCache.getFileCache(reading.file).frontmatter["langr-origin"];
+			let presetOrigin = view.app.metadataCache.getFileCache(reading.file).frontmatter["langr-origin"]
 			defaultOrigin = presetOrigin? presetOrigin: reading.file.name
 		}
 
@@ -415,15 +397,15 @@ async function onSearch(evt: CustomEvent) {
 			sentences: storedSen
 				? [storedSen]
 				: [{ text: sentenceText, trans: null, origin: defaultOrigin }],
-		};
+		}
 	}
 }
 
 onMounted(() => {
-	addEventListener("obsidian-langr-search", onSearch);
-});
+	addEventListener("obsidian-langr-search", onSearch)
+})
 
 onUnmounted(() => {
-	removeEventListener("obsidian-langr-search", onSearch);
-});
+	removeEventListener("obsidian-langr-search", onSearch)
+})
 </script>

@@ -6,10 +6,6 @@ import {
 
 import DbProvider from "./base"
 
-// export let option = {
-//     PORT: 2222,
-// };
-
 
 export class WebDb extends DbProvider {
     port: number;
@@ -37,7 +33,6 @@ export class WebDb extends DbProvider {
             console.warn("Error when getting parse info from server:" + e);
         }
     }
-
 
     // 获取单词/词组的详细信息
     async getExpression(
@@ -67,7 +62,6 @@ export class WebDb extends DbProvider {
             body: JSON.stringify(unixStamp),
             contentType: "application/json",
         }
-        let x = 10;
         try {
             let response = await requestUrl(request)
             return response.json
@@ -165,7 +159,6 @@ export class WebDb extends DbProvider {
 
     // 统计部分
     // 获取各种类型的单词/词组类型
-
     async getCount(): Promise<CountInfo> {
         let request: RequestUrlParam = {
             url: `http://localhost:${this.port}/count_all`,
@@ -203,7 +196,6 @@ export class WebDb extends DbProvider {
 
         try {
             let res = await requestUrl(request);
-
             return res.json;
         } catch (e) { }
     }

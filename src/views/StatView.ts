@@ -1,5 +1,4 @@
 import { ItemView, WorkspaceLeaf, } from 'obsidian'
-import LanguageLearner from '../plugin'
 import { createApp, App } from 'vue'
 
 import MainPlugin from "../plugin"

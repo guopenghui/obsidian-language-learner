@@ -1,6 +1,5 @@
 import Dexie from "dexie"
 
-
 export default class WordDB extends Dexie {
     expressions: Dexie.Table<Expression, number>;
     sentences: Dexie.Table<Sentence, number>;

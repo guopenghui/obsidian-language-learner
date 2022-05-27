@@ -2,7 +2,7 @@ import { App, Notice, PluginSettingTab, Setting, Modal, moment } from "obsidian"
 
 import { WebDb } from "./db/web_db";
 import LanguageLearner from "./plugin";
-
+import { t } from "./lang/helper"
 
 export interface MyPluginSettings {
     use_server: boolean;
@@ -35,8 +35,8 @@ export class SettingTab extends PluginSettingTab {
         containerEl.createEl("h2", { text: "Settings for Language Learner" });
 
         new Setting(containerEl)
-            .setName("Use Server")
-            .setDesc("Use a seperated backend server")
+            .setName(t("Use Server"))
+            .setDesc(t("Use a seperated backend server"))
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.use_server)
                 .onChange(async (use_server) => {
@@ -46,9 +46,9 @@ export class SettingTab extends PluginSettingTab {
             )
 
         new Setting(containerEl)
-            .setName("Server Port")
+            .setName(t("Server Port"))
             .setDesc(
-                'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server'
+                t('An integer between 1024-65535. It should be same as "PORT" variable in .env file of server')
             )
             .setDisabled(!this.plugin.settings.use_server)
             .addText((text) =>
@@ -61,14 +61,14 @@ export class SettingTab extends PluginSettingTab {
                             (this.plugin.db as WebDb).port = p
                             await this.plugin.saveSettings();
                         } else {
-                            new Notice("Wrong port format");
+                            new Notice(t("Wrong port format"));
                         }
                     })
             );
 
         new Setting(containerEl)
-            .setName("Word Database Path")
-            .setDesc("Choose a md file as word database for auto-completion")
+            .setName(t("Word Database Path"))
+            .setDesc(t("Choose a md file as word database for auto-completion"))
             .addText((text) =>
                 text
                     .setValue(this.plugin.settings.word_database)
@@ -79,8 +79,8 @@ export class SettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Review Database Path")
-            .setDesc("Choose a md file as review database for spaced-repetition")
+            .setName(t("Review Database Path"))
+            .setDesc(t("Choose a md file as review database for spaced-repetition"))
             .addText((text) =>
                 text
                     .setValue(this.plugin.settings.review_database)
@@ -91,8 +91,8 @@ export class SettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Last review sync")
-            .setDesc("Last time the review database was updated")
+            .setName(t("Last review sync"))
+            .setDesc(t("Last time the review database was updated"))
             .addMomentFormat(date =>
                 date
                     .setValue(moment.utc(this.plugin.settings.last_sync).local().format())
@@ -100,10 +100,10 @@ export class SettingTab extends PluginSettingTab {
             ).setDisabled(true)
 
         new Setting(containerEl)
-            .setName("Destroy Database")
-            .setDesc("Destroy all stuff and start over")
+            .setName(t("Destroy Database"))
+            .setDesc(t("Destroy all stuff and start over"))
             .addButton(button => button
-                .setButtonText("Destroy")
+                .setButtonText(t("Destroy"))
                 .setWarning()
                 .onClick(async (evt) => {
                     let modal = new WarningModal(this.app, async () => {
@@ -116,6 +116,7 @@ export class SettingTab extends PluginSettingTab {
     }
 }
 
+// 删库之前问一句
 export class WarningModal extends Modal {
     onSubmit: () => Promise<void>;
 
@@ -131,7 +132,7 @@ export class WarningModal extends Modal {
 
         new Setting(contentEl)
             .addButton((btn) => btn
-                .setButtonText("Destroy")
+                .setButtonText(t("Destroy"))
                 .setWarning()
                 .setCta()
                 .onClick(() => {
@@ -140,7 +141,7 @@ export class WarningModal extends Modal {
                 })
             )
             .addButton((btn) => btn
-                .setButtonText("No!!!")
+                .setButtonText(t("No!!!"))
                 .setCta() // what is this?
                 .onClick(() => {
                     this.close();

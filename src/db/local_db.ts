@@ -1,3 +1,4 @@
+import { moment } from "obsidian";
 import { createAutomaton, Automaton } from "ac-auto"
 
 import {
@@ -6,7 +7,6 @@ import {
 } from "./interface"
 import DbProvider from "./base"
 import WordDB from "./idb"
-import { moment } from "obsidian";
 
 
 export class LocalDb extends DbProvider {
@@ -19,18 +19,17 @@ export class LocalDb extends DbProvider {
     // 寻找页面中已经记录过的单词和词组
     async getStoredWords(payload: ArticleWords): Promise<WordsPhrase> {
         let storedPhrases = new Map<string, number>();
-        (await this.idb.expressions
+        await this.idb.expressions
             .where("t").equals("PHRASE")
-            .toArray()
-        ).forEach(expr => {
-            storedPhrases.set(expr.expression, expr.status)
-        })
+            .each(expr => storedPhrases.set(expr.expression, expr.status))
+
         let storedWords = (await this.idb.expressions
             .where("expression").anyOf(payload.words)
             .toArray()
         ).map(expr => {
             return { text: expr.expression, status: expr.status } as Word
         })
+
         let ac = await createAutomaton([...storedPhrases.keys()])
         let searchedPhrases = (await ac.search(payload.article)).map(match => {
             return { text: match[1], status: storedPhrases.get(match[1]), offset: match[0] } as Phrase
@@ -40,11 +39,14 @@ export class LocalDb extends DbProvider {
     }
 
     async getExpression(expression: string): Promise<ExpressionInfo> {
+        expression = expression.toLowerCase()
         let expr = await this.idb.expressions
             .where("expression").equals(expression).first()
+
         if (!expr) {
             return null
         }
+
         let sentences = await this.idb.sentences
             .where("id").anyOf([...expr.sentences.values()])
             .toArray()
@@ -73,6 +75,7 @@ export class LocalDb extends DbProvider {
             let sentences = await this.idb.sentences
                 .where("id").anyOf([...expr.sentences.values()])
                 .toArray()
+
             res.push({
                 expression: expr.expression,
                 meaning: expr.meaning,
@@ -102,10 +105,14 @@ export class LocalDb extends DbProvider {
 
         return exprs
     }
+
     async postExpression(payload: ExpressionInfo): Promise<number> {
+        payload.expression = payload.expression.toLowerCase()
+
         let stored = await this.idb.expressions
             .where("expression").equals(payload.expression)
             .first()
+
         let sentences = new Set<number>()
         for (let sen of payload.sentences) {
             let searched = await this.idb.sentences.where("text").equals(sen.text).first()
@@ -117,6 +124,7 @@ export class LocalDb extends DbProvider {
                 sentences.add(id)
             }
         }
+
         let updatedWord = {
             expression: payload.expression,
             meaning: payload.meaning,
@@ -136,16 +144,18 @@ export class LocalDb extends DbProvider {
 
         return 200
     }
+
     async getTags(): Promise<string[]> {
         let allTags = new Set<string>()
-        let allWords = await this.idb.expressions.toArray()
         await this.idb.expressions.each(expr => {
             for (let t of expr.tags.values()) {
                 allTags.add(t)
             }
         })
+
         return [...allTags.values()]
     }
+
     async postIgnoreWords(payload: string[]): Promise<void> {
         await this.idb.expressions.bulkAdd(
             payload.map(expr => {
@@ -184,6 +194,7 @@ export class LocalDb extends DbProvider {
             phrase_count: counts.PHRASE
         }
     }
+
     async countSeven(): Promise<WordCount[]> {
         let spans: Span[] = []
         spans = [0, 1, 2, 3, 4, 5, 6].map((i) => {
@@ -197,7 +208,9 @@ export class LocalDb extends DbProvider {
 
         let res: WordCount[] = []
 
+        // 对每一天计算
         for (let span of spans) {
+            // 当日
             let today = new Array(5).fill(0)
             await this.idb.expressions.filter(expr => {
                 return expr.t == "WORD" &&
@@ -206,7 +219,7 @@ export class LocalDb extends DbProvider {
             }).each(expr => {
                 today[expr.status]++
             })
-
+            // 累计
             let accumulated = new Array(5).fill(0)
             await this.idb.expressions.filter(expr => {
                 return expr.t == "WORD" &&

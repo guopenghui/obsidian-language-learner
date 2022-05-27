@@ -21,40 +21,19 @@
 </template>
 
 <script setup lang="ts">
-import { Notice, requestUrl, RequestUrlParam } from 'obsidian'
-import { defineComponent, getCurrentInstance, onMounted, onUnmounted, ref } from 'vue'
+// import { Notice, requestUrl, RequestUrlParam } from 'obsidian'
+import { getCurrentInstance, onMounted, onUnmounted, ref } from 'vue'
 import { NInput, NButton, NConfigProvider, darkTheme } from "naive-ui"
+
+// import Plugin from "../plugin"
 import Collins from "./Collins.vue"
-import Plugin from "../plugin"
 import { search, YoudaoResultLex } from "../web-dicts/youdao"
 import { t } from "../lang/helper"
 
 let theme = document.body.hasClass("theme-dark") ? darkTheme : null
 
-
 function play(i: number) {
     (new Audio(prons.value[i].url)).play()
-}
-
-
-let word = ref("")
-let meaning = ref("")
-
-async function send() {
-    let request: RequestUrlParam = {
-        url: `http://localhost:3000/words/${word.value}`,
-        method: "GET",
-    }
-    try {
-        let res = await requestUrl(request)
-        let meanings = res.json.meanings
-        if (meanings.length === 0)
-            meaning.value = "Not found in database."
-        else
-            meaning.value = meanings
-    } catch (e) {
-        meaning.value = "Failed. Check your server or network."
-    }
 }
 
 let word2 = ref("")
@@ -79,7 +58,7 @@ async function searchWord(word: string) {
 }
 
 let panel = ref(null)
-const plugin: Plugin = getCurrentInstance().appContext.config.globalProperties.plugin
+// const plugin: Plugin = getCurrentInstance().appContext.config.globalProperties.plugin
 const onSearch = async (evt: CustomEvent) => {
     // evt.preventDefault()
     let word = evt.detail.selection
