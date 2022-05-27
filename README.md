@@ -14,12 +14,13 @@
 ### 外观展示
 阅读：
 
-![阅读界面](https://raw.githubusercontent.com/guopenghui/obsidian-language-learner/master/public/reading.png)
+![阅读界面](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/reading.png)
+
 
 自动补全/提示：
 
-![自动补全-英中](https://raw.githubusercontent.com/guopenghui/obsidian-language-learner/master/public/complement1.png)
-![自动补全-中英](https://raw.githubusercontent.com/guopenghui/obsidian-language-learner/master/public/complement2.png)
+![自动补全-英中](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/complement1.png)
+![自动补全-中英](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/complement2.png)
 
 间隔复习：
 
