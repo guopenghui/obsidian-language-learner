@@ -24,10 +24,10 @@
 
 间隔复习：
 
-![间隔复习](https://raw.githubusercontent.com/guopenghui/obsidian-language-learner/master/public/review.png)
+![间隔复习](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/review.png)
 
 ## 使用指南
-[使用指南](https://raw.githubusercontent.com/guopenghui/obsidian-language-learner/master/public/tutorial.pdf)
+[使用指南](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/tutorial.pdf)
 
 
 ## 安装
@@ -64,5 +64,5 @@ npm run minify
 
 觉得这款插件好用的朋友，或是想鼓励一下作者，可以赞助孩子买个新鼠标!!🖱
 
-![微信](https://raw.githubusercontent.com/guopenghui/obsidian-language-learner/master/public/wechat.jpg)
-![支付宝](https://raw.githubusercontent.com/guopenghui/obsidian-language-learner/master/public/alipay.jpg)
+![微信](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/wechat.jpg)
+![支付宝](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/alipay.jpg)
