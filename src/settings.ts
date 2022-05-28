@@ -93,11 +93,25 @@ export class SettingTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName(t("Last review sync"))
             .setDesc(t("Last time the review database was updated"))
-            .addMomentFormat(date =>
-                date
-                    .setValue(moment.utc(this.plugin.settings.last_sync).local().format())
+            .addMomentFormat(date => date
+                .setValue(moment.utc(this.plugin.settings.last_sync).local().format())
+                .setDisabled(true)
+            )
+            .addButton(button => button
+                .setButtonText(t("Reset"))
+                .setWarning()
+                .onClick(async (evt) => {
+                    let modal = new WarningModal(
+                        this.app,
+                        t("Are you sure you want to reset last sync time?"),
+                        async () => {
+                            this.plugin.settings.last_sync = "1970-01-01T00:00:00Z"
+                            await this.plugin.saveSettings()
+                        }
+                    )
+                    modal.open()
+                }))
 
-            ).setDisabled(true)
 
         new Setting(containerEl)
             .setName(t("Destroy Database"))
@@ -106,50 +120,55 @@ export class SettingTab extends PluginSettingTab {
                 .setButtonText(t("Destroy"))
                 .setWarning()
                 .onClick(async (evt) => {
-                    let modal = new WarningModal(this.app, async () => {
-                        await this.plugin.db.destroyAll()
-                        new Notice("啊啊啊")
-                    })
+                    let modal = new WarningModal(
+                        this.app,
+                        t("Are you sure you want to destroy your database?"),
+                        async () => {
+                            await this.plugin.db.destroyAll()
+                            new Notice("啊啊啊")
+                        })
                     modal.open()
                 })
             )
     }
 }
 
-// 删库之前问一句
+// 做某些危险操作前问一句
 export class WarningModal extends Modal {
     onSubmit: () => Promise<void>;
+    message: string;
 
-    constructor(app: App, onSubmit: () => Promise<void>) {
-        super(app);
-        this.onSubmit = onSubmit;
+    constructor(app: App, message: string, onSubmit: () => Promise<void>) {
+        super(app)
+        this.message = message
+        this.onSubmit = onSubmit
     }
 
     onOpen() {
-        const { contentEl } = this;
+        const { contentEl } = this
 
-        contentEl.createEl("h2", { text: "Are you sure you want to destroy your database?" });
+        contentEl.createEl("h2", { text: this.message })
 
         new Setting(contentEl)
             .addButton((btn) => btn
-                .setButtonText(t("Destroy"))
+                .setButtonText(t("Yes"))
                 .setWarning()
                 .setCta()
                 .onClick(() => {
                     this.close()
-                    this.onSubmit();
+                    this.onSubmit()
                 })
             )
             .addButton((btn) => btn
                 .setButtonText(t("No!!!"))
                 .setCta() // what is this?
                 .onClick(() => {
-                    this.close();
+                    this.close()
                 }))
     }
 
     onClose() {
-        let { contentEl } = this;
-        contentEl.empty();
+        let { contentEl } = this
+        contentEl.empty()
     }
 }

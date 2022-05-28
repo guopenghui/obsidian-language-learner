@@ -65,7 +65,7 @@ export default {
     "Use a seperated backend server": "使用单独的后端服务器",
     "Server Port": "服务器端口",
     'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
-        '一个介于1024-65532之间的整数.这应该和服务器.env文件中的PORT字段一致',
+        '一个介于1024-65535之间的整数.这应该和服务器.env文件中的PORT字段一致',
     "Wrong port format": "端口格式不对",
     "Word Database Path": "单词数据库路径",
     "Choose a md file as word database for auto-completion": "选择一个md文件作为单词数据库以自动补全",
@@ -75,6 +75,10 @@ export default {
     "Last time the review database was updated": "上次更新复习数据库的时间",
     "Destroy Database": "销毁数据库",
     "Destroy all stuff and start over": "销毁一切从头开始",
+    "Are you sure you want to destroy your database?": "删了库，可就回不了头啦",
     "Destroy": "销毁",
+    "Yes": "确定",
     "No!!!": "不要!!!",
+    "Reset": "重置",
+    "Are you sure you want to reset last sync time?": "确定要重置刷新时间吗?",
 }

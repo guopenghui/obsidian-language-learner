@@ -75,6 +75,10 @@ export default {
     "Last time the review database was updated": "Last time the review database was updated",
     "Destroy Database": "Destroy Database",
     "Destroy all stuff and start over": "Destroy all stuff and start over",
+    "Are you sure you want to destroy your database?": "Are you sure you want to destroy your database",
     "Destroy": "Destroy",
+    "Yes": "Yes",
     "No!!!": "No!!!",
+    "Reset": "Reset",
+    "Are you sure you want to reset last sync time?": "Are you sure you want to reset last sync time",
 }
