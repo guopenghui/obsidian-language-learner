@@ -157,7 +157,8 @@ export class LocalDb extends DbProvider {
     }
 
     async postIgnoreWords(payload: string[]): Promise<void> {
-        await this.idb.expressions.bulkAdd(
+
+        await this.idb.expressions.bulkPut(
             payload.map(expr => {
                 return {
                     expression: expr,

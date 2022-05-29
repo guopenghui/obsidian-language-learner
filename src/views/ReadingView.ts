@@ -74,12 +74,11 @@ export class ReadingView extends TextFileView {
         if (button) {
             button.addEventListener("click", async () => {
                 let ignores = this.containerEl.querySelectorAll(".word.new")
-                let ignore_words: string[] = []
+                let ignore_words: Set<string> = new Set()
                 ignores.forEach((el) => {
-                    ignore_words.push(el.textContent.toLowerCase())
+                    ignore_words.add(el.textContent.toLowerCase())
                 })
-
-                await this.plugin.db.postIgnoreWords(ignore_words)
+                await this.plugin.db.postIgnoreWords([...ignore_words])
                 this.setViewData(this.data)
                 dispatchEvent(new CustomEvent("obsidian-langr-refresh-stat"))
             })
