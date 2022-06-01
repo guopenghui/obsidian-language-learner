@@ -13,8 +13,11 @@
 	"author": "",
 	"license": "MIT",
 	"dependencies": {
+		"@types/downloadjs": "^1.4.3",
 		"ac-auto": "^2.0.0",
 		"dexie": "^3.2.2",
+		"dexie-export-import": "^1.0.3",
+		"downloadjs": "^1.4.7",
 		"echarts": "^5.3.2",
 		"monkey-around": "^2.3.0",
 		"nlcst-to-string": "^3.1.0",

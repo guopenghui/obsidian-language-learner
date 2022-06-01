@@ -10,6 +10,7 @@
     "moduleResolution": "node",
     "importHelpers": true,
     "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
     "jsx":"preserve",
     "lib": [
       "DOM",

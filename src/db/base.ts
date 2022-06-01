@@ -27,6 +27,10 @@ abstract class DbProvider {
     abstract countSeven(): Promise<WordCount[]>;
     // 销毁数据库
     abstract destroyAll(): Promise<void>;
+    // 导入数据库
+    abstract importDB(data: any): Promise<void>;
+    // 导出数据库
+    abstract exportDB(): Promise<void>
 }
 
 

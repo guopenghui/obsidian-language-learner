@@ -10,6 +10,7 @@ export interface MyPluginSettings {
     review_database: string;
     port: number;
     last_sync: string;
+    db_name: string;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -17,7 +18,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     word_database: null,
     review_database: null,
     port: 8086,
-    last_sync: "1970-01-01T00:00:00Z"
+    last_sync: "1970-01-01T00:00:00Z",
+    db_name: "WordDB"
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -65,6 +67,46 @@ export class SettingTab extends PluginSettingTab {
                         }
                     })
             );
+
+        containerEl.createEl("h3", { text: t("IndexDB Database") });
+
+        new Setting(containerEl)
+            .setName(t("Database Name"))
+            .setDesc(t("Reopen app after changing database name"))
+            .addText(text => text
+                .setValue(this.plugin.settings.db_name)
+                .onChange(async (name) => {
+                    this.plugin.settings.db_name = name
+                    this.plugin.saveSettings()
+                })
+            )
+
+        // 导入导出数据库
+        new Setting(containerEl)
+            .setName(t("Import & Export"))
+            .setDesc(t("Warning: Import will override current database"))
+            .addButton(button => button
+                .setButtonText(t("Import"))
+                .onClick(async () => {
+                    let modal = new OpenFileModal(this.plugin.app, async (file: File) => {
+                        // let fr = new FileReader()
+                        // fr.onload = async () => {
+                        // let data = JSON.parse(fr.result as string)
+                        await this.plugin.db.importDB(file)
+                        new Notice("Imported")
+                        // }
+                        // fr.readAsText(file)
+                    })
+                    modal.open()
+                })
+            )
+            .addButton(button => button
+                .setButtonText(t("Export"))
+                .onClick(async () => {
+                    await this.plugin.db.exportDB()
+                    new Notice("Exported")
+                })
+            )
 
         new Setting(containerEl)
             .setName(t("Word Database Path"))
@@ -132,6 +174,47 @@ export class SettingTab extends PluginSettingTab {
             )
     }
 }
+
+
+// 打开某个文件
+class OpenFileModal extends Modal {
+    input: HTMLInputElement
+    file: File
+    onSubmit: (file: File) => Promise<void>
+    constructor(app: App, onSubmit: (file: File) => Promise<void>) {
+        super(app)
+        this.onSubmit = onSubmit
+    }
+
+    onOpen() {
+        const { contentEl } = this
+
+        this.input = contentEl.createEl("input", {
+            attr: {
+                type: "file"
+            }
+        })
+
+        this.input.addEventListener("change", () => {
+            this.file = this.input.files[0]
+            console.dir(this.file)
+        })
+
+        new Setting(contentEl)
+            .addButton(button => button
+                .setButtonText(t("Yes"))
+                .onClick((evt) => {
+                    this.onSubmit(this.file)
+                    this.close()
+                })
+            )
+    }
+
+    onClose(): void {
+
+    }
+}
+
 
 // 做某些危险操作前问一句
 export class WarningModal extends Modal {

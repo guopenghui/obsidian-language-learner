@@ -200,6 +200,10 @@ export class WebDb extends DbProvider {
         } catch (e) { }
     }
 
+    async importDB() { }
+
+    async exportDB() { }
+
     async destroyAll() {
         // 什么也没有发生
     }

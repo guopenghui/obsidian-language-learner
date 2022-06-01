@@ -81,4 +81,12 @@ export default {
     "No!!!": "No!!!",
     "Reset": "Reset",
     "Are you sure you want to reset last sync time?": "Are you sure you want to reset last sync time",
+    "IndexDB Database": "IndexDB Database",
+    "Database Name": "Database Name",
+    // "Change": "Change",
+    "Reopen app after changing database name": "Reopen app after changing database name",
+    "Import & Export": "Import & Export",
+    "Warning: Import will override current database": "Warning: Import will override current database",
+    "Import": "Import",
+    "Export": "Export",
 }

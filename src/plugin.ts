@@ -43,7 +43,7 @@ export default class LanguageLearner extends Plugin {
 
 		this.db = this.settings.use_server ?
 			new WebDb(this.settings.port) :
-			new LocalDb()
+			new LocalDb(this)
 		this.parser = new TextParser(this)
 
 		// 注册查词面板视图

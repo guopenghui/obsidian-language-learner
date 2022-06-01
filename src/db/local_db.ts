@@ -1,5 +1,7 @@
 import { moment } from "obsidian";
 import { createAutomaton, Automaton } from "ac-auto"
+import { exportDB, importInto } from "dexie-export-import"
+import download from "downloadjs"
 
 import {
     ArticleWords, Word, Phrase, WordsPhrase, Sentence,
@@ -7,13 +9,14 @@ import {
 } from "./interface"
 import DbProvider from "./base"
 import WordDB from "./idb"
+import Plugin from "../plugin"
 
 
 export class LocalDb extends DbProvider {
     idb: WordDB;
-    constructor() {
+    constructor(plugin: Plugin) {
         super()
-        this.idb = new WordDB()
+        this.idb = new WordDB(plugin)
     }
 
     // 寻找页面中已经记录过的单词和词组
@@ -233,6 +236,23 @@ export class LocalDb extends DbProvider {
         }
 
         return res
+    }
+
+    async importDB(file: File) {
+        await this.idb.delete()
+        await this.idb.open()
+        await importInto(this.idb, file, {
+            acceptNameDiff: true
+        })
+    }
+
+    async exportDB() {
+        let blob = await exportDB(this.idb)
+        try {
+            download(blob, `${this.idb.dbName}.json`, "application/json")
+        } catch (e) {
+            console.error("error exporting database")
+        }
     }
 
     async destroyAll() {

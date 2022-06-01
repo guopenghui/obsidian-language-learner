@@ -81,4 +81,12 @@ export default {
     "No!!!": "不要!!!",
     "Reset": "重置",
     "Are you sure you want to reset last sync time?": "确定要重置刷新时间吗?",
+    "IndexDB Database": "IndexDB 数据库",
+    "Database Name": "数据库名称",
+    // "Change": "改变",
+    "Reopen app after changing database name": "改名后请重启obsidian",
+    "Import & Export": "导入导出数据",
+    "Warning: Import will override current database": "警告: 导入会覆盖掉当前的数据库",
+    "Import": "导入",
+    "Export": "导出",
 }
