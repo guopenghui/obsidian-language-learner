@@ -37,10 +37,11 @@
 
 ## 安装
 
-### 预构建文件
-
-从realease下载压缩包，解压到相应位置
-### 自行构建
++ 从realease下载压缩包`obsidian-language-leaner.zip`
++ 解压到obsidian库的`.obsidian/plugins/`文件夹下，即保证`main.js`的路径为`.obsidian/plugins/obsidian-language-leaner/main.js`
++ 打开obsidian，在插件中启用本插件`Language Learner`.
++ 配置见[使用指南](#使用指南)
+## 自行构建
 
 下载源码到本地
 ```shell
