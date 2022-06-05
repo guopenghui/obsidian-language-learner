@@ -38,9 +38,11 @@ export default class LanguageLearner extends Plugin {
 	parser: TextParser;
 
 	async onload() {
+		// 读取设置
 		await this.loadSettings();
 		this.addSettingTab(new SettingTab(this.app, this));
 
+		// 打开数据库
 		this.db = this.settings.use_server ?
 			new WebDb(this.settings.port) :
 			new LocalDb(this)
@@ -84,14 +86,14 @@ export default class LanguageLearner extends Plugin {
 			this.activateView(STAT_VIEW_TYPE);
 		});
 
-		// 刷新单词数据库命令
+		// 注册刷新单词数据库命令
 		this.addCommand({
 			id: "langr-refresh-word-database",
 			name: t("Refresh Word Database"),
 			callback: this.refreshWordDb
 		});
 
-		// 刷新复习数据库命令
+		// 注册刷新复习数据库命令
 		this.addCommand({
 			id: "langr-refresh-review-database",
 			name: t("Refresh Review Database"),
@@ -101,6 +103,7 @@ export default class LanguageLearner extends Plugin {
 		this.registerReadingToggle()
 		this.registerContextMenu();
 		this.registerLeftClick();
+		this.registerMouseup()
 	}
 
 	onunload() {
@@ -285,15 +288,8 @@ export default class LanguageLearner extends Plugin {
 		);
 		// markdown 预览模式 右键菜单
 		this.registerDomEvent(document.body, "contextmenu", (evt) => {
-			if (
-				(evt as any).path.find((el: HTMLElement) => {
-					return (
-						el instanceof HTMLElement &&
-						el.hasClass("markdown-preview-view")
-					);
-				})
-			) {
-				const selection = window.getSelection().toString();
+			if ((evt.target as HTMLElement).matchParent(".markdown-preview-view")) {
+				const selection = window.getSelection().toString().trim();
 				if (!selection) return;
 
 				evt.preventDefault();
@@ -302,16 +298,26 @@ export default class LanguageLearner extends Plugin {
 				addMemu(menu, selection);
 
 				menu.showAtMouseEvent(evt);
-			} else if (
-				(evt as any).path.find((el: HTMLElement) => {
-					return (
-						el instanceof HTMLElement && el.hasClass("text-area")
-					);
-				})
-			) {
-				const selection = window.getSelection();
-				if (selection.rangeCount === 0) return;
+			}
+		});
+	}
 
+	// 管理所有的左键抬起
+	registerMouseup() {
+		this.registerDomEvent(document.body, "mouseup", (evt) => {
+			const target = evt.target as HTMLElement
+			if (!target.matchParent(".stns")) {
+				return
+			}
+
+			let start: Node
+			let end: Node
+
+			// test
+			const selection = window.getSelection();
+
+			if (!selection.isCollapsed) {
+				// if (selection.rangeCount === 0) return;
 				evt.preventDefault();
 				let range = selection.getRangeAt(0);
 				if (range.collapsed) return;
@@ -325,33 +331,49 @@ export default class LanguageLearner extends Plugin {
 				)
 					return;
 
-				let start = range.startContainer;
-				let end = range.endContainer;
-
-				let parent = start.parentNode;
-				let newSpan = document.body.createSpan({ cls: "select" });
-				parent.insertBefore(newSpan, start);
-
-				let beginInsert = false;
-				let collection = [] as any[];
-				parent.childNodes.forEach((item) => {
-					if (item === newSpan) {
-						beginInsert = true;
-						return;
-					}
-					if (!beginInsert) return;
-					collection.push(item);
-					if (item === end) {
-						beginInsert = false;
-					}
-				});
-				collection.forEach((item) => {
-					newSpan.appendChild(item);
-				});
-
-				//selection.collapseToStart()
+				start = range.startContainer;
+				end = range.endContainer;
+			} else if (target.hasClass("word")) {
+				start = end = target
+			} else {
+				return
 			}
-		});
+
+			// 保证最多只有一个select块
+			let view = this.app.workspace.getActiveViewOfType(ReadingView)
+			if (view) {
+				view.removeSelect()
+			}
+
+			if ((start as HTMLElement).matchParent(".select")) return
+
+			let parent = start.parentNode;
+			let newSpan = document.body.createSpan({ cls: "select" });
+			parent.insertBefore(newSpan, start);
+
+			let beginInsert = false;
+			let collection = [] as any[];
+			parent.childNodes.forEach((item) => {
+				if (item === newSpan) {
+					beginInsert = true;
+					return;
+				}
+				if (!beginInsert) return;
+				collection.push(item);
+				if (item === end) {
+					beginInsert = false;
+				}
+			});
+			collection.forEach((item) => {
+				newSpan.appendChild(item);
+			});
+
+			//selection.collapseToStart()
+
+			dispatchEvent(new CustomEvent("obsidian-langr-search", {
+				detail: { selection: newSpan.innerText, target: newSpan }
+			}))
+		})
 	}
 
 	// 管理所有的鼠标左击

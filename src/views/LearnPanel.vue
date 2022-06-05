@@ -94,7 +94,6 @@
 						</template>
 						<template #="{ index, value }">
 							<NInput
-								xxx="xxxx"
 								type="textarea"
 								:placeholder="t('Write a new note')"
 								v-model:value="model.notes[index]"
@@ -108,7 +107,6 @@
 					}}</label>
 				</div>
 				<NDynamicInput
-					name="Sentences"
 					v-model:value="model.sentences"
 					:on-create="onCreateSentence"
 				>
