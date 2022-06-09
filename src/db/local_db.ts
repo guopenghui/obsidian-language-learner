@@ -110,6 +110,7 @@ export class LocalDb extends DbProvider {
     }
 
     async postExpression(payload: ExpressionInfo): Promise<number> {
+        console.dir(payload)
         payload.expression = payload.expression.toLowerCase()
 
         let stored = await this.idb.expressions
@@ -123,7 +124,10 @@ export class LocalDb extends DbProvider {
                 await this.idb.sentences.update(searched.id, sen)
                 sentences.add(searched.id)
             } else {
+                console.dir(sen)
+                console.log("it's")
                 let id = await this.idb.sentences.add(sen)
+                console.log("here")
                 sentences.add(id)
             }
         }
