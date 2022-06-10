@@ -335,6 +335,7 @@ async function submit() {
 	if (statusCode !== 200) {
 		new Notice("Submit failed")
 		console.warn("Submit failed, please check server status")
+		return
 	}
 
 	dispatchEvent(

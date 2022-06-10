@@ -1,6 +1,5 @@
 // from ext-saladict: https://github.com/crimx/ext-saladict
 import { Notice } from "obsidian"
-import { fetchDirtyDOM } from './helpers'
 import {
   getText,
   getInnerHTML,
@@ -8,8 +7,9 @@ import {
   HTMLString,
   handleNetWorkError,
   DictSearchResult,
-  removeChild
-} from './helpers'
+  removeChild,
+  fetchDirtyDOM
+} from '../helpers'
 
 export const getSrcPage = (text: string) =>
   'https://dict.youdao.com/w/' + encodeURIComponent(text.replace(/\s+/g, ' '))
@@ -34,6 +34,8 @@ export interface YoudaoResultLex {
   discrimination?: HTMLString
   sentence?: HTMLString
   translation?: HTMLString
+  wordGroup?: HTMLString
+  relWord?: HTMLString
 }
 
 export interface YoudaoResultRelated {
@@ -55,6 +57,8 @@ export const search = async (
     discrimination: true,
     sentence: true,
     translation: true,
+    wordGroup: true,
+    relWord: true,
   }
 
   return fetchDirtyDOM(
@@ -96,7 +100,8 @@ function handleDOM(
     rank: getText(doc, '.rank'),
     pattern: getText(doc, '.pattern'),
     prons: [],
-    collins: []
+    collins: [],
+
   }
 
   const audio: { uk?: string; us?: string } = {}
@@ -192,6 +197,20 @@ function handleDOM(
   if (options.translation) {
     result.translation = getInnerHTML(HOST, doc, {
       selector: '#fanyiToggle .trans-container',
+      transform
+    })
+  }
+
+  if (options.wordGroup) {
+    result.wordGroup = getInnerHTML(HOST, doc, {
+      selector: '#wordGroup',
+      transform
+    })
+  }
+
+  if (options.relWord) {
+    result.relWord = getInnerHTML(HOST, doc, {
+      selector: '#relWordTab',
       transform
     })
   }
