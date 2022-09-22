@@ -152,3 +152,12 @@
     font-size: 1.1em;
     cursor: pointer;
 }
+
+/* 复习卡片中的发音 */
+#sr-flashcard-view h4 {
+    cursor: pointer;
+}
+#sr-flashcard-view h4:hover {
+    color: deeppink;
+    transition: color 0.3s ease;
+}

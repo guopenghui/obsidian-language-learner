@@ -10,6 +10,7 @@ export const READING_ICON: string = 'highlight-glyph'
 export class ReadingView extends TextFileView {
     plugin: LanguageLearner
     data: string
+    actionButtons: Record<string, HTMLElement> = {}
 
     constructor(leaf: WorkspaceLeaf, plugin: LanguageLearner) {
         super(leaf)
@@ -95,14 +96,18 @@ export class ReadingView extends TextFileView {
         menu
             .addItem((item) => {
                 item
-                    .setTitle(t("Return Markdown View"))
+                    .setTitle(t("Return to Markdown"))
                     .setIcon("document")
                     .onClick(() => {
-                        this.plugin.setMarkdownView(this.leaf)
+                        this.backToMarkdown()
                     })
             })
             .addSeparator()
         super.onMoreOptionsMenu(menu)
+    }
+
+    backToMarkdown(): void {
+        this.plugin.setMarkdownView(this.leaf)
     }
 
     clear(): void {
@@ -205,8 +210,15 @@ export class ReadingView extends TextFileView {
         })
     }
 
+    initHeaderButtons() {
+        this.addAction("book", t("Return to Markdown"), () => {
+            this.backToMarkdown()
+        })
+    }
+
     async onOpen() {
         addEventListener("obsidian-langr-refresh", this.refresh)
+        this.initHeaderButtons()
     }
 
     async onClose() {

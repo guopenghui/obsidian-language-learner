@@ -9,6 +9,8 @@ export default {
     "Search word": "查找单词/短语",
     "Refresh Word Database": "刷新单词数据库",
     "Refresh Review Database": "刷新复习数据库",
+    "Get all ignores": "获取所有无视单词",
+    "Ignores are copied to the clipboard": "无视单词已复制到剪贴板",
 
     // SearchPanelView.ts
     "Search Panel": "查词面板",
@@ -18,7 +20,7 @@ export default {
 
     // ReadingView.ts
     "Finish Reading": "完成阅读",
-    "Return Markdown View": "返回Markdown模式",
+    "Return to Markdown": "返回Markdown模式",
 
     // LearnPanelView.ts
     "Learning New Words": "学习新单词",
@@ -89,4 +91,9 @@ export default {
     "Warning: Import will override current database": "警告: 导入会覆盖掉当前的数据库",
     "Import": "导入",
     "Export": "导出",
+    "Review": "复习",
+    "Accent": "口音",
+    "Choose your preferred accent": "选择你更喜欢的口音",
+    "American": "美式",
+    "British": "英式",
 }

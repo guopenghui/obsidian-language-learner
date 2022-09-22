@@ -9,6 +9,8 @@ export default {
     "Search word": "Search word",
     "Refresh Word Database": "Refresh Word Database",
     "Refresh Review Database": "Refresh Review Database",
+    "Get all ignores": "Get all ignores",
+    "Ignores are copied to the clipboard": "Ignores are copied to the clipboard",
 
     // SearchPanelView.ts
     "Search Panel": "Search Panel",
@@ -18,7 +20,7 @@ export default {
 
     // ReadingView.ts
     "Finish Reading": "Finish Reading",
-    "Return Markdown View": "Return Markdown View",
+    "Return to Markdown": "Return Markdown View",
 
     // LearnPanelView.ts
     "Learning New Words": "Learning New Words",
@@ -89,4 +91,9 @@ export default {
     "Warning: Import will override current database": "Warning: Import will override current database",
     "Import": "Import",
     "Export": "Export",
+    "Review": "Review",
+    "Accent": "Accent",
+    "Choose your preferred accent": "Choose your preferred accent",
+    "American": "American",
+    "British": "British",
 }

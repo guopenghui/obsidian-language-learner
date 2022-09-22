@@ -11,6 +11,7 @@ export interface MyPluginSettings {
     port: number;
     last_sync: string;
     db_name: string;
+    review_prons: "0" | "1"
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -19,7 +20,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     review_database: null,
     port: 8086,
     last_sync: "1970-01-01T00:00:00Z",
-    db_name: "WordDB"
+    db_name: "WordDB",
+    review_prons: "0",
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -108,6 +110,19 @@ export class SettingTab extends PluginSettingTab {
                 })
             )
 
+        // 获取所有无视单词
+        new Setting(containerEl)
+            .setName(t("Get all ignores"))
+            .addButton(button => button
+                .setButtonText(t("Export"))
+                .onClick(async () => {
+                    let words = await this.plugin.db.getExpressionSimple(true)
+                    let ignores = words.filter(w => w.status === 0).map(w => w.expression)
+                    await navigator.clipboard.writeText(ignores.join("\n"))
+                    new Notice(t("Ignores are copied to the clipboard"))
+                })
+            )
+
         new Setting(containerEl)
             .setName(t("Word Database Path"))
             .setDesc(t("Choose a md file as word database for auto-completion"))
@@ -172,6 +187,22 @@ export class SettingTab extends PluginSettingTab {
                     modal.open()
                 })
             )
+
+
+        containerEl.createEl("h3", { text: t("Review") });
+
+        new Setting(containerEl)
+            .setName(t("Accent"))
+            .setDesc(t("Choose your preferred accent"))
+            .addDropdown(accent => accent
+                .addOption("0", t("American"))
+                .addOption("1", t("British"))
+                .setValue(this.plugin.settings.review_prons)
+                .onChange(async (value: "0" | "1") => {
+                    this.plugin.settings.review_prons = value
+                    await this.plugin.saveSettings()
+                })
+            )
     }
 }
 
@@ -197,7 +228,6 @@ class OpenFileModal extends Modal {
 
         this.input.addEventListener("change", () => {
             this.file = this.input.files[0]
-            console.dir(this.file)
         })
 
         new Setting(contentEl)

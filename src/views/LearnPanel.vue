@@ -28,6 +28,8 @@
 					<NInput
 						v-model:value="model.meaning"
 						:placeholder="t('A short definition')"
+						type="textarea"
+						autosize
 					/>
 				</NFormItem>
 				<!-- 类别，可以是Word或Phrase -->
@@ -327,7 +329,6 @@ async function submit() {
 	}
 
 	submitLoading.value = true
-	console.dir(model.value)
 	// 超过1条例句时，sentences中的对象会变成Proxy，尚不知原因，因此用JSON转换一下
 	let statusCode = await plugin.db.postExpression(JSON.parse(JSON.stringify(model.value)))
 	submitLoading.value = false

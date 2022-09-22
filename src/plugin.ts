@@ -36,6 +36,7 @@ export default class LanguageLearner extends Plugin {
 	appEl: HTMLElement;
 	db: DbProvider;
 	parser: TextParser;
+	markdownButtons: Record<string, HTMLElement> = {}
 
 	async onload() {
 		// 读取设置
@@ -251,9 +252,40 @@ export default class LanguageLearner extends Plugin {
 						next.call(this, m);
 					};
 				},
-			})
-		);
 
+			})
+		)
+
+		// 增加标题栏切换阅读模式和mardown模式的按钮
+		pluginSelf.register(
+			around(WorkspaceLeaf.prototype, {
+				setViewState(next) {
+					return function (state: ViewState, ...rest: any[]): Promise<void> {
+						return (next.apply(this, [state, ...rest]) as Promise<void>).then(() => {
+							if (state.type === "markdown" &&
+								state.state?.file
+							) {
+								const cache = pluginSelf.app.metadataCache.getCache(state.state.file)
+								if (cache?.frontmatter && cache.frontmatter[FRONT_MATTER_KEY]) {
+									if (!pluginSelf.markdownButtons["reading"]) {
+										pluginSelf.markdownButtons["reading"] =
+											(this.view as MarkdownView).addAction("book-open", t("Open as Reading View"), () => {
+												pluginSelf.setReadingView(this)
+											})
+										pluginSelf.markdownButtons["reading"].addClass("change-to-reading")
+									}
+								} else {
+									pluginSelf.markdownButtons["reading"]?.remove()
+									pluginSelf.markdownButtons["reading"] = null
+								}
+							} else {
+								pluginSelf.markdownButtons["reading"] = null
+							}
+						})
+					}
+				},
+			})
+		)
 	}
 
 	// 管理所有的右键菜单
@@ -404,6 +436,11 @@ export default class LanguageLearner extends Plugin {
 				if (view) {
 					view.removeSelect()
 				}
+			} else if (target.tagName === "H4" && target.matchParent("#sr-flashcard-view")) {
+				let word = target.textContent;
+				let accent = this.settings.review_prons
+				let wordUrl = `http://dict.youdao.com/dictvoice?type=${accent}&audio=` + word.split(" ").join("%20");
+				(new Audio(wordUrl)).play();
 			}
 		});
 	}
