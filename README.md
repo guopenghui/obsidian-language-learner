@@ -5,6 +5,12 @@
 + **目前仅支持中文母语者学习英文**。
 + 因为还在不断的扩充新功能和重构旧功能，所以可能某次更新会带来与之前**不兼容的改变**（比如笔记的格式，数据库的结构等）。所以在更新新版本前请仔细查看release的说明。
 
+
+### 使用指南
++ [文字教程](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/tutorial.pdf)
++ [视频教程](https://www.bilibili.com/video/BV1914y1Y7mT)
+
+
 ### 本插件功能
 
 + **查词功能**。直接在笔记中划词查词，词典为有道词典，支持柯林斯例句、近义词辨析。
@@ -31,8 +37,7 @@
 
 ![间隔复习](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/review.png)
 
-## 使用指南
-[使用指南](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/tutorial.pdf)
+
 
 
 ## 安装
