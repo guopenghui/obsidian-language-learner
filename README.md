@@ -9,6 +9,8 @@
 ### 使用指南
 + [文字教程](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/tutorial.pdf)
 + [视频教程](https://www.bilibili.com/video/BV1914y1Y7mT)
++ [一些做好的文本](https://github.com/guopenghui/language-learner-texts)
+
 
 
 ### 本插件功能
