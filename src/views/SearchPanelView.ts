@@ -24,7 +24,7 @@ export class SearchPanelView extends ItemView {
         return t("Search Panel")
     }
     getIcon(): string {
-        return "logo-crystal"
+        return "book"
     }
     async onOpen(this: SearchPanelView) {
         const container = this.containerEl.children[1];

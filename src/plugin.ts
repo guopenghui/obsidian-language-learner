@@ -49,13 +49,41 @@ export default class LanguageLearner extends Plugin {
 			new LocalDb(this)
 		this.parser = new TextParser(this)
 
+		// 注册刷新单词数据库命令
+		this.addCommand({
+			id: "langr-refresh-word-database",
+			name: t("Refresh Word Database"),
+			callback: this.refreshWordDb
+		});
+
+		// 注册刷新复习数据库命令
+		this.addCommand({
+			id: "langr-refresh-review-database",
+			name: t("Refresh Review Database"),
+			callback: this.refreshReviewDb
+		})
+
+		this.registerCustomViews()
+
+		this.registerReadingToggle()
+		this.registerContextMenu();
+		this.registerLeftClick();
+		this.registerMouseup()
+	}
+
+	onunload() {
+		this.app.workspace.detachLeavesOfType(SEARCH_PANEL_VIEW);
+	}
+
+
+	registerCustomViews() {
 		// 注册查词面板视图
 		this.registerView(
 			SEARCH_PANEL_VIEW,
 			(leaf) => new SearchPanelView(leaf, this)
 		);
 		this.addRibbonIcon(
-			"logo-crystal",
+			"book",
 			t("Open word search panel"),
 			(evt) => {
 				this.activateView(SEARCH_PANEL_VIEW);
@@ -83,32 +111,9 @@ export default class LanguageLearner extends Plugin {
 
 		//注册统计视图
 		this.registerView(STAT_VIEW_TYPE, (leaf) => new StatView(leaf, this));
-		this.addRibbonIcon("paper-plane", t("Open statistics"), async (evt) => {
+		this.addRibbonIcon("bar-chart-4", t("Open statistics"), async (evt) => {
 			this.activateView(STAT_VIEW_TYPE);
 		});
-
-		// 注册刷新单词数据库命令
-		this.addCommand({
-			id: "langr-refresh-word-database",
-			name: t("Refresh Word Database"),
-			callback: this.refreshWordDb
-		});
-
-		// 注册刷新复习数据库命令
-		this.addCommand({
-			id: "langr-refresh-review-database",
-			name: t("Refresh Review Database"),
-			callback: this.refreshReviewDb
-		})
-
-		this.registerReadingToggle()
-		this.registerContextMenu();
-		this.registerLeftClick();
-		this.registerMouseup()
-	}
-
-	onunload() {
-		this.app.workspace.detachLeavesOfType(SEARCH_PANEL_VIEW);
 	}
 
 	async setMarkdownView(leaf: WorkspaceLeaf, focus: boolean = true) {
@@ -269,7 +274,7 @@ export default class LanguageLearner extends Plugin {
 								if (cache?.frontmatter && cache.frontmatter[FRONT_MATTER_KEY]) {
 									if (!pluginSelf.markdownButtons["reading"]) {
 										pluginSelf.markdownButtons["reading"] =
-											(this.view as MarkdownView).addAction("book-open", t("Open as Reading View"), () => {
+											(this.view as MarkdownView).addAction("view", t("Open as Reading View"), () => {
 												pluginSelf.setReadingView(this)
 											})
 										pluginSelf.markdownButtons["reading"].addClass("change-to-reading")

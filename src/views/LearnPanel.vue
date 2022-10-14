@@ -172,7 +172,6 @@
 			<div style="margin-top: 10px">
 				<NButton
 					style="--n-width: 100%"
-					type="primary"
 					attr-type="submit"
 					size="large"
 					@click="submit"

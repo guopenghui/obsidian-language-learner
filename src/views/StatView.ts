@@ -21,7 +21,7 @@ export class StatView extends ItemView {
         return t("Statistics")
     }
     getIcon(): string {
-        return "paper-plane"
+        return "bar-chart-4"
     }
     async onOpen() {
         const container = this.containerEl.children[1] // view-content
