@@ -12,6 +12,7 @@ export interface MyPluginSettings {
     last_sync: string;
     db_name: string;
     review_prons: "0" | "1"
+    col_delimiter: "," | "\t" | "|"
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -22,6 +23,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     last_sync: "1970-01-01T00:00:00Z",
     db_name: "WordDB",
     review_prons: "0",
+    col_delimiter: ","
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -36,7 +38,7 @@ export class SettingTab extends PluginSettingTab {
         const { containerEl } = this;
 
         containerEl.empty();
-        containerEl.createEl("h2", { text: "Settings for Language Learner" });
+        containerEl.createEl("h1", { text: "Settings for Language Learner" });
 
         new Setting(containerEl)
             .setName(t("Use Server"))
@@ -188,6 +190,20 @@ export class SettingTab extends PluginSettingTab {
                 })
             )
 
+        containerEl.createEl("h3", { text: t("Auto Completion") })
+
+        new Setting(containerEl)
+            .setName(t("Column delimiter"))
+            .addDropdown(dilimiter => dilimiter
+                .addOption(",", t("Comma"))
+                .addOption("\t", t("Tab"))
+                .addOption("|", t("Pipe"))
+                .setValue(this.plugin.settings.col_delimiter)
+                .onChange(async (value: "," | "\t" | "|") => {
+                    this.plugin.settings.col_delimiter = value
+                    await this.plugin.saveSettings()
+                })
+            )
 
         containerEl.createEl("h3", { text: t("Review") });
 

@@ -160,11 +160,14 @@ export default class LanguageLearner extends Plugin {
 			t("Known"),
 			t("Learned"),
 		];
+
+		let del = this.settings.col_delimiter
+
 		// 正向查询
 		let classified_texts = classified.map((w, idx) => {
 			return (
 				`#### ${statusMap[idx]}\n` +
-				w.map((i) => `${words[i].expression},    ${words[i].meaning}`).join("\n") +
+				w.map((i) => `${words[i].expression}  ${del}    ${words[i].meaning}`).join("\n") +
 				"\n"
 			);
 		});
@@ -175,7 +178,7 @@ export default class LanguageLearner extends Plugin {
 		let meaning2Word = classified
 			.flat()
 			.map(
-				(i) => `${words[i].meaning}  ,  ${words[i].expression}`
+				(i) => `${words[i].meaning}  ${del}  ${words[i].expression}`
 			)
 			.join("\n");
 

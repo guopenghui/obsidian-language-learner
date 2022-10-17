@@ -91,6 +91,12 @@ export default {
     "Warning: Import will override current database": "Warning: Import will override current database",
     "Import": "Import",
     "Export": "Export",
+    "Auto Completion": "Auto Completion",
+    "Column delimiter": "Column delimiter",
+    "Comma": "Comma",
+    "Tab": "Tab",
+    "Pipe": "Pipe",
+
     "Review": "Review",
     "Accent": "Accent",
     "Choose your preferred accent": "Choose your preferred accent",
