@@ -12,6 +12,7 @@ export interface MyPluginSettings {
     last_sync: string;
     db_name: string;
     review_prons: "0" | "1"
+    default_paragraphs: string
     col_delimiter: "," | "\t" | "|"
 }
 
@@ -23,6 +24,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     last_sync: "1970-01-01T00:00:00Z",
     db_name: "WordDB",
     review_prons: "0",
+    default_paragraphs: "4",
     col_delimiter: ","
 }
 
@@ -189,6 +191,24 @@ export class SettingTab extends PluginSettingTab {
                     modal.open()
                 })
             )
+
+        containerEl.createEl("h3", { text: t("Reading Mode") })
+        new Setting(containerEl)
+            .setName(t("Default Paragraphs"))
+            .addDropdown(num => num
+                .addOption("2", "1")
+                .addOption("4", "2")
+                .addOption("8", "4")
+                .addOption("16", "8")
+                .addOption("32", "16")
+                .addOption("all", "All")
+                .setValue(this.plugin.settings.default_paragraphs)
+                .onChange(async (value: string) => {
+                    this.plugin.settings.default_paragraphs = value
+                    await this.plugin.saveSettings()
+                })
+            )
+
 
         containerEl.createEl("h3", { text: t("Auto Completion") })
 

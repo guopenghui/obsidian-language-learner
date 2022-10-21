@@ -21,6 +21,9 @@ export default {
     // ReadingView.ts
     "Finish Reading": "完成阅读",
     "Return to Markdown": "返回Markdown模式",
+    "paragraph": "段",
+    "page": "页",
+    "All": "全部",
 
     // LearnPanelView.ts
     "Learning New Words": "学习新单词",
@@ -91,6 +94,10 @@ export default {
     "Warning: Import will override current database": "警告: 导入会覆盖掉当前的数据库",
     "Import": "导入",
     "Export": "导出",
+
+    "Reading Mode": "阅读模式",
+    "Default Paragraphs": "默认段数",
+
     "Auto Completion": "自动补全",
     "Column delimiter": "列分隔符",
     "Comma": "英文逗号 ,",

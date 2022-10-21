@@ -21,6 +21,9 @@ export default {
     // ReadingView.ts
     "Finish Reading": "Finish Reading",
     "Return to Markdown": "Return Markdown View",
+    "paragraph": "paragraph",
+    "page": "page",
+    "All": "All",
 
     // LearnPanelView.ts
     "Learning New Words": "Learning New Words",
@@ -91,6 +94,10 @@ export default {
     "Warning: Import will override current database": "Warning: Import will override current database",
     "Import": "Import",
     "Export": "Export",
+
+    "Reading Mode": "Reading Mode",
+    "Default Paragraphs": "Default paragraphs",
+
     "Auto Completion": "Auto Completion",
     "Column delimiter": "Column delimiter",
     "Comma": "Comma",

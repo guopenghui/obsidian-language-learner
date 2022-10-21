@@ -1,6 +1,9 @@
 import { Menu, TextFileView, WorkspaceLeaf, Notice } from 'obsidian'
+import { App as VueApp, createApp } from 'vue'
+
 import LanguageLearner from '../plugin'
-// import parse from './parser'
+import ReadingArea from 'ReadingArea.vue'
+import store from "./store"
 import { t } from "../lang/helper"
 
 
@@ -11,10 +14,13 @@ export class ReadingView extends TextFileView {
     plugin: LanguageLearner
     data: string
     actionButtons: Record<string, HTMLElement> = {}
+    vueapp: VueApp
+    firstInit: boolean
 
     constructor(leaf: WorkspaceLeaf, plugin: LanguageLearner) {
         super(leaf)
         this.plugin = plugin
+        this.firstInit = true
     }
 
     getIcon() {
@@ -27,62 +33,16 @@ export class ReadingView extends TextFileView {
 
     async setViewData(data: string, clear?: boolean) {
         this.data = data
+        store.text = data
 
-        data = await this.plugin.parser.parse(data)
+        if (this.firstInit) {
+            this.vueapp = createApp(ReadingArea)
+            this.vueapp.config.globalProperties.plugin = this.plugin
+            this.vueapp.config.globalProperties.data = this.data
+            this.vueapp.config.globalProperties.view = this
+            this.vueapp.mount(this.contentEl)
 
-        let frontMatter = this.plugin.app.metadataCache.getFileCache(this.file).frontmatter
-        let audio = ""
-        if (frontMatter["langr-audio"]) {
-            audio = "<audio controls "
-                + `src="${frontMatter["langr-audio"]}">`
-                + "Your browser does not support the <code>audio</code> element."
-                + "</audio>"
-        }
-        let finishButton = `<button class="finish-reading">`
-            + `${t("Finish Reading")}`
-            + `</button>`
-
-        let functional = `<div `
-            + `class="func-area"`
-            + `style="padding-bottom:20px;`
-            + `border-bottom:2px solid gray;"`
-            + `>`
-            + `${audio}${finishButton}`
-            + `</div>`
-
-        let text_area = `<div `
-            + `class="text-area"`
-            + `style="overflow:auto;`
-            + `flex:1;padding-top:20px;`
-            + `padding-left:5%;`
-            + `padding-right:5%;"`
-            + `>`
-            + `${data}`
-            + `</div>`
-
-        let layout = `<div id="langr-reading"`
-            + `style="height:100%;`
-            + `width:100%;overflow:hidden;`
-            + `display:flex;flex-direction:column;"`
-            + `>`
-            + `${functional}`
-            + `${text_area}`
-            + `</div>`
-
-        this.contentEl.innerHTML = layout
-
-        let button = this.contentEl.querySelector(".finish-reading")
-        if (button) {
-            button.addEventListener("click", async () => {
-                let ignores = this.containerEl.querySelectorAll(".word.new")
-                let ignore_words: Set<string> = new Set()
-                ignores.forEach((el) => {
-                    ignore_words.add(el.textContent.toLowerCase())
-                })
-                await this.plugin.db.postIgnoreWords([...ignore_words])
-                this.setViewData(this.data)
-                dispatchEvent(new CustomEvent("obsidian-langr-refresh-stat"))
-            })
+            this.firstInit = false
         }
         //this.plugin.setMarkdownView(this.leaf, false)
     }
@@ -219,10 +179,16 @@ export class ReadingView extends TextFileView {
     async onOpen() {
         addEventListener("obsidian-langr-refresh", this.refresh)
         this.initHeaderButtons()
+
+        // const contentEl = this.contentEl.createEl("div", {
+        //     cls: "langr-reading",
+        // })
+
     }
 
     async onClose() {
         removeEventListener("obsidian-langr-refresh", this.refresh)
+        this.vueapp.unmount()
     }
 
 }

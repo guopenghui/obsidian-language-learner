@@ -27,6 +27,7 @@ import { WebDb } from "./db/web_db";
 import { LocalDb } from "./db/local_db"
 import { TextParser } from "./views/parser"
 import { DEFAULT_SETTINGS, MyPluginSettings, SettingTab } from "./settings";
+import { FrontMatterManager } from "./utils/frontmatter"
 
 export const FRONT_MATTER_KEY: string = "langr";
 
@@ -37,6 +38,7 @@ export default class LanguageLearner extends Plugin {
 	db: DbProvider;
 	parser: TextParser;
 	markdownButtons: Record<string, HTMLElement> = {}
+	frontManager: FrontMatterManager;
 
 	async onload() {
 		// 读取设置
@@ -47,7 +49,10 @@ export default class LanguageLearner extends Plugin {
 		this.db = this.settings.use_server ?
 			new WebDb(this.settings.port) :
 			new LocalDb(this)
+
 		this.parser = new TextParser(this)
+
+		this.frontManager = new FrontMatterManager(this.app)
 
 		// 注册刷新单词数据库命令
 		this.addCommand({
@@ -62,6 +67,10 @@ export default class LanguageLearner extends Plugin {
 			name: t("Refresh Review Database"),
 			callback: this.refreshReviewDb
 		})
+
+
+		// test
+
 
 		this.registerCustomViews()
 

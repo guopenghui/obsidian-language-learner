@@ -29,13 +29,13 @@ export class TextParser {
     }
 
     async parse(data: string) {
-        let lines = data.split("\n")
-        let articleStart = lines.indexOf("^^^article") + 1
-        let articleEnd = lines.indexOf("^^^words")
+        // let lines = data.split("\n")
+        // let articleStart = lines.indexOf("^^^article") + 1
+        // let articleEnd = lines.indexOf("^^^words")
 
-        let article = lines.slice(articleStart, articleEnd).join("\n")
+        // let article = lines.slice(articleStart, articleEnd).join("\n")
 
-        let newHTML = await this.text2HTML(article.trim())
+        let newHTML = await this.text2HTML(data.trim())
         return newHTML
     }
 
