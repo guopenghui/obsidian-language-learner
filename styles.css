@@ -2,6 +2,7 @@
 #langr-reading {
     user-select: none;
     line-height: 1.8em;
+    font-family: 'Times New Roman';
 }
 
 #langr-reading span.word {

@@ -4,6 +4,7 @@
             <div class="function-area" style="padding-bottom:10px; border-bottom: 2px solid gray;">
                 <audio controls v-if="audioSource" :src="audioSource"></audio>
                 <div style="display:flex;">
+                    <button @click="activeNotes = true">做笔记</button>
                     <span style="flex:1;"></span>
                     <button v-if="page * pageSize < totalLines" class="finish-reading" @click="addIgnores">结束阅读并转入下一页</button>
                     <button v-else class="finish-reading" @click="addIgnores">结束阅读</button>
@@ -22,6 +23,22 @@
                     :page-sizes="pageSizes">
                 </NPagination>
             </div>
+            <NDrawer v-model:show="activeNotes" 
+                    :placement="'bottom'" 
+                    :close-on-esc="true" 
+                    :auto-focus="true"
+                    :on-after-enter="afterNoteEnter"
+                    :on-after-leave="afterNoteLeave"
+                    to="#langr-reading"
+                    >
+                <NDrawerContent title="Notes">
+                    <NInput
+                        v-model:value="notes"
+                        type="textarea"
+                        :autosize="{minRows: 5}"
+                    />
+                </NDrawerContent>
+            </NDrawer>
         </NConfigProvider>
     </div>
 </template>
@@ -29,7 +46,8 @@
 
 <script setup lang="ts">
 import { ref, getCurrentInstance, computed, watch, watchEffect } from "vue"
-import { NPagination, NConfigProvider, darkTheme } from "naive-ui"
+import { NPagination, NConfigProvider, darkTheme, NDrawer, NDrawerContent, NInput } from "naive-ui"
+import type { DrawerPlacement } from "naive-ui"
 import PluginType from "../plugin"
 import { ReadingView } from "./ReadingView"
 import store from "./store"
@@ -65,23 +83,59 @@ let pageSize = dp === "all" ? ref(Number.MAX_VALUE) : ref(parseInt(dp))
 //     }
 // })
 
+// 记笔记
+let activeNotes = ref(false)
+let notes = ref("")
+async function afterNoteEnter() {
+    notes.value = await readContent("notes")
+}
+async function afterNoteLeave() {
+    writeContent("notes", notes.value)    
+}
+
+async function readContent(type: string):Promise<string> {
+    let oldText = await plugin.app.vault.read(view.file)
+    let lines = oldText.split("\n")
+    let seg = divide(lines)
+    if(!seg[type]) {
+        plugin.app.vault.modify(view.file,oldText + `\n^^^${type}\n\n`)
+        return ""
+    }
+    return lines.slice(seg[type].start, seg[type].end).join("\n")
+}
+
+async function writeContent(type: string, content: string):Promise<void> {
+    let oldText = await plugin.app.vault.read(view.file)
+    let lines = oldText.split("\n")
+    let seg = divide(lines)
+    let newText = lines.slice(0, seg[type].start).join("\n") + 
+                "\n" + content.trim() + "\n\n" + 
+                lines.slice(seg[type].end, lines.length).join("\n")
+    plugin.app.vault.modify(view.file, newText)
+}
 
 
 // 拆分文本
 let lines = store.text.split("\n")
-let positions = [] as [string,number][]
-positions.push(["article", lines.indexOf("^^^article")],
-                ["words", lines.indexOf("^^^words")],
-                ["notes", lines.indexOf("^^^notes")]);
-positions.sort((a,b) => a[1] - b[1])
-positions = positions.filter((v) => v[1] !== -1)
-positions.push(["eof", lines.length]);
-
 type Seg = {[K in string]:{start:number, end:number}}
-let segments: Seg = {} 
-for(let i=0; i<positions.length-1; i++) {
-    segments[`${positions[i][0]}`] = {start: positions[i][1] + 1, end: positions[i+1][1]}
+let segments = divide(lines)
+
+function divide(lines: string[]) {
+    let positions = [] as [string,number][]
+    positions.push(["article", lines.indexOf("^^^article")],
+                    ["words", lines.indexOf("^^^words")],
+                    ["notes", lines.indexOf("^^^notes")]);
+    positions.sort((a,b) => a[1] - b[1])
+    positions = positions.filter((v) => v[1] !== -1)
+    positions.push(["eof", lines.length]);
+
+    let segments: Seg = {} 
+    for(let i=0; i<positions.length-1; i++) {
+        segments[`${positions[i][0]}`] = {start: positions[i][1] + 1, end: positions[i+1][1]}
+    }
+    return segments
 }
+
 
 
 let article = lines.slice(segments["article"].start, segments["article"].end)

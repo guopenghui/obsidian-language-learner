@@ -97,6 +97,8 @@ export default {
 
     "Reading Mode": "阅读模式",
     "Default Paragraphs": "默认段数",
+    "Use Machine Translation": "使用机器翻译",
+    "Auto translate sentences": "用机器翻译自动翻译例句",
 
     "Auto Completion": "自动补全",
     "Column delimiter": "列分隔符",

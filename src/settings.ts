@@ -14,6 +14,7 @@ export interface MyPluginSettings {
     review_prons: "0" | "1"
     default_paragraphs: string
     col_delimiter: "," | "\t" | "|"
+    use_machine_trans: boolean;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -25,7 +26,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     db_name: "WordDB",
     review_prons: "0",
     default_paragraphs: "4",
-    col_delimiter: ","
+    col_delimiter: ",",
+    use_machine_trans: false,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -209,6 +211,16 @@ export class SettingTab extends PluginSettingTab {
                 })
             )
 
+        new Setting(containerEl)
+            .setName(t("Use Machine Translation"))
+            .setDesc(t("Auto translate sentences"))
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.use_machine_trans)
+                .onChange(async (use_machine_trans) => {
+                    this.plugin.settings.use_machine_trans = use_machine_trans
+                    await this.plugin.saveSettings()
+                })
+            )
 
         containerEl.createEl("h3", { text: t("Auto Completion") })
 

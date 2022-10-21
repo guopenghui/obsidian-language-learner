@@ -201,11 +201,12 @@ import {
 	darkTheme,
 } from "naive-ui"
 
-import { ExpressionInfo } from "../db/interface"
+import { ExpressionInfo, Sentence } from "../db/interface"
 import { t } from "../lang/helper"
 import { LearnPanelView } from "./LearnPanelView"
 import { ReadingView } from "./ReadingView"
 import Plugin from "../plugin"
+import { search } from "../dictionary/youdao/engine"
 
 const view: LearnPanelView = getCurrentInstance().appContext.config.globalProperties.view
 const plugin: Plugin = getCurrentInstance().appContext.config.globalProperties.plugin
@@ -352,20 +353,64 @@ async function submit() {
 
 // 查询词汇时自动填充新词表单
 async function onSearch(evt: CustomEvent) {
-	let selection = evt.detail.selection
+	let selection = evt.detail.selection as string
 	let expr = await plugin.db.getExpression(selection)
 
+	let exprType = "WORD"
+	if(selection.trim().contains(" ")) {
+		exprType = "PHRASE"
+	}
+	
+	let target = evt.detail.target as HTMLElement
+
+	let sentenceText = ""
+	let storedSen: Sentence = null
+	let defaultOrigin: string = null
+	let filledTrans = null
+
+	if(target) {
+		let sentenceEl = target.parentElement.hasClass("stns")
+			? target.parentElement
+			: target.parentElement.parentElement
+		sentenceText = sentenceEl.textContent
+
+		storedSen = await plugin.db.tryGetSen(sentenceText)
+		
+		let reading = view.app.workspace.getActiveViewOfType(ReadingView)
+
+		if(reading) {
+			let presetOrigin = view.app.metadataCache.getFileCache(reading.file).frontmatter["langr-origin"]
+			defaultOrigin = presetOrigin? presetOrigin: reading.file.name
+		}
+		if(plugin.settings.use_machine_trans) {
+			let res = await search(sentenceText)
+			if(res && (res.result as any).translation) {
+				let html = (res.result as any).translation as string
+				filledTrans = html.match(/<p>([^<>]+)<\/p>/g)[1]?.match(/<p>(.*)<\/p>/)[1] ?? null
+			}
+		}
+	}
+
 	if(expr) {
+		if(sentenceText) {
+			if(!storedSen) {
+				expr.sentences = expr.sentences.concat({text: sentenceText, trans: filledTrans, origin: defaultOrigin})	
+			} else {
+				let added = expr.sentences.find((sen) => sen.text === sentenceText)
+				if(!added) {
+					expr.sentences = expr.sentences.concat(storedSen)
+				}
+			}
+		}
 		model.value = expr
 		return
 	}else {
-		let target = evt.detail.target as HTMLElement
 		if(!target) {
 			model.value = {
 				expression: selection,
 				meaning: "",
 				status: 1,
-				t: "WORD",
+				t: exprType,
 				tags: [],
 				notes: [],
 				sentences: [],
@@ -373,31 +418,17 @@ async function onSearch(evt: CustomEvent) {
 			return
 		}
 
-		let sentenceEl = target.parentElement.hasClass("stns")
-			? target.parentElement
-			: target.parentElement.parentElement
-		let sentenceText = sentenceEl.textContent
-
-		let storedSen = await plugin.db.tryGetSen(sentenceText)
-		
-		let reading = view.app.workspace.getActiveViewOfType(ReadingView)
-
-		let defaultOrigin: string = null
-		if(reading) {
-			let presetOrigin = view.app.metadataCache.getFileCache(reading.file).frontmatter["langr-origin"]
-			defaultOrigin = presetOrigin? presetOrigin: reading.file.name
-		}
 
 		model.value = {
 			expression: selection,
 			meaning: "",
 			status: 1,
-			t: "WORD",
+			t: exprType,
 			tags: [],
 			notes: [],
 			sentences: storedSen
 				? [storedSen]
-				: [{ text: sentenceText, trans: null, origin: defaultOrigin }],
+				: [{ text: sentenceText, trans: filledTrans, origin: defaultOrigin }],
 		}
 	}
 }

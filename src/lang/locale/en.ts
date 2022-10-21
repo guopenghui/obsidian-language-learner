@@ -97,6 +97,8 @@ export default {
 
     "Reading Mode": "Reading Mode",
     "Default Paragraphs": "Default paragraphs",
+    "Use Machine Translation": "Use Machine Translation",
+    "Auto translate sentences": "Auto translate sentences",
 
     "Auto Completion": "Auto Completion",
     "Column delimiter": "Column delimiter",
