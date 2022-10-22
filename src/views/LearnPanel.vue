@@ -349,6 +349,12 @@ async function submit() {
 		})
 	)
 	dispatchEvent(new CustomEvent("obsidian-langr-refresh-stat"))
+	
+	//自动刷新数据库
+	if(plugin.settings.auto_refresh_db) {
+		(plugin.app as any).commands.executeCommandById("obsidian-language-learner:langr-refresh-review-database");	
+		(plugin.app as any).commands.executeCommandById("obsidian-language-learner:langr-refresh-word-database");	
+	}
 }
 
 // 查询词汇时自动填充新词表单

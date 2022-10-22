@@ -15,6 +15,7 @@ export interface MyPluginSettings {
     default_paragraphs: string
     col_delimiter: "," | "\t" | "|"
     use_machine_trans: boolean;
+    auto_refresh_db: boolean;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -27,7 +28,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     review_prons: "0",
     default_paragraphs: "4",
     col_delimiter: ",",
-    use_machine_trans: false,
+    use_machine_trans: true,
+    auto_refresh_db: true,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -75,6 +77,46 @@ export class SettingTab extends PluginSettingTab {
                         }
                     })
             );
+
+        containerEl.createEl("h3", { text: t("Text Database") });
+
+        new Setting(containerEl)
+            .setName(t("Auto refresh"))
+            .setDesc(t("Auto refresh database when submitting"))
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.auto_refresh_db)
+                .onChange(async (value) => {
+                    this.plugin.settings.auto_refresh_db = value
+                    await this.plugin.saveSettings()
+                })
+            )
+
+        new Setting(containerEl)
+            .setName(t("Word Database Path"))
+            .setDesc(t("Choose a md file as word database for auto-completion"))
+            .addText((text) =>
+                text
+                    .setValue(this.plugin.settings.word_database)
+                    .onChange(async (path) => {
+                        this.plugin.settings.word_database = path;
+                        await this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName(t("Review Database Path"))
+            .setDesc(t("Choose a md file as review database for spaced-repetition"))
+            .addText((text) =>
+                text
+                    .setValue(this.plugin.settings.review_database)
+                    .onChange(async (path) => {
+                        this.plugin.settings.review_database = path;
+                        await this.plugin.saveSettings();
+                    })
+            );
+
+
+
 
         containerEl.createEl("h3", { text: t("IndexDB Database") });
 
@@ -129,29 +171,6 @@ export class SettingTab extends PluginSettingTab {
                 })
             )
 
-        new Setting(containerEl)
-            .setName(t("Word Database Path"))
-            .setDesc(t("Choose a md file as word database for auto-completion"))
-            .addText((text) =>
-                text
-                    .setValue(this.plugin.settings.word_database)
-                    .onChange(async (path) => {
-                        this.plugin.settings.word_database = path;
-                        await this.plugin.saveSettings();
-                    })
-            );
-
-        new Setting(containerEl)
-            .setName(t("Review Database Path"))
-            .setDesc(t("Choose a md file as review database for spaced-repetition"))
-            .addText((text) =>
-                text
-                    .setValue(this.plugin.settings.review_database)
-                    .onChange(async (path) => {
-                        this.plugin.settings.review_database = path;
-                        await this.plugin.saveSettings();
-                    })
-            );
 
         new Setting(containerEl)
             .setName(t("Last review sync"))

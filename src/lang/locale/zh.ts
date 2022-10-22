@@ -86,6 +86,12 @@ export default {
     "No!!!": "不要!!!",
     "Reset": "重置",
     "Are you sure you want to reset last sync time?": "确定要重置刷新时间吗?",
+
+    "Text Database": "文本数据库",
+    "Auto refresh": "自动刷新数据库",
+    "Auto refresh database when submitting": "当提交单词时自动刷新文本数据库",
+
+
     "IndexDB Database": "IndexDB 数据库",
     "Database Name": "数据库名称",
     // "Change": "改变",
@@ -96,7 +102,7 @@ export default {
     "Export": "导出",
 
     "Reading Mode": "阅读模式",
-    "Default Paragraphs": "默认段数",
+    "Default Paragraphs": "每页默认段数",
     "Use Machine Translation": "使用机器翻译",
     "Auto translate sentences": "用机器翻译自动翻译例句",
 

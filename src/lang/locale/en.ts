@@ -86,6 +86,12 @@ export default {
     "No!!!": "No!!!",
     "Reset": "Reset",
     "Are you sure you want to reset last sync time?": "Are you sure you want to reset last sync time",
+
+    "Text Database": "Text Database",
+    "Auto refresh": "Auto refresh",
+    "Auto refresh database when submitting": "Auto refresh database when submitting",
+
+
     "IndexDB Database": "IndexDB Database",
     "Database Name": "Database Name",
     // "Change": "Change",

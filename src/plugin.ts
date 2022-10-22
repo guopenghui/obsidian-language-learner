@@ -70,6 +70,11 @@ export default class LanguageLearner extends Plugin {
 
 
 		// test
+		// this.addCommand({
+		// 	id: "langr-test",
+		// 	name: "Test for langr",
+		// 	callback: () => new Notice("hello!")
+		// })
 
 
 		this.registerCustomViews()
