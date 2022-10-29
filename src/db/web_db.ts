@@ -39,7 +39,7 @@ export class WebDb extends DbProvider {
         expression: string
     ): Promise<ExpressionInfo> {
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/words`,
+            url: `http://localhost:${this.port}/word`,
             method: "POST",
             body: JSON.stringify(expression.toLowerCase()),
             contentType: "application/json",
@@ -52,6 +52,24 @@ export class WebDb extends DbProvider {
             console.warn("Error while getting data from server." + e);
         }
     }
+
+    async getExpressionsSimple(expressions: string[]): Promise<ExpressionInfoSimple[]> {
+        expressions = expressions.map(v => v.toLowerCase())
+        let request: RequestUrlParam = {
+            url: `http://localhost:${this.port}/words_simple`,
+            method: "POST",
+            body: JSON.stringify(expressions),
+            contentType: "application/json",
+        }
+
+        try {
+            let response = await requestUrl(request);
+            return response.json
+        } catch (e) {
+            console.error("Error getting simple data from server: " + e)
+        }
+    }
+
 
     // 获取某一时间之后的所有单词的详细信息
     async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
@@ -72,7 +90,7 @@ export class WebDb extends DbProvider {
 
 
     // 通过status查询单词/词组,获取简略信息
-    async getExpressionSimple(
+    async getAllExpressionSimple(
         ignores?: boolean
     ): Promise<ExpressionInfoSimple[]> {
         let mode = ignores ? "all" : "no_ignore";
@@ -87,7 +105,7 @@ export class WebDb extends DbProvider {
 
             return response.json;
         } catch (e) {
-            console.warn("Error while getting data to server." + e);
+            console.warn("Error while getting all simple data from server." + e);
         }
     }
 

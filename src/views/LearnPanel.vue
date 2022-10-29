@@ -352,8 +352,10 @@ async function submit() {
 	
 	//自动刷新数据库
 	if(plugin.settings.auto_refresh_db) {
-		(plugin.app as any).commands.executeCommandById("obsidian-language-learner:langr-refresh-review-database");	
-		(plugin.app as any).commands.executeCommandById("obsidian-language-learner:langr-refresh-word-database");	
+		setTimeout(() => {
+			(plugin.app as any).commands.executeCommandById("obsidian-language-learner:langr-refresh-review-database");	
+			(plugin.app as any).commands.executeCommandById("obsidian-language-learner:langr-refresh-word-database");	
+		}, 0);
 	}
 }
 

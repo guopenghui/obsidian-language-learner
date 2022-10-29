@@ -164,7 +164,7 @@ export class SettingTab extends PluginSettingTab {
             .addButton(button => button
                 .setButtonText(t("Export"))
                 .onClick(async () => {
-                    let words = await this.plugin.db.getExpressionSimple(true)
+                    let words = await this.plugin.db.getAllExpressionSimple(true)
                     let ignores = words.filter(w => w.status === 0).map(w => w.expression)
                     await navigator.clipboard.writeText(ignores.join("\n"))
                     new Notice(t("Ignores are copied to the clipboard"))

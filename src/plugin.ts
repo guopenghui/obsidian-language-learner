@@ -158,7 +158,7 @@ export default class LanguageLearner extends Plugin {
 			return;
 		}
 		// 获取所有非无视单词的简略信息
-		let words = await this.db.getExpressionSimple(false);
+		let words = await this.db.getAllExpressionSimple(false);
 
 		let classified: number[][] = Array(5)
 			.fill(0)
@@ -203,41 +203,53 @@ export default class LanguageLearner extends Plugin {
 	}
 
 	refreshReviewDb = async () => {
-		let data = await this.db.getExpressionAfter(this.settings.last_sync)
-		if (data.length === 0) {
-			new Notice("Nothing new")
-			return
-		}
-
-		let appendData = data.map(word => {
-			let notes = word.notes.length === 0 ?
-				"" :
-				"**Notes**:\n" + word.notes.map(n => n + "\n").join("");
-			let sentences = word.sentences.length === 0 ?
-				"" :
-				"**Sentences**:\n" + word.sentences.map(sen => {
-					return (`*${sen.text.trim()}*` + "\n") +
-						(sen.trans ? sen.trans.trim() + "\n" : "") +
-						(sen.origin ? sen.origin.trim() : "")
-				}).join("\n")
-
-			return `#word\n` +
-				`#### ${word.expression}\n` +
-				"?\n" +
-				`${word.meaning}\n` +
-				`${notes}` +
-				`${sentences}\n`
-		}).join("\n")
-
 		let dataBase = this.app.vault.getAbstractFileByPath(this.settings.review_database)
-
 		if (!dataBase || "children" in dataBase) {
 			new Notice("Invalid database path")
 			return
 		}
 
 		let db = dataBase as TFile
-		await this.app.vault.append(db, appendData)
+		let text = await this.app.vault.read(db)
+		let oldRecord = {} as { [K in string]: string }
+		text.match(/#word(\n.+)+\n(<!--SR.*?-->)/g)
+			?.map(v => v.match(/#### (\w+)[\s\S]+(<!--SR.*-->)/))
+			?.forEach(v => {
+				oldRecord[v[1]] = v[2]
+			})
+
+		// let data = await this.db.getExpressionAfter(this.settings.last_sync)
+		let data = await this.db.getExpressionAfter("1970-01-01T00:00:00Z")
+		if (data.length === 0) {
+			new Notice("Nothing new")
+			return
+		}
+
+		data.sort((a, b) => a.expression.localeCompare(b.expression))
+
+		let newText = data.map(word => {
+			let notes = word.notes.length === 0 ?
+				"" :
+				"**Notes**:\n" + word.notes.join("\n").trim() + "\n";
+			let sentences = word.sentences.length === 0 ?
+				"" :
+				"**Sentences**:\n" + word.sentences.map(sen => {
+					return (`*${sen.text.trim()}*` + "\n") +
+						(sen.trans ? sen.trans.trim() + "\n" : "") +
+						(sen.origin ? sen.origin.trim() : "")
+				}).join("\n").trim() + "\n"
+
+			return `#word\n` +
+				`#### ${word.expression}\n` +
+				"?\n" +
+				`${word.meaning}\n` +
+				`${notes}` +
+				`${sentences}` +
+				(oldRecord[word.expression] ? oldRecord[word.expression] + "\n" : "")
+		}).join("\n") + "\n"
+
+		newText = "#flashcards\n\n" + newText
+		await this.app.vault.modify(db, newText)
 
 		this.settings.last_sync = moment.utc().format()
 		this.saveSettings()

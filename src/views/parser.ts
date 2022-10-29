@@ -65,6 +65,28 @@ export class TextParser {
         return HTML;
     }
 
+    async getWordsPhrases(text: string) {
+        const ast = this.processor.parse(text);
+        let words: Set<string> = new Set();
+        visit(ast, "WordNode", (word) => {
+            words.add(toString(word).toLowerCase())
+        });
+        let wordsPhrases = await this.plugin.db.getStoredWords({ article: text.toLowerCase(), words: [...words] })
+
+        let payload = [] as string[];
+        wordsPhrases.phrases.forEach(word => {
+            if (word.status > 0)
+                payload.push(word.text)
+        })
+        wordsPhrases.words.forEach(word => {
+            if (word.status > 0)
+                payload.push(word.text)
+        })
+
+        let res = await this.plugin.db.getExpressionsSimple(payload)
+        return res
+    }
+
     // Plugin：在retextEnglish基础上，把AST上一些单词包裹成短语
     addPhrases() {
         let selfThis = this

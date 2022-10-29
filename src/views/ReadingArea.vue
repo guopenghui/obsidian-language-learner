@@ -87,54 +87,54 @@ let pageSize = dp === "all" ? ref(Number.MAX_VALUE) : ref(parseInt(dp))
 let activeNotes = ref(false)
 let notes = ref("")
 async function afterNoteEnter() {
-    notes.value = await readContent("notes")
+    notes.value = await view.readContent("notes")
 }
 async function afterNoteLeave() {
-    writeContent("notes", notes.value)    
+    view.writeContent("notes", notes.value)    
 }
 
-async function readContent(type: string):Promise<string> {
-    let oldText = await plugin.app.vault.read(view.file)
-    let lines = oldText.split("\n")
-    let seg = divide(lines)
-    if(!seg[type]) {
-        plugin.app.vault.modify(view.file,oldText + `\n^^^${type}\n\n`)
-        return ""
-    }
-    return lines.slice(seg[type].start, seg[type].end).join("\n")
-}
+// async function readContent(type: string):Promise<string> {
+//     let oldText = await plugin.app.vault.read(view.file)
+//     let lines = oldText.split("\n")
+//     let seg = divide(lines)
+//     if(!seg[type]) {
+//         plugin.app.vault.modify(view.file,oldText + `\n^^^${type}\n\n`)
+//         return ""
+//     }
+//     return lines.slice(seg[type].start, seg[type].end).join("\n")
+// }
 
-async function writeContent(type: string, content: string):Promise<void> {
-    let oldText = await plugin.app.vault.read(view.file)
-    let lines = oldText.split("\n")
-    let seg = divide(lines)
-    let newText = lines.slice(0, seg[type].start).join("\n") + 
-                "\n" + content.trim() + "\n\n" + 
-                lines.slice(seg[type].end, lines.length).join("\n")
-    plugin.app.vault.modify(view.file, newText)
-}
+// async function writeContent(type: string, content: string):Promise<void> {
+//     let oldText = await plugin.app.vault.read(view.file)
+//     let lines = oldText.split("\n")
+//     let seg = divide(lines)
+//     let newText = lines.slice(0, seg[type].start).join("\n") + 
+//                 "\n" + content.trim() + "\n\n" + 
+//                 lines.slice(seg[type].end, lines.length).join("\n")
+//     plugin.app.vault.modify(view.file, newText)
+// }
 
 
 // 拆分文本
 let lines = store.text.split("\n")
 type Seg = {[K in string]:{start:number, end:number}}
-let segments = divide(lines)
+let segments = view.divide(lines)
 
-function divide(lines: string[]) {
-    let positions = [] as [string,number][]
-    positions.push(["article", lines.indexOf("^^^article")],
-                    ["words", lines.indexOf("^^^words")],
-                    ["notes", lines.indexOf("^^^notes")]);
-    positions.sort((a,b) => a[1] - b[1])
-    positions = positions.filter((v) => v[1] !== -1)
-    positions.push(["eof", lines.length]);
+// function divide(lines: string[]) {
+//     let positions = [] as [string,number][]
+//     positions.push(["article", lines.indexOf("^^^article")],
+//                     ["words", lines.indexOf("^^^words")],
+//                     ["notes", lines.indexOf("^^^notes")]);
+//     positions.sort((a,b) => a[1] - b[1])
+//     positions = positions.filter((v) => v[1] !== -1)
+//     positions.push(["eof", lines.length]);
 
-    let segments: Seg = {} 
-    for(let i=0; i<positions.length-1; i++) {
-        segments[`${positions[i][0]}`] = {start: positions[i][1] + 1, end: positions[i+1][1]}
-    }
-    return segments
-}
+//     let segments: Seg = {} 
+//     for(let i=0; i<positions.length-1; i++) {
+//         segments[`${positions[i][0]}`] = {start: positions[i][1] + 1, end: positions[i+1][1]}
+//     }
+//     return segments
+// }
 
 
 

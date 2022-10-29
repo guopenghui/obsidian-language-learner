@@ -66,6 +66,24 @@ export class LocalDb extends DbProvider {
 
     }
 
+    async getExpressionsSimple(expressions: string[]): Promise<ExpressionInfoSimple[]> {
+        expressions = expressions.map(e => e.toLowerCase())
+
+        let exprs = await this.idb.expressions
+            .where("expression")
+            .anyOf(expressions)
+            .toArray()
+
+        return exprs.map(v => {
+            return {
+                expression: v.expression,
+                meaning: v.meaning,
+                status: v.status,
+                t: v.t,
+            }
+        })
+    }
+
     async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
         let unixStamp = moment.utc(time).unix()
         let wordsAfter = await this.idb.expressions
@@ -91,7 +109,7 @@ export class LocalDb extends DbProvider {
         }
         return res
     }
-    async getExpressionSimple(ignores?: boolean): Promise<ExpressionInfoSimple[]> {
+    async getAllExpressionSimple(ignores?: boolean): Promise<ExpressionInfoSimple[]> {
         let exprs: ExpressionInfoSimple[]
         let bottomStatus = ignores ? -1 : 0
         exprs = (await this.idb.expressions

@@ -70,6 +70,54 @@ export class ReadingView extends TextFileView {
         this.plugin.setMarkdownView(this.leaf)
     }
 
+    async saveWords() {
+        let data = await this.readContent("article")
+
+        let exprs = (await this.plugin.parser.getWordsPhrases(data))
+            .map(w => `+ **${w.expression}** : ${w.meaning}`)
+            .join("\n") + "\n\n"
+
+        await this.readContent("words") // 如果没有这一模块就加上
+        await this.writeContent("words", exprs)
+    }
+
+    divide(lines: string[]) {
+        let positions = [] as [string, number][]
+        positions.push(["article", lines.indexOf("^^^article")],
+            ["words", lines.indexOf("^^^words")],
+            ["notes", lines.indexOf("^^^notes")]);
+        positions.sort((a, b) => a[1] - b[1])
+        positions = positions.filter((v) => v[1] !== -1)
+        positions.push(["eof", lines.length]);
+
+        let segments = {} as { [K in string]: { start: number, end: number } }
+        for (let i = 0; i < positions.length - 1; i++) {
+            segments[`${positions[i][0]}`] = { start: positions[i][1] + 1, end: positions[i + 1][1] }
+        }
+        return segments
+    }
+
+    async readContent(type: string): Promise<string> {
+        let oldText = await this.plugin.app.vault.read(this.file)
+        let lines = oldText.split("\n")
+        let seg = this.divide(lines)
+        if (!seg[type]) {
+            this.plugin.app.vault.modify(this.file, oldText + `\n^^^${type}\n\n`)
+            return ""
+        }
+        return lines.slice(seg[type].start, seg[type].end).join("\n")
+    }
+
+    async writeContent(type: string, content: string): Promise<void> {
+        let oldText = await this.plugin.app.vault.read(this.file)
+        let lines = oldText.split("\n")
+        let seg = this.divide(lines)
+        let newText = lines.slice(0, seg[type].start).join("\n") +
+            "\n" + content.trim() + "\n\n" +
+            lines.slice(seg[type].end, lines.length).join("\n")
+        this.plugin.app.vault.modify(this.file, newText)
+    }
+
     clear(): void {
 
     }
@@ -189,6 +237,7 @@ export class ReadingView extends TextFileView {
     async onClose() {
         removeEventListener("obsidian-langr-refresh", this.refresh)
         this.vueapp.unmount()
+        this.saveWords()
     }
 
 }
