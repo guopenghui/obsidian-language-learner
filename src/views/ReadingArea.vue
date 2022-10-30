@@ -81,7 +81,7 @@ let pageSize = dp === "all" ? ref(Number.MAX_VALUE) : ref(parseInt(dp))
 let activeNotes = ref(false)
 let notes = ref("")
 async function afterNoteEnter() {
-    notes.value = await view.readContent("notes")
+    notes.value = await view.readContent("notes", true)
 }
 async function afterNoteLeave() {
     view.writeContent("notes", notes.value)    

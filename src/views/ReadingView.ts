@@ -71,13 +71,15 @@ export class ReadingView extends TextFileView {
     }
 
     async saveWords() {
-        let data = await this.readContent("article")
+        if ((await this.readContent("words")) === null) {
+            return
+        }
 
+        let data = await this.readContent("article")
         let exprs = (await this.plugin.parser.getWordsPhrases(data))
             .map(w => `+ **${w.expression}** : ${w.meaning}`)
             .join("\n") + "\n\n"
 
-        await this.readContent("words") // 如果没有这一模块就加上
         await this.writeContent("words", exprs)
     }
 
@@ -97,13 +99,16 @@ export class ReadingView extends TextFileView {
         return segments
     }
 
-    async readContent(type: string): Promise<string> {
+    async readContent(type: string, create: boolean = false): Promise<string> {
         let oldText = await this.plugin.app.vault.read(this.file)
         let lines = oldText.split("\n")
         let seg = this.divide(lines)
         if (!seg[type]) {
-            this.plugin.app.vault.modify(this.file, oldText + `\n^^^${type}\n\n`)
-            return ""
+            if (create) {
+                this.plugin.app.vault.modify(this.file, oldText + `\n^^^${type}\n\n`)
+                return ""
+            }
+            return null
         }
         return lines.slice(seg[type].start, seg[type].end).join("\n")
     }
@@ -112,6 +117,9 @@ export class ReadingView extends TextFileView {
         let oldText = await this.plugin.app.vault.read(this.file)
         let lines = oldText.split("\n")
         let seg = this.divide(lines)
+        if (!seg[type]) {
+            return
+        }
         let newText = lines.slice(0, seg[type].start).join("\n") +
             "\n" + content.trim() + "\n\n" +
             lines.slice(seg[type].end, lines.length).join("\n")
