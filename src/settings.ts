@@ -9,7 +9,6 @@ export interface MyPluginSettings {
     word_database: string;
     review_database: string;
     port: number;
-    last_sync: string;
     db_name: string;
     review_prons: "0" | "1"
     default_paragraphs: string
@@ -23,7 +22,6 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     word_database: null,
     review_database: null,
     port: 8086,
-    last_sync: "1970-01-01T00:00:00Z",
     db_name: "WordDB",
     review_prons: "0",
     default_paragraphs: "4",
@@ -170,29 +168,6 @@ export class SettingTab extends PluginSettingTab {
                     new Notice(t("Ignores are copied to the clipboard"))
                 })
             )
-
-
-        new Setting(containerEl)
-            .setName(t("Last review sync"))
-            .setDesc(t("Last time the review database was updated"))
-            .addMomentFormat(date => date
-                .setValue(moment.utc(this.plugin.settings.last_sync).local().format())
-                .setDisabled(true)
-            )
-            .addButton(button => button
-                .setButtonText(t("Reset"))
-                .setWarning()
-                .onClick(async (evt) => {
-                    let modal = new WarningModal(
-                        this.app,
-                        t("Are you sure you want to reset last sync time?"),
-                        async () => {
-                            this.plugin.settings.last_sync = "1970-01-01T00:00:00Z"
-                            await this.plugin.saveSettings()
-                        }
-                    )
-                    modal.open()
-                }))
 
 
         new Setting(containerEl)

@@ -251,7 +251,6 @@ export default class LanguageLearner extends Plugin {
 		newText = "#flashcards\n\n" + newText
 		await this.app.vault.modify(db, newText)
 
-		this.settings.last_sync = moment.utc().format()
 		this.saveSettings()
 	}
 
