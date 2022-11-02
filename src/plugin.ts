@@ -213,7 +213,7 @@ export default class LanguageLearner extends Plugin {
 		let text = await this.app.vault.read(db)
 		let oldRecord = {} as { [K in string]: string }
 		text.match(/#word(\n.+)+\n(<!--SR.*?-->)/g)
-			?.map(v => v.match(/#### (\w+)[\s\S]+(<!--SR.*-->)/))
+			?.map(v => v.match(/#### (.+)[\s\S]+(<!--SR.*-->)/))
 			?.forEach(v => {
 				oldRecord[v[1]] = v[2]
 			})
