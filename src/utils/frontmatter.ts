@@ -1,5 +1,6 @@
 import { App, TFile, parseYaml, stringifyYaml } from "obsidian"
 
+type FrontMatter = { [K in string]: string };
 
 export class FrontMatterManager {
     app: App
@@ -10,8 +11,8 @@ export class FrontMatterManager {
     }
 
     // 解析
-    async loadFrontMatter(file: TFile): Promise<any> {
-        let res = {} as { [K in string]: string }
+    async loadFrontMatter(file: TFile): Promise<FrontMatter> {
+        let res = {} as FrontMatter
         let text = await this.app.vault.read(file);
 
         let match = text.match(/^\n*---\n([\s\S]+)\n---/)
@@ -22,8 +23,8 @@ export class FrontMatterManager {
         return res
     }
 
-    async storeFrontMatter(file: TFile, obj: any) {
-        if (Object.keys(obj).length === 0) {
+    async storeFrontMatter(file: TFile, fm: FrontMatter) {
+        if (Object.keys(fm).length === 0) {
             return
         }
 
@@ -31,7 +32,7 @@ export class FrontMatterManager {
         let match = text.match(/^\n*---\n([\s\S]+)\n---/)
 
         let newText = ""
-        let newFront = stringifyYaml(obj)
+        let newFront = stringifyYaml(fm)
         if (match) {
             newText = text.replace(/^\n*---\n([\s\S]+)\n---/, `---\n${newFront}\n---`)
         } else {
@@ -50,10 +51,10 @@ export class FrontMatterManager {
 
     // 修改
     async setFrontMatter(file: TFile, key: string, value: string) {
-        let obj = await this.loadFrontMatter(file)
+        let fm = await this.loadFrontMatter(file)
 
-        obj[key] = value
+        fm[key] = value
 
-        this.storeFrontMatter(file, obj)
+        this.storeFrontMatter(file, fm)
     }
 }

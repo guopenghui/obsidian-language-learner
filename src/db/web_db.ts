@@ -111,8 +111,6 @@ export class WebDb extends DbProvider {
 
     // 添加或更新单词/词组的信息
     async postExpression(payload: ExpressionInfo): Promise<number> {
-        // 数据库中一律保存小写
-        payload.expression = payload.expression.toLowerCase();
         let request: RequestUrlParam = {
             url: `http://localhost:${this.port}/update`,
             method: "POST",

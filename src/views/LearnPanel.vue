@@ -329,8 +329,10 @@ async function submit() {
 	}
 
 	submitLoading.value = true
+	let data = JSON.parse(JSON.stringify(model.value));
+	(data as any).expression = (data as any).expression.trim().toLowerCase()
 	// 超过1条例句时，sentences中的对象会变成Proxy，尚不知原因，因此用JSON转换一下
-	let statusCode = await plugin.db.postExpression(JSON.parse(JSON.stringify(model.value)))
+	let statusCode = await plugin.db.postExpression(data)
 	submitLoading.value = false
 
 	if (statusCode !== 200) {

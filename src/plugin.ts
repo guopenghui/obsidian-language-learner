@@ -150,11 +150,15 @@ export default class LanguageLearner extends Plugin {
 	}
 
 	refreshWordDb = async () => {
+		if (!this.settings.word_database) {
+			return
+		}
+
 		let dataBase = this.app.vault.getAbstractFileByPath(
 			this.settings.word_database
 		)
 		if (!dataBase || dataBase.hasOwnProperty("children")) {
-			new Notice("Invalid database path");
+			new Notice("Invalid refresh database path");
 			return;
 		}
 		// 获取所有非无视单词的简略信息
@@ -203,9 +207,13 @@ export default class LanguageLearner extends Plugin {
 	}
 
 	refreshReviewDb = async () => {
+		if (!this.settings.review_database) {
+			return
+		}
+
 		let dataBase = this.app.vault.getAbstractFileByPath(this.settings.review_database)
 		if (!dataBase || "children" in dataBase) {
-			new Notice("Invalid database path")
+			new Notice("Invalid word database path")
 			return
 		}
 
@@ -221,7 +229,7 @@ export default class LanguageLearner extends Plugin {
 		// let data = await this.db.getExpressionAfter(this.settings.last_sync)
 		let data = await this.db.getExpressionAfter("1970-01-01T00:00:00Z")
 		if (data.length === 0) {
-			new Notice("Nothing new")
+			// new Notice("Nothing new")
 			return
 		}
 

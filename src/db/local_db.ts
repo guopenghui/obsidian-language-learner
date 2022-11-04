@@ -128,8 +128,6 @@ export class LocalDb extends DbProvider {
     }
 
     async postExpression(payload: ExpressionInfo): Promise<number> {
-        payload.expression = payload.expression.toLowerCase()
-
         let stored = await this.idb.expressions
             .where("expression").equals(payload.expression)
             .first()
