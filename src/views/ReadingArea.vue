@@ -58,7 +58,11 @@ let vueThis = getCurrentInstance()
 let view = vueThis.appContext.config.globalProperties.view as ReadingView
 let plugin = view.plugin as PluginType
 let contentEl = view.contentEl as HTMLElement
-let theme = document.body.hasClass("theme-dark") ? darkTheme: null
+
+// 切换明亮/黑暗模式
+const theme = computed(() => {
+	return store.dark? darkTheme: null
+})
 
 let frontMatter = plugin.app.metadataCache.getFileCache(view.file).frontmatter
 let audioSource = frontMatter["langr-audio"] || ""

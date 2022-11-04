@@ -184,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, StyleValue, onMounted, onUnmounted, getCurrentInstance, toRaw } from "vue"
+import { ref, StyleValue, onMounted, onUnmounted, getCurrentInstance, toRaw, computed } from "vue"
 import { Notice } from "obsidian"
 import {
 	NForm,
@@ -207,12 +207,15 @@ import { LearnPanelView } from "./LearnPanelView"
 import { ReadingView } from "./ReadingView"
 import Plugin from "../plugin"
 import { search } from "../dictionary/youdao/engine"
+import store from "./store"
 
 const view: LearnPanelView = getCurrentInstance().appContext.config.globalProperties.view
 const plugin: Plugin = getCurrentInstance().appContext.config.globalProperties.plugin
 
 // 切换明亮/黑暗模式
-const theme = document.body.hasClass("theme-dark") ? darkTheme : null
+const theme = computed(() => {
+	return store.dark? darkTheme: null
+})
 
 //表单数据
 let model = ref<ExpressionInfo>({

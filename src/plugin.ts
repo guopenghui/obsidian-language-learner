@@ -28,6 +28,7 @@ import { LocalDb } from "./db/local_db"
 import { TextParser } from "./views/parser"
 import { DEFAULT_SETTINGS, MyPluginSettings, SettingTab } from "./settings";
 import { FrontMatterManager } from "./utils/frontmatter"
+import store from "./views/store"
 
 export const FRONT_MATTER_KEY: string = "langr";
 
@@ -82,7 +83,10 @@ export default class LanguageLearner extends Plugin {
 		this.registerReadingToggle()
 		this.registerContextMenu();
 		this.registerLeftClick();
-		this.registerMouseup()
+		this.registerMouseup();
+		this.registerEvent(this.app.workspace.on("css-change", () => {
+			store.dark = document.body.hasClass("theme-dark");
+		}))
 	}
 
 	onunload() {

@@ -17,14 +17,17 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, onUnmounted} from "vue"
+import {ref, computed, onMounted, onUnmounted} from "vue"
 import {NConfigProvider, NButton, NButtonGroup, NInput, darkTheme} from "naive-ui"
 
 import Youdao from "../dictionary/youdao/View.vue"
 import {t} from "../lang/helper"
+import store from "./store"
 
-
-let theme = document.body.hasClass("theme-dark") ? darkTheme : null
+// 切换明亮/黑暗模式
+const theme = computed(() => {
+	return store.dark? darkTheme: null
+})
 
 // 提供一个前进后退查询记录的功能
 let history: string[] = []
