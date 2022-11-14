@@ -29,16 +29,28 @@ export class TextParser {
     }
 
     async parse(data: string) {
-        // let lines = data.split("\n")
-        // let articleStart = lines.indexOf("^^^article") + 1
-        // let articleEnd = lines.indexOf("^^^words")
-
-        // let article = lines.slice(articleStart, articleEnd).join("\n")
-
         let newHTML = await this.text2HTML(data.trim())
         return newHTML
     }
 
+    async countWords(text: string): Promise<[number, number, number]> {
+        const ast = this.processor.parse(text)
+        let wordSet: Set<string> = new Set();
+        visit(ast, "WordNode", (word) => {
+            let text = toString(word).toLowerCase()
+            if (/[0-9\u4e00-\u9fa5]/.test(text)) return
+            wordSet.add(text)
+        });
+        let stored = await this.plugin.db.getStoredWords({ article: "", words: [...wordSet] });
+        let ignore = 0
+        stored.words.forEach(word => {
+            if (word.status === 0)
+                ignore++
+        })
+        let learn = stored.words.length - ignore
+        let unknown = wordSet.size - stored.words.length
+        return [unknown, learn, ignore]
+    }
 
     async text2HTML(text: string) {
         this.pIdx = 0;

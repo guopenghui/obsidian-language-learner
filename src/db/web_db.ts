@@ -13,6 +13,7 @@ export class WebDb extends DbProvider {
         super()
         this.port = port
     }
+    async open() { }
 
     close() { }
 

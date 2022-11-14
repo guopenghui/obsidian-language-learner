@@ -1,18 +1,23 @@
 <template>
     <div id="langr-reading" style="height:100%;">
         <NConfigProvider :theme="theme" style=" height:100%; display:flex; flex-direction: column;">
+            <!-- 功能区 -->
             <div class="function-area" style="padding-bottom:10px; border-bottom: 2px solid gray;">
                 <audio controls v-if="audioSource" :src="audioSource"></audio>
                 <div style="display:flex;">
                     <button @click="activeNotes = true">做笔记</button>
-                    <span style="flex:1;"></span>
+                        <div style="flex:1; display:flex; justify-content: center; align-items: center;">
+                            <CountBar :unknown="unknown" :learn="learn" :ignore="ignore"/>
+                        </div>
                     <button v-if="page * pageSize < totalLines" class="finish-reading" @click="addIgnores">结束阅读并转入下一页</button>
                     <button v-else class="finish-reading" @click="addIgnores">结束阅读</button>
                 </div>
             </div>
+            <!-- 阅读区 -->
             <div class="text-area" 
                 style="flex:1; overflow:auto; padding-left: 5%; padding-right: 5%;" 
                 v-html="renderedText"/>
+            <!-- 底栏 -->
             <div class="pagination" style="padding-top:10px; border-top: 2px solid gray; display:flex; flex-direction: column;">
                 <NPagination 
                     style="justify-content:center;"
@@ -45,11 +50,12 @@
 
 
 <script setup lang="ts">
-import { ref, getCurrentInstance, computed, watch, watchEffect } from "vue"
+import { ref, getCurrentInstance, computed, watch, onMounted, onUnmounted} from "vue"
 import { NPagination, NConfigProvider, darkTheme, NDrawer, NDrawerContent, NInput } from "naive-ui"
 import type { DrawerPlacement } from "naive-ui"
 import PluginType from "../plugin"
 import { ReadingView } from "./ReadingView"
+import CountBar from "./CountBar.vue"
 import store from "./store"
 import { t } from "../lang/helper"
 
@@ -102,10 +108,32 @@ let segments = view.divide(lines)
 let article = lines.slice(segments["article"].start, segments["article"].end)
 let totalLines = article.length
 
+// 计数
+let unknown = ref(0)
+let learn = ref(0)
+let ignore = ref(0)
+let countChange = ref(true)
+
+watch([countChange], async () => {
+    [unknown.value, learn.value, ignore.value] = 
+        await plugin.parser.countWords(article.join("\n"));
+}, { immediate: true })
+
+let refreshCount = () => { countChange.value = !countChange.value}
+
+onMounted(() => {
+    addEventListener("obsidian-langr-refresh", refreshCount)
+})
+onUnmounted(() => {
+    removeEventListener("obsidian-langr-refresh", refreshCount)
+})
+
+
+
 // 渲染文本
 let renderedText = ref("")
-let refreshHandle = ref(true)
 let psChange = ref(true) // 标志pageSize的改变
+let refreshHandle = ref(true)
 
 // pageSize变化应该使page同时进行调整以尽量保持原阅读位置
 // 同时page和pageSize的改变都应该引起langr-pos的改变，但应只修改一次
@@ -160,6 +188,8 @@ async function addIgnores() {
     if(page.value * pageSize.value < totalLines) {
         page.value ++
     }
+
+    refreshCount()
 }
 
 
