@@ -14,6 +14,8 @@ export class WebDb extends DbProvider {
         this.port = port
     }
 
+    close() { }
+
     // 寻找页面中已经记录过的单词和词组
     async getStoredWords(
         payload: ArticleWords

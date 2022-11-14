@@ -14,7 +14,6 @@ export default class WordDB extends Dexie {
             expressions: "++id, &expression, status, t, date, *tags",
             sentences: "++id, &text"
         })
-        this.open()
     }
 }
 

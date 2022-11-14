@@ -5,6 +5,8 @@ import {
 
 
 abstract class DbProvider {
+    abstract open(): Promise<void>;
+    abstract close(): void;
     // 在文章中寻找之前记录过的单词和词组
     abstract getStoredWords(payload: ArticleWords): Promise<WordsPhrase>;
     // 查询单个单词/词组的全部信息

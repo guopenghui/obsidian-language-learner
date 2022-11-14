@@ -14,9 +14,20 @@ import Plugin from "../plugin"
 
 export class LocalDb extends DbProvider {
     idb: WordDB;
+    plugin: Plugin;
     constructor(plugin: Plugin) {
         super()
+        this.plugin = plugin
         this.idb = new WordDB(plugin)
+    }
+
+    async open() {
+        await this.idb.open()
+        return
+    }
+
+    close() {
+        this.idb.close()
     }
 
     // 寻找页面中已经记录过的单词和词组

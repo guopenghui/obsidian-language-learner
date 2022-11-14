@@ -1,14 +1,18 @@
-import { App, Notice, PluginSettingTab, Setting, Modal, moment } from "obsidian"
+import { App, Notice, PluginSettingTab, Setting, Modal, moment, debounce } from "obsidian"
 
 import { WebDb } from "./db/web_db";
+import { LocalDb } from "./db/local_db"
+import Server from "./api/server"
 import LanguageLearner from "./plugin";
 import { t } from "./lang/helper"
 
 export interface MyPluginSettings {
     use_server: boolean;
+    port: number;
+    self_server: boolean;
+    self_port: number;
     word_database: string;
     review_database: string;
-    port: number;
     db_name: string;
     review_prons: "0" | "1"
     default_paragraphs: string
@@ -19,9 +23,11 @@ export interface MyPluginSettings {
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
     use_server: false,
+    port: 8086,
+    self_server: false,
+    self_port: 3002,
     word_database: null,
     review_database: null,
-    port: 8086,
     db_name: "WordDB",
     review_prons: "0",
     default_paragraphs: "4",
@@ -44,6 +50,16 @@ export class SettingTab extends PluginSettingTab {
         containerEl.empty();
         containerEl.createEl("h1", { text: "Settings for Language Learner" });
 
+        this.backendSettings(containerEl);
+        this.indexedDBSettings(containerEl);
+        this.textDBSettings(containerEl);
+        this.readingSettings(containerEl);
+        this.completionSettings(containerEl);
+        this.reviewSettings(containerEl);
+        this.selfServerSettings(containerEl);
+    }
+
+    backendSettings(containerEl: HTMLElement) {
         new Setting(containerEl)
             .setName(t("Use Server"))
             .setDesc(t("Use a seperated backend server"))
@@ -51,7 +67,15 @@ export class SettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.use_server)
                 .onChange(async (use_server) => {
                     this.plugin.settings.use_server = use_server
+                    if (use_server) {
+                        this.plugin.db.close()
+                        this.plugin.db = new WebDb(this.plugin.settings.port)
+                    } else {
+                        this.plugin.db = new LocalDb(this.plugin)
+                        await this.plugin.db.open()
+                    }
                     await this.plugin.saveSettings()
+                    this.display()
                 })
             )
 
@@ -64,7 +88,7 @@ export class SettingTab extends PluginSettingTab {
             .addText((text) =>
                 text
                     .setValue(String(this.plugin.settings.port))
-                    .onChange(async (port) => {
+                    .onChange(debounce(async (port) => {
                         let p = Number(port);
                         if (!isNaN(p) && p >= 1023 && p <= 65535) {
                             this.plugin.settings.port = p;
@@ -73,61 +97,38 @@ export class SettingTab extends PluginSettingTab {
                         } else {
                             new Notice(t("Wrong port format"));
                         }
-                    })
+                    }, 500, true))
             );
-
-        containerEl.createEl("h3", { text: t("Text Database") });
-
-        new Setting(containerEl)
-            .setName(t("Auto refresh"))
-            .setDesc(t("Auto refresh database when submitting"))
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.auto_refresh_db)
-                .onChange(async (value) => {
-                    this.plugin.settings.auto_refresh_db = value
-                    await this.plugin.saveSettings()
-                })
-            )
-
-        new Setting(containerEl)
-            .setName(t("Word Database Path"))
-            .setDesc(t("Choose a md file as word database for auto-completion"))
-            .addText((text) =>
-                text
-                    .setValue(this.plugin.settings.word_database)
-                    .onChange(async (path) => {
-                        this.plugin.settings.word_database = path;
-                        await this.plugin.saveSettings();
-                    })
-            );
-
-        new Setting(containerEl)
-            .setName(t("Review Database Path"))
-            .setDesc(t("Choose a md file as review database for spaced-repetition"))
-            .addText((text) =>
-                text
-                    .setValue(this.plugin.settings.review_database)
-                    .onChange(async (path) => {
-                        this.plugin.settings.review_database = path;
-                        await this.plugin.saveSettings();
-                    })
-            );
+    }
 
 
-
+    indexedDBSettings(containerEl: HTMLElement) {
+        if (this.plugin.settings.use_server) {
+            return
+        }
 
         containerEl.createEl("h3", { text: t("IndexDB Database") });
 
         new Setting(containerEl)
             .setName(t("Database Name"))
-            .setDesc(t("Reopen app after changing database name"))
+            .setDesc(t("Reopen DB after changing database name"))
             .addText(text => text
                 .setValue(this.plugin.settings.db_name)
-                .onChange(async (name) => {
+                .onChange(debounce(async (name) => {
                     this.plugin.settings.db_name = name
                     this.plugin.saveSettings()
+                }, 1000, true))
+            )
+            .addButton(button => button
+                .setButtonText(t("Reopen"))
+                .onClick(async () => {
+                    this.plugin.db.close()
+                    this.plugin.db = new LocalDb(this.plugin)
+                    await this.plugin.db.open()
+                    new Notice("DB is Reopened")
                 })
             )
+
 
         // 导入导出数据库
         new Setting(containerEl)
@@ -187,7 +188,48 @@ export class SettingTab extends PluginSettingTab {
                     modal.open()
                 })
             )
+    }
 
+    textDBSettings(containerEl: HTMLElement) {
+        containerEl.createEl("h3", { text: t("Text Database") });
+
+        new Setting(containerEl)
+            .setName(t("Auto refresh"))
+            .setDesc(t("Auto refresh database when submitting"))
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.auto_refresh_db)
+                .onChange(async (value) => {
+                    this.plugin.settings.auto_refresh_db = value
+                    await this.plugin.saveSettings()
+                })
+            )
+
+        new Setting(containerEl)
+            .setName(t("Word Database Path"))
+            .setDesc(t("Choose a md file as word database for auto-completion"))
+            .addText((text) =>
+                text
+                    .setValue(this.plugin.settings.word_database)
+                    .onChange(async (path) => {
+                        this.plugin.settings.word_database = path;
+                        await this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName(t("Review Database Path"))
+            .setDesc(t("Choose a md file as review database for spaced-repetition"))
+            .addText((text) =>
+                text
+                    .setValue(this.plugin.settings.review_database)
+                    .onChange(async (path) => {
+                        this.plugin.settings.review_database = path;
+                        await this.plugin.saveSettings();
+                    })
+            );
+    }
+
+    readingSettings(containerEl: HTMLElement) {
         containerEl.createEl("h3", { text: t("Reading Mode") })
         new Setting(containerEl)
             .setName(t("Default Paragraphs"))
@@ -215,7 +257,9 @@ export class SettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings()
                 })
             )
+    }
 
+    completionSettings(containerEl: HTMLElement) {
         containerEl.createEl("h3", { text: t("Auto Completion") })
 
         new Setting(containerEl)
@@ -231,6 +275,9 @@ export class SettingTab extends PluginSettingTab {
                 })
             )
 
+    }
+
+    reviewSettings(containerEl: HTMLElement) {
         containerEl.createEl("h3", { text: t("Review") });
 
         new Setting(containerEl)
@@ -246,6 +293,52 @@ export class SettingTab extends PluginSettingTab {
                 })
             )
     }
+
+    selfServerSettings(containerEl: HTMLElement) {
+        containerEl.createEl("h3", { text: t("As Server") })
+
+        new Setting(containerEl)
+            .setName(t("Self as Server"))
+            .setDesc(t("Make plugin a server and interact with chrome extension"))
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.self_server)
+                .onChange(async (self_server) => {
+                    this.plugin.settings.self_server = self_server
+                    if (self_server) {
+                        this.plugin.server = new Server(this.plugin, this.plugin.settings.self_port)
+                        await this.plugin.server.start()
+                    } else {
+                        await this.plugin.server?.close()
+                        this.plugin.server = null
+                    }
+                    await this.plugin.saveSettings()
+                    this.display()
+                })
+            )
+
+        if (!this.plugin.settings.self_server) return
+
+        new Setting(containerEl)
+            .setName(t("Server Port"))
+            .setDesc(
+                t("when changing port, you should restart the server")
+            )
+            .addText((text) =>
+                text
+                    .setValue(String(this.plugin.settings.self_port))
+                    .onChange(debounce(async (port) => {
+                        let p = Number(port);
+                        if (!isNaN(p) && p >= 1023 && p <= 65535) {
+                            this.plugin.settings.self_port = p;
+                            await this.plugin.saveSettings();
+                        } else {
+                            new Notice(t("Wrong port format"));
+                        }
+                    }, 1000, true))
+            );
+
+    }
+
 }
 
 

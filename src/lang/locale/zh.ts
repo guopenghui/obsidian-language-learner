@@ -67,7 +67,7 @@ export default {
 
     // settings
     "Use Server": "使用服务器",
-    "Use a seperated backend server": "使用单独的后端服务器",
+    "Use a seperated backend server": "使用单独的后端服务器(目前只对作者有用)",
     "Server Port": "服务器端口",
     'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
         '一个介于1024-65535之间的整数.这应该和服务器.env文件中的PORT字段一致',
@@ -94,8 +94,9 @@ export default {
 
     "IndexDB Database": "IndexDB 数据库",
     "Database Name": "数据库名称",
-    // "Change": "改变",
-    "Reopen app after changing database name": "改名后请重启obsidian",
+    "Reopen": "重启",
+    // "Change": "Change",
+    "Reopen DB after changing database name": "改名后点击重启数据库",
     "Import & Export": "导入导出数据",
     "Warning: Import will override current database": "警告: 导入会覆盖掉当前的数据库",
     "Import": "导入",
@@ -116,4 +117,9 @@ export default {
     "Choose your preferred accent": "选择你更喜欢的口音",
     "American": "美式",
     "British": "英式",
+
+    "As Server": "成为服务器",
+    "Self as Server": "开启服务器功能",
+    "Make plugin a server and interact with chrome extension": "插件打开一个服务器提供api，由此可以与谷歌浏览器插件交互",
+    "when changing port, you should restart the server": "如果改变端口，请重启服务器"
 }

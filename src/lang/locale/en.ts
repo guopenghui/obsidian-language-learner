@@ -55,6 +55,7 @@ export default {
     "Origin (Optional)": "Origin (Optional)",
     "It looks more like a PHRASE than a WORD": "It looks more like a PHRASE than a WORD",
     "Meaning is empty!": "Meaning is empty",
+    "Expression is empty!": "Expression is empty",
     "Submit": "Submit",
 
     // Stat.vue
@@ -62,12 +63,11 @@ export default {
     "Day Non-Ignore": "Day Non-Ignore",
     // "Single day": "Single day",
     "Accumulated": "Accumulated",
-    "Expression is empty!": "Expression is empty",
     "Statistics": "Statistics",
 
     // settings
     "Use Server": "Use Server",
-    "Use a seperated backend server": "Use a seperated backend server",
+    "Use a seperated backend server": "Use a seperated backend server(Only for developer now)",
     "Server Port": "Server Port",
     'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
         'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server',
@@ -94,8 +94,9 @@ export default {
 
     "IndexDB Database": "IndexDB Database",
     "Database Name": "Database Name",
+    "Reopen": "Reopen",
     // "Change": "Change",
-    "Reopen app after changing database name": "Reopen app after changing database name",
+    "Reopen DB after changing database name": "Reopen app after changing database name",
     "Import & Export": "Import & Export",
     "Warning: Import will override current database": "Warning: Import will override current database",
     "Import": "Import",
@@ -117,4 +118,10 @@ export default {
     "Choose your preferred accent": "Choose your preferred accent",
     "American": "American",
     "British": "British",
+
+
+    "As Server": "As Server",
+    "Self as Server": "Self as Server",
+    "Make plugin a server and interact with chrome extension": "Make plugin a server and interact with chrome extension",
+    "when changing port, you should restart the server": "when changing port, you should restart the server",
 }

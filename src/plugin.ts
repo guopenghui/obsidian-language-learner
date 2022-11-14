@@ -26,8 +26,10 @@ import DbProvider from "./db/base"
 import { WebDb } from "./db/web_db";
 import { LocalDb } from "./db/local_db"
 import { TextParser } from "./views/parser"
-import { DEFAULT_SETTINGS, MyPluginSettings, SettingTab } from "./settings";
 import { FrontMatterManager } from "./utils/frontmatter"
+import Server from "./api/server"
+
+import { DEFAULT_SETTINGS, MyPluginSettings, SettingTab } from "./settings";
 import store from "./views/store"
 
 export const FRONT_MATTER_KEY: string = "langr";
@@ -37,6 +39,7 @@ export default class LanguageLearner extends Plugin {
 	settings: MyPluginSettings;
 	appEl: HTMLElement;
 	db: DbProvider;
+	server: Server;
 	parser: TextParser;
 	markdownButtons: Record<string, HTMLElement> = {}
 	frontManager: FrontMatterManager;
@@ -50,10 +53,18 @@ export default class LanguageLearner extends Plugin {
 		this.db = this.settings.use_server ?
 			new WebDb(this.settings.port) :
 			new LocalDb(this)
+		await this.db.open()
 
+		// 设置解析器
 		this.parser = new TextParser(this)
-
 		this.frontManager = new FrontMatterManager(this.app)
+
+		// 打开内置服务器
+		this.server = this.settings.self_server ?
+			new Server(this, this.settings.self_port) :
+			null
+		await this.server?.start()
+
 
 		// 注册刷新单词数据库命令
 		this.addCommand({
@@ -91,6 +102,7 @@ export default class LanguageLearner extends Plugin {
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(SEARCH_PANEL_VIEW);
+		this.server?.close()
 	}
 
 
@@ -153,6 +165,12 @@ export default class LanguageLearner extends Plugin {
 		} as ViewState);
 	}
 
+	async refreshTextDB() {
+		await this.refreshWordDb();
+		await this.refreshReviewDb();
+		(this.app as any).commands.executeCommandById("various-complements:reload-custom-dictionaries")
+	}
+
 	refreshWordDb = async () => {
 		if (!this.settings.word_database) {
 			return
@@ -189,7 +207,7 @@ export default class LanguageLearner extends Plugin {
 		let classified_texts = classified.map((w, idx) => {
 			return (
 				`#### ${statusMap[idx]}\n` +
-				w.map((i) => `${words[i].expression}  ${del}    ${words[i].meaning}`).join("\n") +
+				w.map((i) => `${words[i].expression}${del}    ${words[i].meaning}`).join("\n") +
 				"\n"
 			);
 		});
