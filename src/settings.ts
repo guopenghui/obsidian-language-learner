@@ -178,6 +178,18 @@ export class SettingTab extends PluginSettingTab {
                     new Notice("Exported")
                 })
             )
+        // 获取所有非无视单词
+        new Setting(containerEl)
+            .setName(t("Get all non-ignores"))
+            .addButton(button => button
+                .setButtonText(t("Export"))
+                .onClick(async () => {
+                    let words = await this.plugin.db.getAllExpressionSimple(true)
+                    let ignores = words.filter(w => w.status !== 0).map(w => w.expression)
+                    await navigator.clipboard.writeText(ignores.join("\n"))
+                    new Notice(t("Copied to clipboard"))
+                })
+            )
 
         // 获取所有无视单词
         new Setting(containerEl)
@@ -188,7 +200,7 @@ export class SettingTab extends PluginSettingTab {
                     let words = await this.plugin.db.getAllExpressionSimple(true)
                     let ignores = words.filter(w => w.status === 0).map(w => w.expression)
                     await navigator.clipboard.writeText(ignores.join("\n"))
-                    new Notice(t("Ignores are copied to the clipboard"))
+                    new Notice(t("Copied to clipboard"))
                 })
             )
 

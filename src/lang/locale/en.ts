@@ -9,8 +9,7 @@ export default {
     "Search word": "Search word",
     "Refresh Word Database": "Refresh Word Database",
     "Refresh Review Database": "Refresh Review Database",
-    "Get all ignores": "Get all ignores",
-    "Ignores are copied to the clipboard": "Ignores are copied to the clipboard",
+
 
     // SearchPanelView.ts
     "Search Panel": "Search Panel",
@@ -107,6 +106,9 @@ export default {
     "Warning: Import will override current database": "Warning: Import will override current database",
     "Import": "Import",
     "Export": "Export",
+    "Get all ignores": "Get all ignores",
+    "Get all non-ignores": "Get all non-ignores",
+    "Copied to clipboard": "Copied to clipboard",
 
     "Reading Mode": "Reading Mode",
     "Default Paragraphs": "Default paragraphs",

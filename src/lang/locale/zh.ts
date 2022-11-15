@@ -9,8 +9,7 @@ export default {
     "Search word": "查找单词/短语",
     "Refresh Word Database": "刷新单词数据库",
     "Refresh Review Database": "刷新复习数据库",
-    "Get all ignores": "获取所有无视单词",
-    "Ignores are copied to the clipboard": "无视单词已复制到剪贴板",
+
 
     // SearchPanelView.ts
     "Search Panel": "查词面板",
@@ -107,6 +106,9 @@ export default {
     "Warning: Import will override current database": "警告: 导入会覆盖掉当前的数据库",
     "Import": "导入",
     "Export": "导出",
+    "Get all ignores": "获取所有无视单词",
+    "Get all non-ignores": "获取所有非无视单词",
+    "Copied to the clipboard": "已复制到剪贴板",
 
     "Reading Mode": "阅读模式",
     "Default Paragraphs": "每页默认段数",
