@@ -11,6 +11,7 @@ export interface MyPluginSettings {
     port: number;
     self_server: boolean;
     self_port: number;
+    function_key: "ctrlKey" | "altKey" | "metaKey" | "disable";
     word_database: string;
     review_database: string;
     db_name: string;
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     port: 8086,
     self_server: false,
     self_port: 3002,
+    function_key: "ctrlKey",
     word_database: null,
     review_database: null,
     db_name: "WordDB",
@@ -51,6 +53,7 @@ export class SettingTab extends PluginSettingTab {
         containerEl.createEl("h1", { text: "Settings for Language Learner" });
 
         this.backendSettings(containerEl);
+        this.querySettings(containerEl);
         this.indexedDBSettings(containerEl);
         this.textDBSettings(containerEl);
         this.readingSettings(containerEl);
@@ -99,6 +102,25 @@ export class SettingTab extends PluginSettingTab {
                         }
                     }, 500, true))
             );
+    }
+
+    querySettings(containerEl: HTMLElement) {
+        containerEl.createEl("h3", { text: t("Translate") });
+
+        new Setting(containerEl)
+            .setName(t("Word Select"))
+            .setDesc(t("Press function key and select text to translate"))
+            .addDropdown(funcKey => funcKey
+                .addOption("ctrlKey", "Ctrl")
+                .addOption("altKey", "Alt")
+                .addOption("metaKey", "Meta")
+                .addOption("disable", t("Disable"))
+                .setValue(this.plugin.settings.function_key)
+                .onChange(async (value: "ctrlKey" | "altKey" | "metaKey" | "disable") => {
+                    this.plugin.settings.function_key = value;
+                    await this.plugin.saveSettings()
+                })
+            )
     }
 
 

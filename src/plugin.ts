@@ -65,22 +65,6 @@ export default class LanguageLearner extends Plugin {
             null
         await this.server?.start()
 
-
-        // 注册刷新单词数据库命令
-        this.addCommand({
-            id: "langr-refresh-word-database",
-            name: t("Refresh Word Database"),
-            callback: this.refreshWordDb
-        });
-
-        // 注册刷新复习数据库命令
-        this.addCommand({
-            id: "langr-refresh-review-database",
-            name: t("Refresh Review Database"),
-            callback: this.refreshReviewDb
-        })
-
-
         // test
         // this.addCommand({
         // 	id: "langr-test",
@@ -88,9 +72,8 @@ export default class LanguageLearner extends Plugin {
         // 	callback: () => new Notice("hello!")
         // })
 
-
+        this.addCommands()
         this.registerCustomViews()
-
         this.registerReadingToggle()
         this.registerContextMenu();
         this.registerLeftClick();
@@ -105,6 +88,31 @@ export default class LanguageLearner extends Plugin {
         this.server?.close()
     }
 
+    addCommands() {
+        // 注册刷新单词数据库命令
+        this.addCommand({
+            id: "langr-refresh-word-database",
+            name: t("Refresh Word Database"),
+            callback: this.refreshWordDb
+        });
+
+        // 注册刷新复习数据库命令
+        this.addCommand({
+            id: "langr-refresh-review-database",
+            name: t("Refresh Review Database"),
+            callback: this.refreshReviewDb
+        })
+
+        // 注册查词命令
+        this.addCommand({
+            id: "langr-search-word",
+            name: t("Translate"),
+            callback: () => {
+                let selection = window.getSelection().toString().trim()
+                this.queryWord(selection)
+            }
+        })
+    }
 
     registerCustomViews() {
         // 注册查词面板视图
@@ -406,6 +414,13 @@ export default class LanguageLearner extends Plugin {
         this.registerDomEvent(document.body, "mouseup", (evt) => {
             const target = evt.target as HTMLElement
             if (!target.matchParent(".stns")) { // 处理普通模式
+                const funcKey = this.settings.function_key;
+                if (funcKey === "disable" || evt[funcKey] === false) return;
+
+                let selection = window.getSelection().toString().trim()
+                if (!selection) return;
+
+                this.queryWord(selection)
                 return
             } else {	// 处理阅读模式下
                 let start: Node

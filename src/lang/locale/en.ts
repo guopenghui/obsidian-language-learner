@@ -72,6 +72,12 @@ export default {
     'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
         'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server',
     "Wrong port format": "Wrong port format",
+
+    "Translate": "Translate",
+    "Word Select": "Word Select",
+    "Press function key and select text to translate": "Press function key and select text to translate",
+    "Disable": "Disable",
+
     "Word Database Path": "Word Database Path",
     "Choose a md file as word database for auto-completion": "Choose a md file as word database for auto-completion",
     "Review Database Path": "Review Database Path",

@@ -72,6 +72,12 @@ export default {
     'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
         '一个介于1024-65535之间的整数.这应该和服务器.env文件中的PORT字段一致',
     "Wrong port format": "端口格式不对",
+
+    "Translate": "查词",
+    "Word Select": "划词翻译",
+    "Press function key and select text to translate": "按下功能键同时划词即可打开翻译",
+    "Disable": "关闭",
+
     "Word Database Path": "单词数据库路径",
     "Choose a md file as word database for auto-completion": "选择一个md文件作为单词数据库以自动补全",
     "Review Database Path": "复习数据库路径",
