@@ -19,6 +19,7 @@ export interface MyPluginSettings {
     default_paragraphs: string
     col_delimiter: "," | "\t" | "|"
     use_machine_trans: boolean;
+    word_count: boolean;
     auto_refresh_db: boolean;
 }
 
@@ -35,6 +36,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     default_paragraphs: "4",
     col_delimiter: ",",
     use_machine_trans: true,
+    word_count: true,
     auto_refresh_db: true,
 }
 
@@ -298,6 +300,16 @@ export class SettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.use_machine_trans)
                 .onChange(async (use_machine_trans) => {
                     this.plugin.settings.use_machine_trans = use_machine_trans
+                    await this.plugin.saveSettings()
+                })
+            )
+        new Setting(containerEl)
+            .setName(t("Open count bar"))
+            .setDesc(t("Count the word number of different type of article"))
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.word_count)
+                .onChange(async (value) => {
+                    this.plugin.settings.word_count = value
                     await this.plugin.saveSettings()
                 })
             )

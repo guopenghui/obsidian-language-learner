@@ -116,6 +116,8 @@ export default {
     "Default Paragraphs": "Default paragraphs",
     "Use Machine Translation": "Use Machine Translation",
     "Auto translate sentences": "Auto translate sentences",
+    "Open count bar": "Open count bar",
+    "Count the word number of different type of article": "Count the word number of different type of article",
 
     "Auto Completion": "Auto Completion",
     "Column delimiter": "Column delimiter",

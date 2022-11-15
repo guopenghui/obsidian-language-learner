@@ -7,7 +7,7 @@
                 <div style="display:flex;">
                     <button @click="activeNotes = true">做笔记</button>
                         <div style="flex:1; display:flex; justify-content: center; align-items: center;">
-                            <CountBar :unknown="unknown" :learn="learn" :ignore="ignore"/>
+                            <CountBar v-if="plugin.settings.word_count" :unknown="unknown" :learn="learn" :ignore="ignore"/>
                         </div>
                     <button v-if="page * pageSize < totalLines" class="finish-reading" @click="addIgnores">结束阅读并转入下一页</button>
                     <button v-else class="finish-reading" @click="addIgnores">结束阅读</button>
@@ -50,7 +50,7 @@
 
 
 <script setup lang="ts">
-import { ref, getCurrentInstance, computed, watch, onMounted, onUnmounted} from "vue"
+import { ref, Ref, getCurrentInstance, computed, watch, onMounted, onUnmounted} from "vue"
 import { NPagination, NConfigProvider, darkTheme, NDrawer, NDrawerContent, NInput } from "naive-ui"
 import type { DrawerPlacement } from "naive-ui"
 import PluginType from "../plugin"
@@ -82,9 +82,6 @@ const pageSizes = [
     {label: `${t("All")}`, value: Number.MAX_VALUE},
 ]
 
-let page = ref(1)
-let dp =plugin.settings.default_paragraphs
-let pageSize = dp === "all" ? ref(Number.MAX_VALUE) : ref(parseInt(dp))
 
 
 // 记笔记
@@ -113,24 +110,30 @@ let unknown = ref(0)
 let learn = ref(0)
 let ignore = ref(0)
 let countChange = ref(true)
-
-watch([countChange], async () => {
-    [unknown.value, learn.value, ignore.value] = 
-        await plugin.parser.countWords(article.join("\n"));
-}, { immediate: true })
-
 let refreshCount = () => { countChange.value = !countChange.value}
 
-onMounted(() => {
-    addEventListener("obsidian-langr-refresh", refreshCount)
-})
-onUnmounted(() => {
-    removeEventListener("obsidian-langr-refresh", refreshCount)
-})
+if(plugin.settings.word_count) {
+    watch([countChange], async () => {
+        [unknown.value, learn.value, ignore.value] = 
+            await plugin.parser.countWords(article.join("\n"));
+    }, { immediate: true })
+
+    onMounted(() => {
+        addEventListener("obsidian-langr-refresh", refreshCount)
+    })
+    onUnmounted(() => {
+        removeEventListener("obsidian-langr-refresh", refreshCount)
+    })
+}
 
 
 
 // 渲染文本
+let dp =plugin.settings.default_paragraphs
+let pageSize = dp === "all" ? ref(Number.MAX_VALUE) : ref(parseInt(dp))
+let lastPos = vueThis.appContext.config.globalProperties.lastPos as string
+let page = lastPos? ref(Math.ceil(parseInt(lastPos) / pageSize.value)) : ref(1)
+
 let renderedText = ref("")
 let psChange = ref(true) // 标志pageSize的改变
 let refreshHandle = ref(true)
@@ -146,21 +149,9 @@ watch([pageSize], async ([ps],[prev_ps]) => {
     }
 })
 
-let firstInit = true
 
 watch([page,psChange,refreshHandle], async ([p,pc],[prev_p,prev_pc]) => {
-    let start = 0
-    if(firstInit) {
-        let lastPos = await plugin.frontManager.getFrontMatter(view.file, "langr-pos")
-        if (lastPos) {
-            page.value = Math.ceil(parseInt(lastPos) / pageSize.value)
-        }
-        start = (page.value - 1) * pageSize.value
-        firstInit = false
-    } else {
-        start = (p - 1) * pageSize.value
-    }
-
+    let start = (p - 1) * pageSize.value
     let end = start + pageSize.value > totalLines ?
         totalLines :
         start + pageSize.value

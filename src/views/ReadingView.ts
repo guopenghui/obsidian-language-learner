@@ -36,7 +36,9 @@ export class ReadingView extends TextFileView {
         store.text = data
 
         if (this.firstInit) {
+            let lastPos = await this.plugin.frontManager.getFrontMatter(this.file, "langr-pos")
             this.vueapp = createApp(ReadingArea)
+            this.vueapp.config.globalProperties.lastPos = lastPos
             this.vueapp.config.globalProperties.plugin = this.plugin
             this.vueapp.config.globalProperties.data = this.data
             this.vueapp.config.globalProperties.view = this
