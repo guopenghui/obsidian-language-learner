@@ -102,7 +102,7 @@ export default {
     "Database Name": "数据库名称",
     "Reopen": "重启",
     // "Change": "Change",
-    "Reopen DB after changing database name": "改名后点击重启数据库",
+    "Reopen DB after changing database name": "切换数据库后点击按钮重启数据库",
     "Import & Export": "导入导出数据",
     "Warning: Import will override current database": "警告: 导入会覆盖掉当前的数据库",
     "Import": "导入",

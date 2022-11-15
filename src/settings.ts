@@ -192,7 +192,7 @@ export class SettingTab extends PluginSettingTab {
                 })
             )
 
-
+        // 销毁数据库
         new Setting(containerEl)
             .setName(t("Destroy Database"))
             .setDesc(t("Destroy all stuff and start over"))
@@ -205,7 +205,9 @@ export class SettingTab extends PluginSettingTab {
                         t("Are you sure you want to destroy your database?"),
                         async () => {
                             await this.plugin.db.destroyAll()
-                            new Notice("啊啊啊")
+                            new Notice("已清空")
+                            this.plugin.db = new LocalDb(this.plugin)
+                            this.plugin.db.open()
                         })
                     modal.open()
                 })

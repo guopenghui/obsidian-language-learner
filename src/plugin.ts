@@ -85,6 +85,7 @@ export default class LanguageLearner extends Plugin {
 
     onunload() {
         this.app.workspace.detachLeavesOfType(SEARCH_PANEL_VIEW);
+        this.db.close()
         this.server?.close()
     }
 

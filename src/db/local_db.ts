@@ -283,8 +283,7 @@ export class LocalDb extends DbProvider {
     }
 
     async destroyAll() {
-        await this.idb.delete()
-        this.idb.open()
+        return this.idb.delete()
     }
 }
 

@@ -102,7 +102,7 @@ export default {
     "Database Name": "Database Name",
     "Reopen": "Reopen",
     // "Change": "Change",
-    "Reopen DB after changing database name": "Reopen app after changing database name",
+    "Reopen DB after changing database name": "Reopen app after switch database(when change database name)",
     "Import & Export": "Import & Export",
     "Warning: Import will override current database": "Warning: Import will override current database",
     "Import": "Import",
