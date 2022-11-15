@@ -109,6 +109,8 @@ export default {
     "Get all ignores": "获取所有无视单词",
     "Get all non-ignores": "获取所有非无视单词",
     "Copied to the clipboard": "已复制到剪贴板",
+    "Export Word": "导出单词",
+    "Export Word and Phrase": "导出单词和短语",
 
     "Reading Mode": "阅读模式",
     "Default Paragraphs": "每页默认段数",

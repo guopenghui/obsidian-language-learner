@@ -109,6 +109,8 @@ export default {
     "Get all ignores": "Get all ignores",
     "Get all non-ignores": "Get all non-ignores",
     "Copied to clipboard": "Copied to clipboard",
+    "Export Word": "Export Word",
+    "Export Word and Phrase": "Export Word and Phrase",
 
     "Reading Mode": "Reading Mode",
     "Default Paragraphs": "Default paragraphs",

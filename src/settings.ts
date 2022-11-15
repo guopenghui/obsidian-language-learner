@@ -182,7 +182,15 @@ export class SettingTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName(t("Get all non-ignores"))
             .addButton(button => button
-                .setButtonText(t("Export"))
+                .setButtonText(t("Export Word"))
+                .onClick(async () => {
+                    let words = await this.plugin.db.getAllExpressionSimple(true)
+                    let ignores = words.filter(w => (w.status !== 0 && w.t !== "PHRASE")).map(w => w.expression)
+                    await navigator.clipboard.writeText(ignores.join("\n"))
+                    new Notice(t("Copied to clipboard"))
+                }))
+            .addButton(button => button
+                .setButtonText(t("Export Word and Phrase"))
                 .onClick(async () => {
                     let words = await this.plugin.db.getAllExpressionSimple(true)
                     let ignores = words.filter(w => w.status !== 0).map(w => w.expression)
@@ -351,8 +359,6 @@ export class SettingTab extends PluginSettingTab {
                     this.display()
                 })
             )
-
-        if (!this.plugin.settings.self_server) return
 
         new Setting(containerEl)
             .setName(t("Server Port"))
