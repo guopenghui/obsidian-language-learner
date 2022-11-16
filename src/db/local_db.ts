@@ -167,9 +167,9 @@ export class LocalDb extends DbProvider {
             date: moment().unix()
         }
         if (stored) {
-            this.idb.expressions.update(stored.id, updatedWord)
+            await this.idb.expressions.update(stored.id, updatedWord)
         } else {
-            this.idb.expressions.add(updatedWord)
+            await this.idb.expressions.add(updatedWord)
         }
 
         return 200

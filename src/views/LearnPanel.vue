@@ -1,6 +1,7 @@
 <template>
 	<div id="langr-learn-panel">
-		<NConfigProvider :theme="theme">
+		<NConfigProvider :theme="theme" :theme-overrides="themeOverrides">
+			<!-- <NThemeEditor> -->
 			<NForm
 				:model="model"
 				label-placement="top"
@@ -15,6 +16,7 @@
 					path="expression"
 				>
 					<NInput
+						size="small"
 						v-model:value="model.expression"
 						:placeholder="t('A word or a phrase')"
 					/>
@@ -26,6 +28,7 @@
 					path="meaning"
 				>
 					<NInput
+						size="small"
 						v-model:value="model.meaning"
 						:placeholder="t('A short definition')"
 						type="textarea"
@@ -74,6 +77,7 @@
 					path="tags"
 				>
 					<NSelect
+						size="small"
 						v-model:value="model.tags"
 						filterable
 						multiple
@@ -96,6 +100,7 @@
 						</template>
 						<template #="{ index, value }">
 							<NInput
+								size="small"
 								type="textarea"
 								:placeholder="t('Write a new note')"
 								v-model:value="model.notes[index]"
@@ -117,14 +122,12 @@
 					</template>
 					<template #="{ index, value }">
 						<div
-							style="
-								display: flex;
+							style="display: flex;
 								flex-direction: column;
 								flex: 1;
 								border: 2px solid gray;
 								border-radius: 3px;
-								padding: 3px;
-							"
+								padding: 3px;"
 						>
 							<NFormItem
 								:show-label="false"
@@ -132,6 +135,7 @@
 								:rule="sourceRule"
 							>
 								<NInput
+									size="small"
 									type="textarea"
 									v-model:value="model.sentences[index].text"
 									:placeholder="t('Origin sentence')"
@@ -144,6 +148,7 @@
 								:path="`sentences[${index}].trans`"
 							>
 								<NInput
+									size="small"
 									type="textarea"
 									v-model:value="model.sentences[index].trans"
 									:placeholder="t('Translation (Optional)')"
@@ -156,6 +161,7 @@
 								:path="`sentences[${index}].origin`"
 							>
 								<NInput
+									size="small"
 									type="textarea"
 									v-model:value="
 										model.sentences[index].origin
@@ -173,19 +179,19 @@
 				<NButton
 					style="--n-width: 100%"
 					attr-type="submit"
-					size="large"
 					@click="submit"
 					:loading="submitLoading"
 					>{{ t("Submit") }}</NButton
 				>
 			</div>
+		<!-- </NThemeEditor> -->
 		</NConfigProvider>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { ref, StyleValue, onMounted, onUnmounted, getCurrentInstance, toRaw, computed } from "vue"
 import { Notice } from "obsidian"
+import { ref, onMounted, onUnmounted, getCurrentInstance, computed, CSSProperties } from "vue"
 import {
 	NForm,
 	NFormItem,
@@ -198,7 +204,9 @@ import {
 	NSelect,
 	SelectOption,
 	NConfigProvider,
+	// NThemeEditor,
 	darkTheme,
+	GlobalThemeOverrides,
 } from "naive-ui"
 
 import { ExpressionInfo, Sentence } from "../db/interface"
@@ -216,6 +224,28 @@ const plugin: Plugin = getCurrentInstance().appContext.config.globalProperties.p
 const theme = computed(() => {
 	return store.dark? darkTheme: null
 })
+
+// 样式设置
+const themeOverrides: GlobalThemeOverrides = {
+  "common": {},
+  "Form": {
+    "labelFontSizeTopMedium": "15px",
+    "feedbackFontSizeMedium": "13px",
+    "blankHeightMedium": "5px",
+    "feedbackHeightMedium": "22px"
+  },
+  "Radio": {
+    "buttonBorderRadius": "5px",
+    "fontSizeMedium": "13px",
+    "fontSizeSmall": "13px",
+    "buttonHeightSmall": "22px"
+  },
+  "Input": {
+    "fontSizeSmall": "12px"
+  }
+}
+
+
 
 //表单数据
 let model = ref<ExpressionInfo>({
@@ -256,10 +286,10 @@ let sourceRule = {
 	message: "At least input a source sentence",
 }
 
-let labelStyle: StyleValue = {
-	fontSize: "16px",
+let labelStyle: CSSProperties = {
+	// fontSize: "16px",
 	fontWeight: "bold",
-	padding: "0 0 8px 2px",
+	// padding: "0 0 8px 2px",
 }
 
 function onCreateSentence() {

@@ -118,6 +118,10 @@ export default {
     "Auto translate sentences": "用机器翻译自动翻译例句",
     "Open count bar": "开启单词计数条(较影响打开文章时的性能)",
     "Count the word number of different type of article": "计算文章中各种词的数目和占比",
+    "Font Size": "字体大小",
+    "Like 15px or 1.5em": "比如 15px 或 1.5em",
+    "Font Family": "字体",
+    "Line Height": "行高",
 
     "Auto Completion": "自动补全",
     "Column delimiter": "列分隔符",

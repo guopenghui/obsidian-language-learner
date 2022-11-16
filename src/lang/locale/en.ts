@@ -118,6 +118,10 @@ export default {
     "Auto translate sentences": "Auto translate sentences",
     "Open count bar": "Open count bar",
     "Count the word number of different type of article": "Count the word number of different type of article",
+    "Font Size": "Font Size",
+    "Like 15px or 1.5em": "Like 15px or 1.5em",
+    "Font Family": "Font Family",
+    "Line Height": "Line Height",
 
     "Auto Completion": "Auto Completion",
     "Column delimiter": "Column delimiter",

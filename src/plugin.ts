@@ -43,6 +43,7 @@ export default class LanguageLearner extends Plugin {
     parser: TextParser;
     markdownButtons: Record<string, HTMLElement> = {}
     frontManager: FrontMatterManager;
+    store: typeof store = store
 
     async onload() {
         // 读取设置
@@ -72,6 +73,8 @@ export default class LanguageLearner extends Plugin {
         // 	callback: () => new Notice("hello!")
         // })
 
+        this.storeSettings()
+
         this.addCommands()
         this.registerCustomViews()
         this.registerReadingToggle()
@@ -87,6 +90,13 @@ export default class LanguageLearner extends Plugin {
         this.app.workspace.detachLeavesOfType(SEARCH_PANEL_VIEW);
         this.db.close()
         this.server?.close()
+    }
+
+    storeSettings() {
+        this.store.dark = document.body.hasClass("theme-dark")
+        this.store.fontSize = this.settings.font_size
+        this.store.fontFamily = this.settings.font_family
+        this.store.lineHeight = this.settings.line_height
     }
 
     addCommands() {
@@ -125,7 +135,7 @@ export default class LanguageLearner extends Plugin {
             "book",
             t("Open word search panel"),
             (evt) => {
-                this.activateView(SEARCH_PANEL_VIEW);
+                this.activateView(SEARCH_PANEL_VIEW, "left");
             }
         );
 
@@ -298,7 +308,7 @@ export default class LanguageLearner extends Plugin {
         const pluginSelf = this
         pluginSelf.register(
             around(MarkdownView.prototype, {
-                onMoreOptionsMenu(next) {
+                onPaneMenu(next) {
                     return function (m: Menu) {
                         const file = this.file;
                         const cache = file.cache
@@ -361,7 +371,7 @@ export default class LanguageLearner extends Plugin {
     }
 
     async queryWord(word: string, target?: HTMLElement): Promise<void> {
-        await this.activateView(SEARCH_PANEL_VIEW);
+        await this.activateView(SEARCH_PANEL_VIEW, "left");
         const view = this.app.workspace.getLeavesOfType(
             SEARCH_PANEL_VIEW
         )[0].view as SearchPanelView;
@@ -401,7 +411,7 @@ export default class LanguageLearner extends Plugin {
                 if (!selection) return;
 
                 evt.preventDefault();
-                let menu = new Menu(this.app);
+                let menu = new Menu();
 
                 addMemu(menu, selection);
 
@@ -533,12 +543,19 @@ export default class LanguageLearner extends Plugin {
         await this.saveData(this.settings);
     }
 
-    async activateView(VIEW_TYPE: string) {
+    async activateView(VIEW_TYPE: string, side: "left" | "right" = "right") {
         if (this.app.workspace.getLeavesOfType(VIEW_TYPE).length === 0) {
-            await this.app.workspace.getLeftLeaf(false).setViewState({
-                type: VIEW_TYPE,
-                active: true,
-            });
+            if (side === "left") {
+                await this.app.workspace.getLeftLeaf(false).setViewState({
+                    type: VIEW_TYPE,
+                    active: true,
+                });
+            } else {
+                await this.app.workspace.getRightLeaf(false).setViewState({
+                    type: VIEW_TYPE,
+                    active: true,
+                });
+            }
         }
 
         this.app.workspace.revealLeaf(

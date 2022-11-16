@@ -15,8 +15,10 @@
             </div>
             <!-- 阅读区 -->
             <div class="text-area" 
-                style="flex:1; overflow:auto; padding-left: 5%; padding-right: 5%;" 
-                v-html="renderedText"/>
+                style="flex:1; overflow:auto; padding-left: 5%; padding-right: 5%;"
+                :style="{fontSize: store.fontSize, fontFamily: store.fontFamily}"
+                v-html="renderedText"
+                />
             <!-- 底栏 -->
             <div class="pagination" style="padding-top:10px; border-top: 2px solid gray; display:flex; flex-direction: column;">
                 <NPagination 
@@ -162,6 +164,9 @@ watch([page,psChange,refreshHandle], async ([p,pc],[prev_p,prev_pc]) => {
         plugin.frontManager.setFrontMatter(view.file, "langr-pos", `${(p-1)*pageSize.value + 1}`)
     }
 }, {immediate: true})
+
+
+// 设置阅读文字样式
 
 
 // 添加无视单词

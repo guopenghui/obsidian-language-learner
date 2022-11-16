@@ -23,7 +23,7 @@
 
 #langr-reading span.word:hover,
 #langr-reading span.phrase:hover{
-    border: 1px solid deepskyblue;
+    border-color: deepskyblue;
 }
 
 #langr-reading span.new {

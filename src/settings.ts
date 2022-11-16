@@ -11,16 +11,24 @@ export interface MyPluginSettings {
     port: number;
     self_server: boolean;
     self_port: number;
+    //search
     function_key: "ctrlKey" | "altKey" | "metaKey" | "disable";
+    // reading
+    word_count: boolean;
+    default_paragraphs: string;
+    font_size: string;
+    font_family: string;
+    line_height: string;
+    use_machine_trans: boolean;
+    //indexed db
+    db_name: string;
+    //text db
     word_database: string;
     review_database: string;
-    db_name: string;
-    review_prons: "0" | "1"
-    default_paragraphs: string
-    col_delimiter: "," | "\t" | "|"
-    use_machine_trans: boolean;
-    word_count: boolean;
+    col_delimiter: "," | "\t" | "|";
     auto_refresh_db: boolean;
+    // review
+    review_prons: "0" | "1";
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -28,16 +36,24 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     port: 8086,
     self_server: false,
     self_port: 3002,
+    // search
     function_key: "ctrlKey",
+    // indexed
+    db_name: "WordDB",
+    // text db
     word_database: null,
     review_database: null,
-    db_name: "WordDB",
-    review_prons: "0",
-    default_paragraphs: "4",
     col_delimiter: ",",
+    auto_refresh_db: true,
+    // reading
+    default_paragraphs: "4",
+    font_size: "15px",
+    font_family: '"Times New Roman"',
+    line_height: "1.8em",
     use_machine_trans: true,
     word_count: true,
-    auto_refresh_db: true,
+    // review
+    review_prons: "0",
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -277,6 +293,41 @@ export class SettingTab extends PluginSettingTab {
 
     readingSettings(containerEl: HTMLElement) {
         containerEl.createEl("h3", { text: t("Reading Mode") })
+
+        new Setting(containerEl)
+            .setName(t("Font Size"))
+            .setDesc(t("Like 15px or 1.5em"))
+            .addText(text => text
+                .setValue(this.plugin.settings.font_size)
+                .onChange(debounce(async (value) => {
+                    this.plugin.settings.font_size = value
+                    this.plugin.store.fontSize = value
+                    await this.plugin.saveSettings()
+                }, 500))
+            )
+
+        new Setting(containerEl)
+            .setName(t("Font Family"))
+            .addText(text => text
+                .setValue(this.plugin.settings.font_family)
+                .onChange(debounce(async (value) => {
+                    this.plugin.settings.font_family = value
+                    this.plugin.store.fontFamily = value
+                    await this.plugin.saveSettings()
+                }, 500))
+            )
+
+        new Setting(containerEl)
+            .setName(t("Line Height"))
+            .addText(text => text
+                .setValue(this.plugin.settings.line_height)
+                .onChange(debounce(async (value) => {
+                    this.plugin.settings.line_height = value
+                    this.plugin.store.lineHeight = value
+                    await this.plugin.saveSettings()
+                }, 500))
+            )
+
         new Setting(containerEl)
             .setName(t("Default Paragraphs"))
             .addDropdown(num => num
