@@ -80,7 +80,8 @@ export default class Server {
         let type = this.parseUrl(req.url)
         switch (type) {
             case "ECHO": {
-                console.log("hello from chrome")
+                // console.log("hello from chrome")
+                res.setHeader("Keep-Alive", "timeout=0")
                 res.statusCode = 200;
                 res.end("hi")
                 break

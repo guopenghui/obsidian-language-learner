@@ -31,6 +31,7 @@ import Server from "./api/server"
 
 import { DEFAULT_SETTINGS, MyPluginSettings, SettingTab } from "./settings";
 import store from "./views/store"
+import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
 
 export const FRONT_MATTER_KEY: string = "langr";
 
@@ -73,6 +74,8 @@ export default class LanguageLearner extends Plugin {
         // 	callback: () => new Notice("hello!")
         // })
 
+        await this.replacePDF()
+
         this.storeSettings()
 
         this.addCommands()
@@ -86,10 +89,31 @@ export default class LanguageLearner extends Plugin {
         }))
     }
 
-    onunload() {
+    async onunload() {
         this.app.workspace.detachLeavesOfType(SEARCH_PANEL_VIEW);
         this.db.close()
         this.server?.close()
+        if (await app.vault.adapter.exists(".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html")) {
+            this.registerExtensions([PDF_FILE_EXTENSION], "pdf")
+        }
+    }
+
+    async replacePDF() {
+        if (await app.vault.adapter.exists(".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html")) {
+            this.registerView(VIEW_TYPE_PDF, (leaf) => {
+                return new PDFView(leaf);
+            });
+
+            (this.app as any).viewRegistry.unregisterExtensions([PDF_FILE_EXTENSION])
+            this.registerExtensions([PDF_FILE_EXTENSION], VIEW_TYPE_PDF);
+
+            this.registerDomEvent(window, "message", (ev) => {
+                if (ev.data.type === "search") {
+                    this.queryWord(ev.data.selection)
+                }
+            })
+        }
+
     }
 
     storeSettings() {
