@@ -6,8 +6,7 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"version": "node version-bump.mjs && git add manifest.json versions.json",
-		"minify": "node node_modules\\esbuild\\bin\\esbuild --minify --outfile=main.min.js main.js"
+		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
 	"keywords": [],
 	"author": "",
@@ -35,10 +34,12 @@
 		"@vue/compiler-sfc": "^3.2.31",
 		"builtin-modules": "^3.2.0",
 		"esbuild": "0.13.12",
+		"esbuild-plugin-svg": "^0.1.0",
 		"esbuild-plugin-vue3": "^0.3.0",
 		"hash-sum": "^2.0.0",
 		"naive-ui": "^2.33.0",
 		"obsidian": "latest",
+		"sass": "^1.56.1",
 		"tslib": "2.3.1",
 		"typescript": "4.4.4"
 	}

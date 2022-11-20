@@ -7,7 +7,6 @@ export class FrontMatterManager {
 
     constructor(app: App) {
         this.app = app;
-        (app as any).FM = this
     }
 
     // 解析
@@ -34,9 +33,9 @@ export class FrontMatterManager {
         let newText = ""
         let newFront = stringifyYaml(fm)
         if (match) {
-            newText = text.replace(/^\n*---\n([\s\S]+)\n---/, `---\n${newFront}\n---`)
+            newText = text.replace(/^\n*---\n([\s\S]+)\n---/, `---\n${newFront}---`)
         } else {
-            newText = `---\n${newFront}\n---\n\n` + text
+            newText = `---\n${newFront}---\n\n` + text
         }
 
         this.app.vault.modify(file, newText)

@@ -1,7 +1,9 @@
 import esbuild from "esbuild";
 import process from "process";
+import fs from "fs"
 import builtins from 'builtin-modules'
 import vue from 'esbuild-plugin-vue3'
+import svg from "esbuild-plugin-svg"
 
 const banner =
 	`/*
@@ -12,14 +14,15 @@ if you want to view the source, please visit the github repository of this plugi
 
 const prod = (process.argv[2] === 'production');
 
-esbuild.build({
+await esbuild.build({
 	banner: {
 		js: banner,
 	},
 	plugins: [
 		vue(),
+		svg(),
 	],
-	entryPoints: ['main.ts'],
+	entryPoints: ['./src/plugin.ts'],
 	bundle: true,
 	external: [
 		'obsidian',
@@ -51,6 +54,23 @@ esbuild.build({
 	target: 'es2016',
 	logLevel: "info",
 	sourcemap: prod ? false : 'inline',
+	minify: prod ? true : false,
 	treeShaking: true,
 	outfile: 'main.js',
 }).catch(() => process.exit(1));
+
+await esbuild.build({
+	entryPoints: ["./src/main.css"],
+	outfile: "styles.css",
+	plugins: [svg()],
+	watch: !prod,
+	bundle: true,
+	allowOverwrite: true,
+	minify: false,
+})
+
+// if (!prod) {
+// 	fs.rm("./main.css", () => {
+// 		console.log("Build completed successfully.")
+// 	})
+// }

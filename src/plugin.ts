@@ -32,6 +32,7 @@ import Server from "./api/server"
 import { DEFAULT_SETTINGS, MyPluginSettings, SettingTab } from "./settings";
 import store from "./views/store"
 import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
+import { playAudio } from "./utils/helpers";
 
 export const FRONT_MATTER_KEY: string = "langr";
 
@@ -530,7 +531,7 @@ export default class LanguageLearner extends Plugin {
                 target.classList.contains("select") ||
                 target.classList.contains("phrase")
             ) {
-                this.queryWord(target.innerHTML, target);
+                this.queryWord(target.textContent, target);
             } else if (
                 !!target.matchParent(".text-area") &&
                 !target.matchParent(".stns")
@@ -550,7 +551,7 @@ export default class LanguageLearner extends Plugin {
                 let word = target.textContent;
                 let accent = this.settings.review_prons
                 let wordUrl = `http://dict.youdao.com/dictvoice?type=${accent}&audio=` + word.split(" ").join("%20");
-                (new Audio(wordUrl)).play();
+                playAudio(wordUrl);
             }
         });
     }

@@ -1,0 +1,21 @@
+/* Input your styles */
+
+/* 复习卡片中的发音 */
+#sr-flashcard-view h4 {
+    cursor: pointer;
+}
+#sr-flashcard-view h4:hover {
+    color: deeppink;
+    transition: color 0.3s ease;
+}
+
+.speaker {
+    height: 13px;
+    width: 8px;
+    display: inline-block;
+    vertical-align: baseline;
+    margin: 0 3px;
+    background-color: #d54b21;
+    clip-path: polygon(0 30%, 30% 30%, 89% 0, 89% 100%, 31% 69%, 0 69%);
+}
+

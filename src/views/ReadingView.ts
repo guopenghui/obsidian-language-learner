@@ -54,7 +54,7 @@ export class ReadingView extends TextFileView {
     }
 
 
-    onMoreOptionsMenu(menu: Menu): void {
+    onPaneMenu(menu: Menu): void {
         menu
             .addItem((item) => {
                 item
@@ -65,7 +65,7 @@ export class ReadingView extends TextFileView {
                     })
             })
             .addSeparator()
-        super.onMoreOptionsMenu(menu)
+        super.onPaneMenu(menu, "")
     }
 
     backToMarkdown(): void {

@@ -1,5 +1,5 @@
 <template>
-    <div class="container" @click="handleClick">
+    <div id="langr-search" @click="handleClick">
        <NConfigProvider :theme="theme">
             <div class="search-bar" style="display:flex;">
                 <NButtonGroup size="small">
@@ -11,7 +11,7 @@
             </div>
         </NConfigProvider> 
         <KeepAlive>
-            <Component :is="Youdao" :word="word"></Component>
+            <Component :is="component" :word="word"></Component>
         </KeepAlive>
     </div>
 </template>
@@ -21,8 +21,15 @@ import {ref, computed, onMounted, onUnmounted} from "vue"
 import {NConfigProvider, NButton, NButtonGroup, NInput, darkTheme} from "naive-ui"
 
 import Youdao from "../dictionary/youdao/View.vue"
+import Cambridge from "../dictionary/cambridge/View.vue"
 import {t} from "../lang/helper"
 import store from "./store"
+
+let component = computed(() => {
+    let which = 1
+    if(which === 0) return Youdao
+    else if(which === 1) return Cambridge
+})
 
 // 切换明亮/黑暗模式
 const theme = computed(() => {
@@ -81,3 +88,13 @@ onUnmounted(() => {
     removeEventListener('obsidian-langr-search', onSearch)
 })
 </script>
+
+<style lang="scss">
+#langr-search {
+    font-size: 0.8em;
+    user-select: text;
+    button {
+        margin-right: 5px;
+    }
+}
+</style>

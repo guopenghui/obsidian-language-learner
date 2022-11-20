@@ -51,3 +51,32 @@ let styleC = computed(() => {
   return {flex: props.ignore}
 })
 </script>
+
+<style lang="scss">/*计数条*/
+.count-bar {
+    border: 2px solid black;
+    height: 20px;
+    width: 80%;
+    display: flex;
+    /* font-size: 0.3em; */
+    text-align: center;
+    color: black;
+    /* font-weight: bold; */
+    cursor: pointer;
+    line-height: 1em;
+    border-radius: 10px;
+    .b1 {
+      background-color: rgba(173, 216, 230, 0.734);
+      border-top-left-radius:10px;
+      border-bottom-left-radius:10px;
+    }
+    .b2 {
+      background-color: rgba(255, 166, 0, 0.705);
+    }
+    .b3 {
+      background-color: rgba(211, 211, 211, 0.747);
+      border-top-right-radius:10px;
+      border-bottom-right-radius:10px;
+    }
+}
+</style>

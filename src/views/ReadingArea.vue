@@ -190,3 +190,50 @@ async function addIgnores() {
 
 
 </script>
+
+<style lang="scss">
+#langr-reading {
+    user-select: none;
+    .text-area {
+        span.word {
+            user-select: text;    
+            border: 1px solid transparent;
+            cursor:pointer;
+            border-radius: 4px;
+            &:hover {
+                border-color: deepskyblue;
+            }
+       } 
+        span.phrase {
+            background-color: transparent;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            &:hover {
+                border-color: deepskyblue;
+            }
+        }
+        span.stns {
+            border: 1px solid transparent;
+        }
+        span {
+            .new { background-color:#add8e644;}    
+            .learning {background-color: #ff980055;}
+            .familiar {background-color: #ffeb3c55;}
+            .known {background-color: #9eda5855;}
+            .learned {background-color: #4cb05155;}
+        }      
+        .select {
+            background-color: #90ee9060;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            &:hover {border: 1px solid green;}        
+        }
+    }
+}
+</style>
