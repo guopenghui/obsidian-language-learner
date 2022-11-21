@@ -66,7 +66,7 @@ export const search = async (
   )
     .catch(handleNetWorkError)
     .then(doc => checkResult(doc, options))
-    .catch(() => { new Notice("Dictionary No Result.😟") })
+    .catch(handleNoResult)
 }
 
 function checkResult(

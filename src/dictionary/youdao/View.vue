@@ -2,7 +2,7 @@
     <div id="youdao">
         <h2>{{ word }}</h2>
         <div class="pronunces">
-            <span class="pron" v-for="i in prons.length" @click="play(i - 1)">{{ prons[i - 1].phsym }}</span>
+            <span class="pron" v-for="i in prons.length" @click="playAudio(prons[i - 1].url)">{{ prons[i - 1].phsym }}</span>
         </div>
         <div class="meaning" style="margin-bottom: 10px;" v-html="meaningHTML"></div>
         <div class="translation" v-html="translationHTML"/>
@@ -19,10 +19,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick} from 'vue'
 
 import Collins from "./YDCollins.vue"
 import { search, YoudaoResultLex } from "./engine"
+import { playAudio } from "../../utils/helpers"
 import { t } from "../../lang/helper"
 
 // import Plugin from "../plugin"
@@ -33,9 +34,11 @@ const props = defineProps<{
     theme?: any,
 }>()
 
-function play(i: number) {
-    (new Audio(prons.value[i].url)).play()
-}
+const emits = defineEmits<{
+    (event: "loading", status:{ id: string, loading: boolean }): void
+}>()
+
+let loading = ref(true)
 
 let word = ref("")
 let meaningHTML = ref("")
@@ -48,31 +51,45 @@ let wordGroupHTML = ref("")
 let relWordHTML = ref("")
 
 async function searchWord(text: string) {
-    let res = await search(text)
-    if (!res) {
-        return
+    loading.value = true
+    emits("loading", { id: "youdao", loading: loading.value})
+    try {
+        let res = await search(text)
+        if (!res) {
+            return
+        }
+        let result = res.result as YoudaoResultLex
+        word.value = result.title
+        meaningHTML.value = result.basic
+        translationHTML.value = result.translation
+        prons.value = result.prons
+        collins.value = result.collins
+        discriminationHTML.value = result.discrimination
+        wordGroupHTML.value = result.wordGroup
+        relWordHTML.value = result.relWord
+
+        await nextTick() 
+        loading.value = false
+        emits("loading", { id: "youdao", loading: loading.value})
+    } catch (e) {
+        
     }
-    let result = res.result as YoudaoResultLex
-    word.value = result.title
-    meaningHTML.value = result.basic
-    translationHTML.value = result.translation
-    prons.value = result.prons
-    collins.value = result.collins
-    discriminationHTML.value = result.discrimination
-    wordGroupHTML.value = result.wordGroup
-    relWordHTML.value = result.relWord
 }
 
 watch(
     () => props.word,
-    (newVal) => {
-        searchWord(newVal)
+    (word) => {
+        searchWord(word)
     }
 )
 </script>
 
 <style lang="scss">
 #youdao{
+    h2 {
+        font-size: 1.3em;
+        font-weight: 700;
+    }
     .pron {
         margin-right: 15px;
         color: deeppink;

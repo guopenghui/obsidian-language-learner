@@ -10,26 +10,53 @@
                 <NButton size="small" @click="handleSearch" style="margin-left:5px;">{{ t("Search") }}</NButton>
             </div>
         </NConfigProvider> 
-        <KeepAlive>
-            <Component :is="component" :word="word"></Component>
-        </KeepAlive>
+        <DictItem v-for="(cp, i) in components" :loading="loadings[i]" :name="cp.name">
+            <KeepAlive>
+                <Component @loading="loading" :is="cp.type" :word="word"></Component>
+            </KeepAlive>
+        </DictItem>
     </div>
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, onUnmounted} from "vue"
+import {ref, computed, onMounted, onUnmounted, getCurrentInstance} from "vue"
 import {NConfigProvider, NButton, NButtonGroup, NInput, darkTheme} from "naive-ui"
 
-import Youdao from "../dictionary/youdao/View.vue"
-import Cambridge from "../dictionary/cambridge/View.vue"
-import {t} from "../lang/helper"
+import DictItem from "./DictItem.vue"
+import { t } from "../lang/helper"
 import store from "./store"
+import PluginType from "../plugin"
+import { dicts } from "../dictionary/list"
 
-let component = computed(() => {
-    let which = 1
-    if(which === 0) return Youdao
-    else if(which === 1) return Cambridge
+const plugin = getCurrentInstance().appContext.config.globalProperties.plugin as PluginType
+
+let collection = Object.keys(plugin.settings.dictionaries)
+    .map((dict: keyof typeof dicts) => {
+        return {
+            id: dict,
+            priority: plugin.settings.dictionaries[dict].priority,
+            name: dicts[dict].name,
+        }
+    })
+    .filter((dict) => plugin.settings.dictionaries[dict.id].enable)
+collection.sort((a,b) => a.priority - b.priority)
+
+let components = collection.map((dict) => {
+    return {
+        name: dict.name, 
+        type: dicts[dict.id].Cp,
+    }
 })
+
+let map: {[K in string]: number} = {}
+collection.forEach((v,i) => {
+    map[v.id] = i
+})
+
+let loadings = ref<boolean[]>(Array(2).fill(true))
+function loading({id, loading}: {id: string, loading: boolean}) {
+    loadings.value[map[id]] = loading
+}
 
 // 切换明亮/黑暗模式
 const theme = computed(() => {
@@ -46,6 +73,7 @@ function switchHistory(direction: "prev"|"next") {
         Math.min(historyIndex.value + (direction==="prev"?-1:1), history.length-1)
     )
     word.value = history[historyIndex.value]
+    inputWord.value = history[historyIndex.value]
 }
 function appendHistory() {
     if(historyIndex.value < history.length - 1) {
@@ -93,8 +121,11 @@ onUnmounted(() => {
 #langr-search {
     font-size: 0.8em;
     user-select: text;
-    button {
-        margin-right: 5px;
+    .search-bar {
+        margin-bottom: 5px;
+        button {
+            margin-right: 5px;
+        }
     }
 }
 </style>

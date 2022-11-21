@@ -19,6 +19,81 @@
 }
 
 /* main.css */
+.dict-item header {
+  display: flex;
+  border-top: 2px dashed gray;
+  height: 22px;
+}
+.dict-item header .empty-area {
+  flex: 1;
+}
+.dict-item header button {
+  width: 19px;
+  height: 19px;
+  background: 0 0;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: none;
+}
+.dict-item header button:hover {
+  box-shadow: none;
+}
+.dict-item header button .fold-arrow {
+  transition: transform 0.4s;
+  padding: 3px;
+  fill: gray;
+}
+.dict-item .dict-item-body {
+  position: relative;
+  overflow: hidden;
+  padding-top: 10px;
+  transition: max-height 0.5s;
+}
+.dict-item .dict-item-body .fold-mask {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 50px;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: linear-gradient(rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.5) 60%, var(--background-secondary) 100%);
+  cursor: pointer;
+}
+.dict-item .dict-item-body .fold-mask .fold-mask-arrow {
+  position: absolute;
+  z-index: 10;
+  bottom: 0;
+  margin: 0 auto;
+}
+.dict-item:not(.open) .fold-mask {
+  display: none;
+}
+.dict-item:not(.open) .dict-item-body {
+  max-height: 10px;
+}
+.dict-item.expand .fold-mask {
+  display: none;
+}
+.dict-item.expand .dict-item-body {
+  max-height: 5000px;
+}
+.dict-item.open .fold-arrow {
+  transform: rotate(-90deg);
+  transition: transform 0.4s;
+}
+.dict-item.open:not(.expand) .dict-item-body {
+  max-height: 250px;
+}
+.dict-item:not(.loading) .dict-loading {
+  display: none;
+}
+#youdao h2 {
+  font-size: 1.3em;
+  font-weight: 700;
+}
 #youdao .pron {
   margin-right: 15px;
   color: deeppink;
@@ -95,6 +170,8 @@
 #cambridge h3.dsense_h {
   color: inherit;
   font-size: 1.1em;
+  margin-top: 10px;
+  margin-bottom: 3px;
 }
 #cambridge .di-title {
   font-size: 1.3em;
@@ -199,7 +276,10 @@
   font-size: 0.8em;
   user-select: text;
 }
-#langr-search button {
+#langr-search .search-bar {
+  margin-bottom: 5px;
+}
+#langr-search .search-bar button {
   margin-right: 5px;
 }
 .count-bar {

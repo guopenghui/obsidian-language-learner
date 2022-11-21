@@ -74,8 +74,11 @@ export default {
 
     "Translate": "查词",
     "Word Select": "划词翻译",
-    "Press function key and select text to translate": "按下功能键同时划词即可打开翻译",
+    "Press function key and select text to translate": "按下功能键同时划词或双击单词即可打开翻译",
     "Disable": "关闭",
+    "Dictionaries": "词典",
+    "Youdao": "有道词典",
+    "Cambridge": "剑桥词典",
 
     "Word Database Path": "单词数据库路径",
     "Choose a md file as word database for auto-completion": "选择一个md文件作为单词数据库以自动补全",

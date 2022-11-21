@@ -12,30 +12,44 @@
  
 
 <script setup lang="ts">
-import { Notice } from "obsidian"
+import {Notice} from "obsidian"
 import { playAudio } from "src/utils/helpers";
-import { ref, watch, onMounted, onUnmounted} from "vue"
+import { ref, watch, onMounted, onUnmounted, nextTick} from "vue"
 import { CambridgeResult, search } from "./engine"
 const props = defineProps<{
     word: string
 }>()
-let word =ref("hello")
+
+const emits = defineEmits<{
+    (event: "loading", status:{ id: string, loading: boolean }): void
+}>()
+
+let loading = ref(true)
+
 let result = ref<CambridgeResult>([])
-watch(
-    // () => props.word,
-    word,
-    async (word) => {
-    // let res = await search(word)
+
+async function searchWord(text: string) {
+    loading.value = true
+    emits("loading", { id: "cambridge", loading: loading.value})
+
     try {
-        let res = await search(word)
+        let res = await search(text)
         result.value = res.result
+
+        await nextTick()
+        loading.value = false
+        emits("loading", { id: "cambridge", loading: loading.value})
     } catch(e) {
-        new Notice(e.message)
+        // new Notice(e.message)
     }
-}, { immediate: true})
+}
+
+
 watch(
     () => props.word,
-    (w) => word.value = w
+    (word) => {
+        searchWord(word)
+    }
 )
 
 onMounted(() => {
@@ -43,7 +57,7 @@ onMounted(() => {
     // 管理点击事件
     cam.addEventListener("click", (evt) => {
         let target = evt.target as HTMLElement
-        console.log(target)
+        // console.log(target)
         if(target.tagName === "HEADER" && target.hasClass("ca_h") || target.matchParent("header.ca_h")) {
             let section = target.matchParent("section")
             section.hasClass("expand")?
@@ -72,6 +86,8 @@ onMounted(() => {
     h3.dsense_h {
         color: inherit;
         font-size: 1.1em;
+        margin-top: 10px;
+        margin-bottom: 3px;
     }
     .di-title {
         font-size: 1.3em;

@@ -76,6 +76,9 @@ export default {
     "Word Select": "Word Select",
     "Press function key and select text to translate": "Press function key and select text to translate",
     "Disable": "Disable",
+    "Dictionaries": "Dictionaries",
+    "Youdao": "Youdao",
+    "Cambridge": "Cambridge",
 
     "Word Database Path": "Word Database Path",
     "Choose a md file as word database for auto-completion": "Choose a md file as word database for auto-completion",

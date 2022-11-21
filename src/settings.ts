@@ -5,6 +5,7 @@ import { LocalDb } from "./db/local_db"
 import Server from "./api/server"
 import LanguageLearner from "./plugin";
 import { t } from "./lang/helper"
+import { dicts } from "./dictionary/list";
 
 export interface MyPluginSettings {
     use_server: boolean;
@@ -13,6 +14,7 @@ export interface MyPluginSettings {
     self_port: number;
     //search
     function_key: "ctrlKey" | "altKey" | "metaKey" | "disable";
+    dictionaries: { [K in string]: { enable: boolean, priority: number } }
     // reading
     word_count: boolean;
     default_paragraphs: string;
@@ -38,6 +40,10 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     self_port: 3002,
     // search
     function_key: "ctrlKey",
+    dictionaries: {
+        "youdao": { enable: true, priority: 1 },
+        "cambridge": { enable: true, priority: 2 },
+    },
     // indexed
     db_name: "WordDB",
     // text db
@@ -139,6 +145,40 @@ export class SettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings()
                 })
             )
+
+        containerEl.createEl("h4", { text: t("Dictionaries") });
+
+        let createDictSetting = (id: string, name: string) => {
+            new Setting(containerEl)
+                .setName(name)
+                .addToggle(toggle => toggle
+                    .setValue(this.plugin.settings.dictionaries[id].enable)
+                    .onChange((value) => {
+                        this.plugin.settings.dictionaries[id].enable = value
+                        this.plugin.saveSettings()
+                    }))
+                .addDropdown(num => num
+                    .addOption("1", "1")
+                    .addOption("2", "2")
+                    .addOption("3", "3")
+                    .addOption("4", "4")
+                    .addOption("5", "5")
+                    .addOption("6", "6")
+                    .addOption("7", "7")
+                    .addOption("8", "8")
+                    .addOption("9", "9")
+                    .addOption("10", "10")
+                    .setValue(this.plugin.settings.dictionaries[id].priority.toString())
+                    .onChange(async (value: string) => {
+                        this.plugin.settings.dictionaries[id].priority = parseInt(value);
+                        await this.plugin.saveSettings()
+                    })
+                )
+        }
+
+        Object.keys(dicts).forEach((dict: keyof typeof dicts) => {
+            createDictSetting(dict, dicts[dict].name)
+        })
     }
 
 
