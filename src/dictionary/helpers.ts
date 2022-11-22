@@ -193,8 +193,9 @@ export function getHTML(
         node.querySelectorAll('img').forEach(fillLink)
     }
 
-    const fragment = sanitizeHTMLToDom(node.outerHTML)
-
+    let container = document.createElement('div')
+    container.appendChild(node)
+    const fragment = sanitizeHTMLToDom(container.outerHTML)
     const content = fragment.firstChild ? (fragment.firstChild as any)[mode] : ''
 
     return transform ? transform(content) : content

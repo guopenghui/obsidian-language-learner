@@ -53,8 +53,8 @@ collection.forEach((v,i) => {
     map[v.id] = i
 })
 
-let loadings = ref<boolean[]>(Array(2).fill(true))
-let shows = ref<boolean[]>(Array(2).fill(true))
+let loadings = ref<boolean[]>(Array(collection.length).fill(true))
+let shows = ref<boolean[]>(Array(collection.length).fill(true))
 function loading({id, loading, result}: {id: string, loading: boolean, result: boolean}) {
     loadings.value[map[id]] = loading
     shows.value[map[id]] = result

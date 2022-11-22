@@ -19,15 +19,15 @@
 }
 
 /* main.css */
-.dict-item header {
+.dict-item header.dict-item-header {
   display: flex;
   border-top: 2px dashed gray;
   height: 22px;
 }
-.dict-item header .empty-area {
+.dict-item header.dict-item-header .empty-area {
   flex: 1;
 }
-.dict-item header button {
+.dict-item header.dict-item-header button {
   color: rgb(236, 239, 244);
   width: 19px;
   height: 19px;
@@ -37,10 +37,10 @@
   cursor: pointer;
   box-shadow: none;
 }
-.dict-item header button:hover {
+.dict-item header.dict-item-header button:hover {
   box-shadow: none;
 }
-.dict-item header button .fold-arrow {
+.dict-item header.dict-item-header button .fold-arrow {
   transition: transform 0.4s;
   padding: 3px;
   fill: gray;
@@ -274,6 +274,25 @@
 }
 #cambridge .daccord span.ti .dexample {
   font-style: italic;
+}
+#jukuu ul.jukuu-sens {
+  padding-left: 20px;
+}
+#jukuu ul.jukuu-sens li.jukuu-sen {
+  margin: 0.5em 0;
+}
+#jukuu ul.jukuu-sens li.jukuu-sen p {
+  margin: 0;
+}
+#jukuu ul.jukuu-sens li.jukuu-sen p b {
+  color: #f9690e;
+}
+#jukuu ul.jukuu-sens li.jukuu-sen .jukuu-ori {
+  color: olive;
+}
+#jukuu ul.jukuu-sens li.jukuu-sen .jukuu-src {
+  font-size: 0.9em;
+  text-align: right;
 }
 #langr-search {
   font-size: 0.8em;

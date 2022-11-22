@@ -79,6 +79,7 @@ export default {
     "Dictionaries": "Dictionaries",
     "Youdao": "Youdao",
     "Cambridge": "Cambridge",
+    "Jukuu": "Jukuu",
 
     "Word Database Path": "Word Database Path",
     "Choose a md file as word database for auto-completion": "Choose a md file as word database for auto-completion",

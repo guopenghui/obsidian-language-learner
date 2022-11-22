@@ -1,6 +1,6 @@
 <template>
     <section class="dict-item" :class="{open: isOpen, expand: isExpand, loading: isLoading,}">
-        <header>
+        <header class="dict-item-header">
             <span>{{props.name}}</span>
             <div class="dict-loading" style="padding-left: 20px;">searching...</div>
             <div class="empty-area"></div>
@@ -74,7 +74,7 @@ watch(
 
 <style lang="scss">
 .dict-item {
-    header {
+    header.dict-item-header {
         display: flex;
         border-top: 2px dashed gray;
         height: 22px;

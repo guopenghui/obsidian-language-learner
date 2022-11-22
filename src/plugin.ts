@@ -559,11 +559,24 @@ export default class LanguageLearner extends Plugin {
     }
 
     async loadSettings() {
-        this.settings = Object.assign(
-            {},
-            DEFAULT_SETTINGS,
-            await this.loadData()
-        );
+        let settings: { [K in string]: any } = Object.assign({}, DEFAULT_SETTINGS)
+        let data = await this.loadData()
+        for (let key in DEFAULT_SETTINGS) {
+            let k = key as keyof typeof DEFAULT_SETTINGS
+            if (!data[k]) continue;
+
+            if (typeof DEFAULT_SETTINGS[k] === "object") {
+                Object.assign(settings[k], data[k])
+            } else {
+                settings[k] = data[k]
+            }
+        }
+        (this.settings as any) = settings
+        // this.settings = Object.assign(
+        //     {},
+        //     DEFAULT_SETTINGS,
+        //     await this.loadData()
+        // );
     }
 
     async saveSettings() {

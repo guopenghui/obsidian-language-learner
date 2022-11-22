@@ -43,12 +43,13 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     dictionaries: {
         "youdao": { enable: true, priority: 1 },
         "cambridge": { enable: true, priority: 2 },
+        "jukuu": { enable: true, priority: 3 },
     },
     // indexed
     db_name: "WordDB",
     // text db
-    word_database: null,
-    review_database: null,
+    word_database: "",
+    review_database: "",
     col_delimiter: ",",
     auto_refresh_db: true,
     // reading
