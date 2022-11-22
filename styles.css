@@ -28,6 +28,7 @@
   flex: 1;
 }
 .dict-item header button {
+  color: rgb(236, 239, 244);
   width: 19px;
   height: 19px;
   background: 0 0;
@@ -59,13 +60,14 @@
   padding: 0;
   border: none;
   box-shadow: none;
-  background: linear-gradient(rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.5) 60%, var(--background-secondary) 100%);
+  background: linear-gradient(var(--13dedc3a-bgRGBA1) 40%, var(--13dedc3a-bgRGBA2) 60%, var(--background-secondary) 100%);
   cursor: pointer;
 }
 .dict-item .dict-item-body .fold-mask .fold-mask-arrow {
   position: absolute;
   z-index: 10;
   bottom: 0;
+  fill: gray;
   margin: 0 auto;
 }
 .dict-item:not(.open) .fold-mask {
@@ -79,6 +81,7 @@
 }
 .dict-item.expand .dict-item-body {
   max-height: 5000px;
+  transition: max-height 2s;
 }
 .dict-item.open .fold-arrow {
   transform: rotate(-90deg);

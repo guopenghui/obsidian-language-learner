@@ -21,6 +21,9 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue"
+import { getRGB } from "../utils/style"
+import store from "./store"
+
 let isOpen = ref(false)
 let isExpand = ref(false)
 let isLoading = ref(false)
@@ -53,6 +56,20 @@ function onExpand() {
     isExpand.value = true
 }
 
+// react to theme change
+let bgRGB = getRGB(".workspace-leaf", "background-color")
+let makeRGBA = (rgb: typeof bgRGB, alpha: number) => `rgba(${rgb.R},${rgb.G},${rgb.B}, ${alpha})`
+let bgRGBA1 = ref(makeRGBA(bgRGB, 0))
+let bgRGBA2 = ref(makeRGBA(bgRGB, 0.5))
+watch(
+    () => store.themeChange,
+    () => {
+        bgRGB = getRGB(".workspace-leaf", "background-color")
+        bgRGBA1.value = makeRGBA(bgRGB, 0)
+        bgRGBA2.value = makeRGBA(bgRGB, 0.5)
+    }
+)
+ 
 </script>
 
 <style lang="scss">
@@ -65,6 +82,7 @@ function onExpand() {
             flex: 1;
         }
         button {
+            color: rgb(236, 239, 244);
             width: 19px;
             height: 19px;
             background: 0 0;
@@ -94,14 +112,13 @@ function onExpand() {
             padding: 0;
             border: none;
             box-shadow: none;
-            background: linear-gradient(rgba(255,255,255,0) 40%,rgba(255,255,255,.5) 60%,var(--background-secondary) 100%);
+            background: linear-gradient(v-bind(bgRGBA1) 40%,v-bind(bgRGBA2) 60%,var(--background-secondary) 100%);
             cursor: pointer;
             .fold-mask-arrow {
                 position: absolute;
                 z-index: 10;
                 bottom: 0;
-                // left: 0;
-                // right: 0;
+                fill: gray;
                 margin: 0 auto;
             }
         }
@@ -116,6 +133,7 @@ function onExpand() {
         .fold-mask {display:none;}
         .dict-item-body {
             max-height: 5000px;
+            transition: max-height 2s;
         }
     }
     &.open {

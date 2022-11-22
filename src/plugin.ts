@@ -87,6 +87,7 @@ export default class LanguageLearner extends Plugin {
         this.registerMouseup();
         this.registerEvent(this.app.workspace.on("css-change", () => {
             store.dark = document.body.hasClass("theme-dark");
+            store.themeChange = !store.themeChange
         }))
     }
 
@@ -119,6 +120,7 @@ export default class LanguageLearner extends Plugin {
 
     storeSettings() {
         this.store.dark = document.body.hasClass("theme-dark")
+        this.store.themeChange = false
         this.store.fontSize = this.settings.font_size
         this.store.fontFamily = this.settings.font_family
         this.store.lineHeight = this.settings.line_height

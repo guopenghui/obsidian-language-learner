@@ -21,25 +21,22 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
-    (event: "loading", status:{ id: string, loading: boolean }): void
+    (event: "loading", status:{ id: string, loading: boolean, result: boolean }): void
 }>()
-
-let loading = ref(true)
 
 let result = ref<CambridgeResult>([])
 
 async function searchWord(text: string) {
-    loading.value = true
-    emits("loading", { id: "cambridge", loading: loading.value})
+    emits("loading", { id: "cambridge", loading: true, result: false})
 
     try {
         let res = await search(text)
         result.value = res.result
 
         await nextTick()
-        loading.value = false
-        emits("loading", { id: "cambridge", loading: loading.value})
+        emits("loading", { id: "cambridge", loading: false, result: true})
     } catch(e) {
+        emits("loading", { id: "cambridge", loading: false, result: false})
         // new Notice(e.message)
     }
 }
@@ -54,6 +51,7 @@ watch(
 
 onMounted(() => {
     let cam = document.querySelector("#cambridge")
+    if(!cam) return
     // 管理点击事件
     cam.addEventListener("click", (evt) => {
         let target = evt.target as HTMLElement

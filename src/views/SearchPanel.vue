@@ -12,7 +12,7 @@
         </NConfigProvider> 
         <DictItem v-for="(cp, i) in components" :loading="loadings[i]" :name="cp.name">
             <KeepAlive>
-                <Component @loading="loading" :is="cp.type" :word="word"></Component>
+                <Component @loading="loading" :is="cp.type" :word="word" v-show="shows[i]"></Component>
             </KeepAlive>
         </DictItem>
     </div>
@@ -54,8 +54,10 @@ collection.forEach((v,i) => {
 })
 
 let loadings = ref<boolean[]>(Array(2).fill(true))
-function loading({id, loading}: {id: string, loading: boolean}) {
+let shows = ref<boolean[]>(Array(2).fill(true))
+function loading({id, loading, result}: {id: string, loading: boolean, result: boolean}) {
     loadings.value[map[id]] = loading
+    shows.value[map[id]] = result
 }
 
 // 切换明亮/黑暗模式

@@ -35,10 +35,8 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
-    (event: "loading", status:{ id: string, loading: boolean }): void
+    (event: "loading", status:{ id: string, loading: boolean, result: boolean }): void
 }>()
-
-let loading = ref(true)
 
 let word = ref("")
 let meaningHTML = ref("")
@@ -51,8 +49,7 @@ let wordGroupHTML = ref("")
 let relWordHTML = ref("")
 
 async function searchWord(text: string) {
-    loading.value = true
-    emits("loading", { id: "youdao", loading: loading.value})
+    emits("loading", { id: "youdao", loading: true, result: false})
     try {
         let res = await search(text)
         if (!res) {
@@ -69,10 +66,9 @@ async function searchWord(text: string) {
         relWordHTML.value = result.relWord
 
         await nextTick() 
-        loading.value = false
-        emits("loading", { id: "youdao", loading: loading.value})
+        emits("loading", { id: "youdao", loading: false, result: true})
     } catch (e) {
-        
+        emits("loading", { id: "youdao", loading: false, result: false})
     }
 }
 

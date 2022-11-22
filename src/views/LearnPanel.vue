@@ -241,7 +241,8 @@ const themeOverrides: GlobalThemeOverrides = {
     "buttonHeightSmall": "22px"
   },
   "Input": {
-    "fontSizeSmall": "12px"
+    "fontSizeSmall": "12px",
+	"paddingSmall": "0 10px",
   }
 }
 
