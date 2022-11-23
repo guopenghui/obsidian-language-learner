@@ -10,11 +10,13 @@
                 <NButton size="small" @click="handleSearch" style="margin-left:5px;">{{ t("Search") }}</NButton>
             </div>
         </NConfigProvider> 
-        <DictItem v-for="(cp, i) in components" :loading="loadings[i]" :name="cp.name">
-            <KeepAlive>
-                <Component @loading="loading" :is="cp.type" :word="word" v-show="shows[i]"></Component>
-            </KeepAlive>
-        </DictItem>
+        <div class="dict-area" style="overflow:auto;">
+            <DictItem v-for="(cp, i) in components" :loading="loadings[i]" :name="cp.name">
+                <KeepAlive>
+                    <Component @loading="loading" :is="cp.type" :word="word" v-show="shows[i]"></Component>
+                </KeepAlive>
+            </DictItem>
+        </div>
     </div>
 </template>
 
@@ -27,6 +29,7 @@ import { t } from "../lang/helper"
 import store from "./store"
 import PluginType from "../plugin"
 import { dicts } from "../dictionary/list"
+import { playAudio } from "src/utils/helpers"
 
 const plugin = getCurrentInstance().appContext.config.globalProperties.plugin as PluginType
 
@@ -101,10 +104,18 @@ function handleSearch() {
 
 function handleClick(evt: MouseEvent) {
     const target = evt.target as HTMLElement
-    if(target.tagName === "A") {
+    if(target.hasClass("speaker")) {
+        evt.preventDefault()
+        evt.stopPropagation()
+        let url = (target as HTMLAnchorElement).href
+        playAudio(url)
+        
+    }
+    else if(target.tagName === "A") {
         evt.preventDefault()
         evt.stopPropagation()
         word.value = target.textContent
+        inputWord.value = target.textContent
         appendHistory()
     }
 }
@@ -121,13 +132,21 @@ onUnmounted(() => {
 
 <style lang="scss">
 #langr-search {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
     font-size: 0.8em;
     user-select: text;
+    display: flex;
+    flex-direction: column;
     .search-bar {
         margin-bottom: 5px;
         button {
             margin-right: 5px;
         }
+    }
+    .dict-area {
+        flex: 1;
     }
 }
 </style>

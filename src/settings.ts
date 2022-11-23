@@ -12,9 +12,13 @@ export interface MyPluginSettings {
     port: number;
     self_server: boolean;
     self_port: number;
-    //search
+    // lang
+    native: string;
+    foreign: string;
+    // search
     function_key: "ctrlKey" | "altKey" | "metaKey" | "disable";
     dictionaries: { [K in string]: { enable: boolean, priority: number } }
+    dict_height: string;
     // reading
     word_count: boolean;
     default_paragraphs: string;
@@ -22,9 +26,9 @@ export interface MyPluginSettings {
     font_family: string;
     line_height: string;
     use_machine_trans: boolean;
-    //indexed db
+    // indexed db
     db_name: string;
-    //text db
+    // text db
     word_database: string;
     review_database: string;
     col_delimiter: "," | "\t" | "|";
@@ -38,13 +42,18 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     port: 8086,
     self_server: false,
     self_port: 3002,
+    // lang
+    native: "zh",
+    foreign: "en",
     // search
     function_key: "ctrlKey",
     dictionaries: {
         "youdao": { enable: true, priority: 1 },
         "cambridge": { enable: true, priority: 2 },
         "jukuu": { enable: true, priority: 3 },
+        "hjdict": { enable: true, priority: 4 },
     },
+    dict_height: "250px",
     // indexed
     db_name: "WordDB",
     // text db
@@ -78,6 +87,7 @@ export class SettingTab extends PluginSettingTab {
         containerEl.createEl("h1", { text: "Settings for Language Learner" });
 
         this.backendSettings(containerEl);
+        this.langSettings(containerEl);
         this.querySettings(containerEl);
         this.indexedDBSettings(containerEl);
         this.textDBSettings(containerEl);
@@ -129,6 +139,40 @@ export class SettingTab extends PluginSettingTab {
             );
     }
 
+    langSettings(containerEl: HTMLElement) {
+        containerEl.createEl("h3", { text: t("Language") });
+
+        new Setting(containerEl)
+            .setName(t("Native"))
+            .addDropdown(native => native
+                .addOption("zh", t("Chinese"))
+                .setValue(this.plugin.settings.native)
+                .onChange(async (value) => {
+                    this.plugin.settings.native = value;
+                    await this.plugin.saveSettings()
+                    this.display()
+                })
+            )
+
+        new Setting(containerEl)
+            .setName(t("Foreign"))
+            .addDropdown(foreign => foreign
+                .addOption("en", t("English"))
+                .addOption("jp", t("Japanese"))
+                .addOption("kr", t("Korean"))
+                .addOption("fr", t("French"))
+                .addOption("de", t("Deutsch"))
+                .addOption("es", t("Spanish"))
+                .setValue(this.plugin.settings.foreign)
+                .onChange(async (value) => {
+                    this.plugin.settings.foreign = value;
+                    await this.plugin.saveSettings()
+                    this.display()
+                })
+            )
+
+    }
+
     querySettings(containerEl: HTMLElement) {
         containerEl.createEl("h3", { text: t("Translate") });
 
@@ -149,9 +193,10 @@ export class SettingTab extends PluginSettingTab {
 
         containerEl.createEl("h4", { text: t("Dictionaries") });
 
-        let createDictSetting = (id: string, name: string) => {
+        let createDictSetting = (id: string, name: string, description: string) => {
             new Setting(containerEl)
                 .setName(name)
+                .setDesc(description)
                 .addToggle(toggle => toggle
                     .setValue(this.plugin.settings.dictionaries[id].enable)
                     .onChange((value) => {
@@ -178,8 +223,18 @@ export class SettingTab extends PluginSettingTab {
         }
 
         Object.keys(dicts).forEach((dict: keyof typeof dicts) => {
-            createDictSetting(dict, dicts[dict].name)
+            createDictSetting(dict, dicts[dict].name, dicts[dict].description)
         })
+
+        new Setting(containerEl)
+            .setName(t("Dictionary Height"))
+            .addText(text => text
+                .setValue(this.plugin.settings.dict_height)
+                .onChange(debounce(async (value) => {
+                    this.plugin.settings.dict_height = value
+                    await this.plugin.saveSettings()
+                }, 500))
+            )
     }
 
 

@@ -11,15 +11,23 @@ export interface GetSrcPageFunction {
 }
 
 export interface SearchFunction<Result> {
-    (text: string): Promise<DictSearchResult<Result>>
+    (text: string, config?: any): Promise<DictSearchResult<Result>>
 }
 
-export async function fetchDirtyDOM(url: string) {
+export async function fetchDirtyDOM(url: string, config?: any): Promise<DocumentFragment> {
     const param: RequestUrlParam = {
         url,
         method: "GET",
     }
+    if (config) {
+        let cookie = Object.keys(config.cookies)
+            .map(name => `${name}=${config.cookies[name]}`)
+            .join("; ");
+        let headers = { "cookie": cookie };
+        param.headers = headers;
+    }
     let response = await request(param)
+    response = response.replace(/<img.+?>/, "")
     return sanitizeHTMLToDom(response)
 }
 

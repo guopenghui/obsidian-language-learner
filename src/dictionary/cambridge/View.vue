@@ -61,11 +61,6 @@ onMounted(() => {
             section.hasClass("expand")?
                 section.removeClass("expand"):
                 section.addClass("expand")
-        } else if(target.hasClass("speaker")) {
-            evt.stopPropagation();
-            evt.preventDefault()
-            let url = (target as HTMLAnchorElement).href
-            playAudio(url)
         }
     })
 })

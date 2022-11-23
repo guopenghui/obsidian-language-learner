@@ -12,7 +12,7 @@
   height: 13px;
   width: 8px;
   display: inline-block;
-  vertical-align: baseline;
+  vertical-align: middle;
   margin: 0 3px;
   background-color: #d54b21;
   clip-path: polygon(0 30%, 30% 30%, 89% 0, 89% 100%, 31% 69%, 0 69%);
@@ -88,7 +88,7 @@
   transition: transform 0.4s;
 }
 .dict-item.open:not(.expand) .dict-item-body {
-  max-height: 250px;
+  max-height: var(--13dedc3a-defaultHeight);
 }
 .dict-item:not(.loading) .dict-loading {
   display: none;
@@ -294,15 +294,113 @@
   font-size: 0.9em;
   text-align: right;
 }
+#hjdict {
+  font-size: 1.1em;
+}
+#hjdict dd {
+  margin-inline-start: 15px;
+}
+#hjdict ul {
+  padding-inline-start: 20px;
+}
+#hjdict h3 {
+  font-size: 1.3em;
+  line-height: 1.3;
+  font-weight: 700;
+  padding: 0;
+}
+#hjdict p {
+  margin: 0.5em 0;
+}
+#hjdict p.detail-source span {
+  font-size: 0.8em;
+  color: white;
+  line-height: 1.2;
+  display: inline-block;
+  border-radius: 2px;
+  text-align: center;
+  margin-left: 7px;
+  padding: 1px 3px;
+}
+#hjdict p.detail-source span.collins-icon {
+  background-color: #c94444;
+}
+#hjdict p.detail-source span.wys-icon {
+  background-color: #414585;
+}
+#hjdict h2 {
+  font-size: 1.4em;
+  font-weight: 500;
+  padding-bottom: 5px;
+  border-bottom: 1px solid gray;
+  margin-bottom: 10px;
+}
+#hjdict .word-info h2 {
+  font-size: 1.3em;
+  font-weight: 700;
+}
+#hjdict .detail-tags-en {
+  display: block;
+  list-style-type: none;
+  overflow: hidden;
+  padding: 0;
+}
+#hjdict .detail-tags-en li {
+  height: 16px;
+  line-height: 1.2;
+  background-color: #f0f0f0;
+  border-radius: 2px;
+  text-align: center;
+  color: gray;
+  float: left;
+  font-size: 1em;
+  padding: 0 4px;
+  margin-right: 8px;
+}
+#hjdict .detail-groups {
+  margin-top: 1em;
+}
+#hjdict .detail-groups dt {
+  font-size: 1.1em;
+  margin-bottom: 0.8em;
+  font-weight: 700;
+  line-height: 1.2;
+}
+#hjdict .detail-groups dd {
+  margin: 0 0 1em 1.5em;
+  display: list-item;
+  list-style-type: decimal;
+}
+#hjdict .detail-groups dd:first-of-type:last-of-type {
+  list-style-type: none;
+}
+#hjdict .detail-groups dd ul {
+  padding-inline-start: 15px;
+}
+#hjdict .detail-groups dd h3 {
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0 0 0.5em;
+  padding: 0;
+}
 #langr-search {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
   font-size: 0.8em;
   user-select: text;
+  display: flex;
+  flex-direction: column;
 }
 #langr-search .search-bar {
   margin-bottom: 5px;
 }
 #langr-search .search-bar button {
   margin-right: 5px;
+}
+#langr-search .dict-area {
+  flex: 1;
 }
 .count-bar {
   border: 2px solid black;

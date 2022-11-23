@@ -13,7 +13,7 @@
     height: 13px;
     width: 8px;
     display: inline-block;
-    vertical-align: baseline;
+    vertical-align: middle;
     margin: 0 3px;
     background-color: #d54b21;
     clip-path: polygon(0 30%, 30% 30%, 89% 0, 89% 100%, 31% 69%, 0 69%);

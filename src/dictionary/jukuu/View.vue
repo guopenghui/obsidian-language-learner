@@ -26,13 +26,10 @@ let result = reactive<JukuuResult>({lang: "zheng", sens: []})
 async function onSearch(word: string) {
     try{
         emits("loading", { id: "jukuu", loading: true, result: false})
-        console.log("搜一搜")
         let res = await search(word)
         result.sens = res.result.sens
-        console.log(res)
         emits("loading", { id: "jukuu", loading: false, result: true})
     } catch (e) {
-        console.log("没收到:",e)
         emits("loading", { id: "jukuu", loading: false, result: false})
     }
 

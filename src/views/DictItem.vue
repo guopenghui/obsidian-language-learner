@@ -1,10 +1,10 @@
 <template>
     <section class="dict-item" :class="{open: isOpen, expand: isExpand, loading: isLoading,}">
-        <header class="dict-item-header">
+        <header class="dict-item-header" @click="onOpen">
             <span>{{props.name}}</span>
             <div class="dict-loading" style="padding-left: 20px;">searching...</div>
             <div class="empty-area"></div>
-            <button @click="onOpen">
+            <button>
                 <svg class="fold-arrow" width="18" height="18" viewBox="0 0 59.414 59.414" xmlns="http://www.w3.org/2000/svg"><path class="dictItemHead-FoldArrowPath" d="M43.854 59.414L14.146 29.707 43.854 0l1.414 1.414-28.293 28.293L45.268 58"></path></svg>
             </button>
         </header>
@@ -20,9 +20,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { ref, watch, getCurrentInstance } from "vue"
+import PluginType from "../plugin"
 import { getRGB } from "../utils/style"
 import store from "./store"
+
+const plugin = getCurrentInstance().appContext.config.globalProperties.plugin as PluginType
+let defaultHeight = plugin.settings.dict_height
 
 let isOpen = ref(false)
 let isExpand = ref(false)
@@ -144,7 +148,7 @@ watch(
     }
     &.open:not(.expand) {
         .dict-item-body {
-            max-height: 250px;
+            max-height: v-bind(defaultHeight);
         }
     }
     &:not(.loading) {

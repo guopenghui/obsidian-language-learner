@@ -34,13 +34,13 @@ export class SearchPanelView extends ItemView {
     async onOpen(this: SearchPanelView) {
         const container = this.containerEl.children[1];
         container.empty();
-        const contentEl = container.createEl("div", {
-            cls: "langr-search"
-        })
+        // const contentEl = container.createEl("div", {
+        //     cls: "langr-search"
+        // })
 
         this.vueapp = createApp(SearchPanel)
         this.vueapp.config.globalProperties.plugin = this.plugin
-        this.vueapp.mount(contentEl)
+        this.vueapp.mount(container)
     }
     async onClose() {
         this.vueapp.unmount()
