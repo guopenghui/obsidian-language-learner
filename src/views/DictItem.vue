@@ -65,12 +65,14 @@ let bgRGB = getRGB(".workspace-leaf", "background-color")
 let makeRGBA = (rgb: typeof bgRGB, alpha: number) => `rgba(${rgb.R},${rgb.G},${rgb.B}, ${alpha})`
 let bgRGBA1 = ref(makeRGBA(bgRGB, 0))
 let bgRGBA2 = ref(makeRGBA(bgRGB, 0.5))
+let bgRGBA3 = ref(makeRGBA(bgRGB, 1))
 watch(
     () => store.themeChange,
     () => {
         bgRGB = getRGB(".workspace-leaf", "background-color")
         bgRGBA1.value = makeRGBA(bgRGB, 0)
         bgRGBA2.value = makeRGBA(bgRGB, 0.5)
+        bgRGBA3.value = makeRGBA(bgRGB, 1)
     }
 )
  
@@ -80,7 +82,11 @@ watch(
 .dict-item {
     header.dict-item-header {
         display: flex;
+        position: sticky;
+        top: 0;
+        z-index: 100;
         border-top: 2px dashed gray;
+        background-color: v-bind(bgRGBA3);
         height: 22px;
         .empty-area {
             flex: 1;
@@ -116,7 +122,7 @@ watch(
             padding: 0;
             border: none;
             box-shadow: none;
-            background: linear-gradient(v-bind(bgRGBA1) 40%,v-bind(bgRGBA2) 60%,var(--background-secondary) 100%);
+            background: linear-gradient(v-bind(bgRGBA1) 40%,v-bind(bgRGBA2) 60%, v-bind(bgRGBA3) 100%);
             cursor: pointer;
             .fold-mask-arrow {
                 position: absolute;

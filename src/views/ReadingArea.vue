@@ -16,7 +16,7 @@
             <!-- 阅读区 -->
             <div class="text-area" 
                 style="flex:1; overflow:auto; padding-left: 5%; padding-right: 5%;"
-                :style="{fontSize: store.fontSize, fontFamily: store.fontFamily}"
+                :style="{fontSize: store.fontSize, fontFamily: store.fontFamily, lineHeight: store.lineHeight}"
                 v-html="renderedText"
                 />
             <!-- 底栏 -->
