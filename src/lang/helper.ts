@@ -1,9 +1,11 @@
 import zh from "./locale/zh"
 import en from "./locale/en"
+import zh_TW from "./locale/zh-TW"
 
 const localeMap: { [k: string]: Partial<typeof en> } = {
     en,
     zh,
+    "zh-TW": zh_TW,
 }
 
 
