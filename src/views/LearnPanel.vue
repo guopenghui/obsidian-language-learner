@@ -94,7 +94,7 @@
 					:label-style="labelStyle"
 					path="tags"
 				>
-					<NDynamicInput v-model:value="model.notes">
+					<NDynamicInput v-model:value="model.notes" :create-button-props="{size: 'small'}">
 						<template #create-button-default>
 							{{ t("Create") }}
 						</template>
@@ -115,14 +115,14 @@
 				</div>
 				<NDynamicInput
 					v-model:value="model.sentences"
+					:create-button-props="{size: 'small'}"
 					:on-create="onCreateSentence"
 				>
 					<template #create-button-default>
 						{{ t("Create") }}
 					</template>
 					<template #="{ index, value }">
-						<div
-							style="display: flex;
+						<div style="display: flex;
 								flex-direction: column;
 								flex: 1;
 								border: 2px solid gray;
@@ -177,6 +177,7 @@
 			<!-- 提交按钮 -->
 			<div style="margin-top: 10px">
 				<NButton
+					size="small"
 					style="--n-width: 100%"
 					attr-type="submit"
 					@click="submit"
@@ -242,7 +243,10 @@ const themeOverrides: GlobalThemeOverrides = {
   },
   "Input": {
     "fontSizeSmall": "12px",
-	"paddingSmall": "0 10px",
+	"paddingSmall": "0 5px",
+  },
+  "DynamicInput": {
+	"actionMargin": "0 0 0 10px",
   }
 }
 

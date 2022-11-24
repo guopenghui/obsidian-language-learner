@@ -1,13 +1,13 @@
 <template>
     <div id="langr-search" @click="handleClick">
-       <NConfigProvider :theme="theme">
+       <NConfigProvider :theme="theme" :theme-overrides="themeConfig">
             <div class="search-bar" style="display:flex;">
-                <NButtonGroup size="small">
+                <NButtonGroup size="tiny">
                     <NButton :disabled="historyIndex<=0" @click="switchHistory('prev')">{{`<`}}</NButton>
                     <NButton :disabled="historyIndex>=lastHistory" @click="switchHistory('next')">{{">"}}</NButton>
                 </NButtonGroup> 
-                <NInput size="small" type="text" placeholder="输入单词" v-model:value="inputWord" style="flex:1;" @keydown.enter="handleSearch"/>
-                <NButton size="small" @click="handleSearch" style="margin-left:5px;">{{ t("Search") }}</NButton>
+                <NInput size="tiny" type="text" placeholder="输入单词" v-model:value="inputWord" style="flex:1;" @keydown.enter="handleSearch"/>
+                <NButton size="tiny" @click="handleSearch" style="margin-left:5px;">{{ t("Search") }}</NButton>
             </div>
         </NConfigProvider> 
         <div class="dict-area" style="overflow:auto;">
@@ -21,8 +21,8 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, onUnmounted, getCurrentInstance} from "vue"
-import {NConfigProvider, NButton, NButtonGroup, NInput, darkTheme} from "naive-ui"
+import { ref, computed, onMounted, onUnmounted, getCurrentInstance } from "vue"
+import { NConfigProvider, NButton, NButtonGroup, NInput, darkTheme, GlobalThemeOverrides } from "naive-ui"
 
 import DictItem from "./DictItem.vue"
 import { t } from "../lang/helper"
@@ -32,6 +32,10 @@ import { dicts } from "../dictionary/list"
 import { playAudio } from "src/utils/helpers"
 
 const plugin = getCurrentInstance().appContext.config.globalProperties.plugin as PluginType
+
+const themeConfig: GlobalThemeOverrides = {
+
+}
 
 let collection = Object.keys(plugin.settings.dictionaries)
     .map((dict: keyof typeof dicts) => {
