@@ -6,9 +6,9 @@
                 <audio controls v-if="audioSource" :src="audioSource"></audio>
                 <div style="display:flex;">
                     <button @click="activeNotes = true">做笔记</button>
-                        <div style="flex:1; display:flex; justify-content: center; align-items: center;">
-                            <CountBar v-if="plugin.settings.word_count" :unknown="unknown" :learn="learn" :ignore="ignore"/>
-                        </div>
+                    <div style="flex:1; display:flex; justify-content: center; align-items: center;">
+                        <CountBar v-if="plugin.settings.word_count" :unknown="unknown" :learn="learn" :ignore="ignore"/>
+                    </div>
                     <button v-if="page * pageSize < totalLines" class="finish-reading" @click="addIgnores">结束阅读并转入下一页</button>
                     <button v-else class="finish-reading" @click="addIgnores">结束阅读</button>
                 </div>
@@ -73,7 +73,12 @@ const theme = computed(() => {
 })
 
 let frontMatter = plugin.app.metadataCache.getFileCache(view.file).frontmatter
-let audioSource = frontMatter["langr-audio"] || ""
+let audioSource = (frontMatter["langr-audio"] || "") as string
+if(audioSource && audioSource.startsWith("~/")) {
+    audioSource = "app://local/" 
+        + plugin.constants.basePath 
+        + audioSource.slice(1)
+}
 
 const pageSizes = [
     {label: `1 ${t("paragraph")} / ${t("page")}`, value: 2},

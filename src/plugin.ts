@@ -1,5 +1,4 @@
 import {
-    App,
     Notice,
     Plugin,
     Menu,
@@ -8,7 +7,7 @@ import {
     MarkdownView,
     Editor,
     TFile,
-    moment,
+    normalizePath
 } from "obsidian";
 import { around } from "monkey-around";
 
@@ -38,6 +37,7 @@ export const FRONT_MATTER_KEY: string = "langr";
 
 
 export default class LanguageLearner extends Plugin {
+    constants: { basePath: string }
     settings: MyPluginSettings;
     appEl: HTMLElement;
     db: DbProvider;
@@ -51,6 +51,8 @@ export default class LanguageLearner extends Plugin {
         // 读取设置
         await this.loadSettings();
         this.addSettingTab(new SettingTab(this.app, this));
+
+        this.registerConstants()
 
         // 打开数据库
         this.db = this.settings.use_server ?
@@ -97,6 +99,12 @@ export default class LanguageLearner extends Plugin {
         this.server?.close()
         if (await app.vault.adapter.exists(".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html")) {
             this.registerExtensions([PDF_FILE_EXTENSION], "pdf")
+        }
+    }
+
+    registerConstants() {
+        this.constants = {
+            basePath: normalizePath((this.app.vault.adapter as any).basePath)
         }
     }
 
