@@ -552,7 +552,7 @@ export default class LanguageLearner extends Plugin {
             } else if (target.tagName === "H4" && target.matchParent("#sr-flashcard-view")) {
                 let word = target.textContent;
                 let accent = this.settings.review_prons
-                let wordUrl = `http://dict.youdao.com/dictvoice?type=${accent}&audio=` + word.split(" ").join("%20");
+                let wordUrl = `http://dict.youdao.com/dictvoice?type=${accent}&audio=` + encodeURIComponent(word);
                 playAudio(wordUrl);
             }
         });
@@ -560,7 +560,7 @@ export default class LanguageLearner extends Plugin {
 
     async loadSettings() {
         let settings: { [K in string]: any } = Object.assign({}, DEFAULT_SETTINGS)
-        let data = await this.loadData()
+        let data = (await this.loadData()) || {}
         for (let key in DEFAULT_SETTINGS) {
             let k = key as keyof typeof DEFAULT_SETTINGS
             if (!data[k]) continue;

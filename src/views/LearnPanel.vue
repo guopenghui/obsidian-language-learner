@@ -429,11 +429,16 @@ async function onSearch(evt: CustomEvent) {
 			let presetOrigin = view.app.metadataCache.getFileCache(reading.file).frontmatter["langr-origin"]
 			defaultOrigin = presetOrigin? presetOrigin: reading.file.name
 		}
+
 		if(plugin.settings.use_machine_trans) {
-			let res = await search(sentenceText)
-			if(res && (res.result as any).translation) {
-				let html = (res.result as any).translation as string
-				filledTrans = html.match(/<p>([^<>]+)<\/p>/g)[1]?.match(/<p>(.*)<\/p>/)[1] ?? null
+			try{
+				let res = await search(sentenceText)
+				if(res && (res.result as any).translation) {
+					let html = (res.result as any).translation as string
+					filledTrans = html.match(/<p>([^<>]+)<\/p>/g)[1]?.match(/<p>(.*)<\/p>/)[1] ?? null
+				}
+			} catch (e) {
+				filledTrans = ""	
 			}
 		}
 	}

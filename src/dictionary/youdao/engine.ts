@@ -214,7 +214,7 @@ function handleDOM(
       transform
     })
   }
-
+  console.log(result)
   if (result.title || result.translation) {
     return { result, audio }
   }
