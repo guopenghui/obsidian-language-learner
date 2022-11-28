@@ -482,5 +482,21 @@
 #langr-reading .text-area .select:hover {
   border: 1px solid green;
 }
+#langr-reading .note-area {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+#langr-reading .note-area .note-input {
+  flex: 1;
+}
+#langr-reading .note-area .note-rendered {
+  border: 1px solid gray;
+  border-radius: 3px;
+  flex: 1;
+  padding: 5px;
+  margin-left: 2px;
+  overflow: auto;
+}
 
 /* src/main.css */

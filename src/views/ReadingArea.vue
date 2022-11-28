@@ -1,6 +1,6 @@
 <template>
     <div id="langr-reading" style="height:100%;">
-        <NConfigProvider :theme="theme" style=" height:100%; display:flex; flex-direction: column;">
+        <NConfigProvider :theme="theme" :theme-overrides="themeConfig" style=" height:100%; display:flex; flex-direction: column;">
             <!-- 功能区 -->
             <div class="function-area" style="padding-bottom:10px; border-bottom: 2px solid gray;">
                 <audio controls v-if="audioSource" :src="audioSource"></audio>
@@ -37,13 +37,18 @@
                     :on-after-enter="afterNoteEnter"
                     :on-after-leave="afterNoteLeave"
                     to="#langr-reading"
+                    :default-height="250"
+                    resizable
                     >
-                <NDrawerContent title="Notes">
-                    <NInput
-                        v-model:value="notes"
-                        type="textarea"
-                        :autosize="{minRows: 5}"
-                    />
+                <NDrawerContent title="Notes" >
+                    <div class="note-area">
+                        <NInput class="note-input"
+                            v-model:value="notes"
+                            type="textarea"
+                            :autosize="{minRows: 5}"
+                        />
+                        <div class="note-rendered" @mouseover="onMouseOver" ref="renderedNote"></div>
+                    </div>
                 </NDrawerContent>
             </NDrawer>
         </NConfigProvider>
@@ -52,9 +57,9 @@
 
 
 <script setup lang="ts">
-import { ref, Ref, getCurrentInstance, computed, watch, onMounted, onUnmounted} from "vue"
-import { NPagination, NConfigProvider, darkTheme, NDrawer, NDrawerContent, NInput } from "naive-ui"
-import type { DrawerPlacement } from "naive-ui"
+import { ref, Ref, getCurrentInstance, computed, watch, onMounted, onUnmounted, watchEffect} from "vue"
+import { NPagination, NConfigProvider, darkTheme, NDrawer, NDrawerContent, NInput, GlobalThemeOverrides} from "naive-ui"
+import { MarkdownRenderer } from "obsidian"
 import PluginType from "../plugin"
 import { ReadingView } from "./ReadingView"
 import CountBar from "./CountBar.vue"
@@ -71,6 +76,15 @@ let contentEl = view.contentEl as HTMLElement
 const theme = computed(() => {
 	return store.dark? darkTheme: null
 })
+
+const themeConfig: GlobalThemeOverrides = {
+    "Drawer": {
+        "bodyPadding": "8px 12px",
+        "headerPadding": "4px 6px",
+        "titleFontWeight": "700",
+    }
+}
+
 
 let frontMatter = plugin.app.metadataCache.getFileCache(view.file).frontmatter
 let audioSource = (frontMatter["langr-audio"] || "") as string
@@ -101,6 +115,28 @@ async function afterNoteLeave() {
     view.writeContent("notes", notes.value)    
 }
 
+let renderedNote = ref<HTMLElement>()
+watchEffect(async (clean) => {
+    if(!renderedNote.value) return
+    await MarkdownRenderer.renderMarkdown(notes.value, renderedNote.value, view.file.path, null)
+    clean(() => {
+        renderedNote.value?.empty()
+    })
+})
+
+function onMouseOver(e: MouseEvent) {
+    let target = e.target as HTMLElement
+    if(target.hasClass("internal-link")) {
+        app.workspace.trigger("hover-link", {
+            event: e,
+            source: "preview",
+            hoverParent: { hoverPopover: null },
+            targetEl: target,
+            linktext: target.getAttr("href"),
+            soursePath: view.file.path,
+        })
+    }
+}
 
 
 // 拆分文本
@@ -238,6 +274,22 @@ async function addIgnores() {
             border: 1px solid transparent;
             border-radius: 4px;
             &:hover {border: 1px solid green;}        
+        }
+    }
+    .note-area {
+        display: flex;
+        height: 100%;
+        width: 100%;
+        .note-input {
+            flex: 1;
+        }
+        .note-rendered {
+            border:1px solid gray;
+            border-radius: 3px;
+            flex: 1;
+            padding: 5px;
+            margin-left: 2px;
+            overflow: auto;
         }
     }
 }
