@@ -665,7 +665,9 @@ export default class LanguageLearner extends Plugin {
         let data = (await this.loadData()) || {};
         for (let key in DEFAULT_SETTINGS) {
             let k = key as keyof typeof DEFAULT_SETTINGS;
-            if (!data[k]) continue;
+            if (data[k] === undefined) {
+                continue;
+            }
 
             if (typeof DEFAULT_SETTINGS[k] === "object") {
                 Object.assign(settings[k], data[k]);
