@@ -9,72 +9,72 @@ import {
     removeChildren,
     fetchDirtyDOM,
     DictSearchResult
-} from '../helpers'
+} from '../helpers';
 
-export type JukuuLang = 'engjp' | 'zhjp' | 'zheng'
+export type JukuuLang = 'engjp' | 'zhjp' | 'zheng';
 
 function getUrl(text: string, lang: JukuuLang) {
-    text = encodeURIComponent(text.replace(/\s+/g, '+'))
+    text = encodeURIComponent(text.replace(/\s+/g, '+'));
 
     switch (lang) {
         case 'engjp':
-            return 'http://www.jukuu.com/jsearch.php?q=' + text
+            return 'http://www.jukuu.com/jsearch.php?q=' + text;
         case 'zhjp':
-            return 'http://www.jukuu.com/jcsearch.php?q=' + text
+            return 'http://www.jukuu.com/jcsearch.php?q=' + text;
         // case 'zheng':
         default:
-            return 'http://www.jukuu.com/search.php?q=' + text
+            return 'http://www.jukuu.com/search.php?q=' + text;
     }
 }
 
 export const getSrcPage: GetSrcPageFunction = (text) => {
-    return getUrl(text, "zheng")
-}
+    return getUrl(text, "zheng");
+};
 
 interface JukuuTransItem {
-    trans: HTMLString
-    original: string
-    src: string
+    trans: HTMLString;
+    original: string;
+    src: string;
 }
 
 export interface JukuuResult {
-    lang: JukuuLang
-    sens: JukuuTransItem[]
+    lang: JukuuLang;
+    sens: JukuuTransItem[];
 }
 
 export interface JukuuPayload {
-    lang?: JukuuLang
+    lang?: JukuuLang;
 }
 
-type JukuuSearchResult = DictSearchResult<JukuuResult>
+type JukuuSearchResult = DictSearchResult<JukuuResult>;
 
 export const search: SearchFunction<JukuuResult> = (
     text: string,
 ) => {
-    const lang = "zheng"
+    const lang = "zheng";
     return fetchDirtyDOM(getSrcPage(text))
         .catch(handleNetWorkError)
         .then(handleDOM)
         .then(sens =>
             sens.length > 0 ? { result: { lang, sens } } : handleNoResult()
-        )
-}
+        );
+};
 
 function handleDOM(doc: DocumentFragment): JukuuTransItem[] {
     return [...doc.querySelectorAll('tr.e')]
         .map($e => {
-            const $trans = $e.lastElementChild
+            const $trans = $e.lastElementChild;
             if (!$trans) {
-                return
+                return;
             }
-            removeChildren($trans, 'img')
+            removeChildren($trans, 'img');
 
-            const $original = $e.nextElementSibling
+            const $original = $e.nextElementSibling;
             if (!$original || !$original.classList.contains('c')) {
-                return
+                return;
             }
 
-            const $src = $original.nextElementSibling
+            const $src = $original.nextElementSibling;
 
             return {
                 trans: getInnerHTML('http://www.jukuu.com', $trans),
@@ -83,7 +83,7 @@ function handleDOM(doc: DocumentFragment): JukuuTransItem[] {
                     $src && $src.classList.contains('s')
                         ? getText($src).replace(/^[\s-]*/, '')
                         : ''
-            }
+            };
         })
-        .filter((item): item is JukuuTransItem => Boolean(item && item.trans))
+        .filter((item): item is JukuuTransItem => Boolean(item && item.trans));
 }

@@ -5,8 +5,8 @@ import { modifyChildren } from "unist-util-modify-children";
 import { visit } from "unist-util-visit";
 import { toString } from "nlcst-to-string";
 
-import { Phrase, Word } from "../db/interface"
-import Plugin from "../plugin";
+import { Phrase, Word } from "@/db/interface";
+import Plugin from "@/plugin";
 
 const STATUS_MAP = ["ignore", "learning", "familiar", "known", "learned"];
 type AnyNode = Root | Content | Content[];
@@ -21,7 +21,7 @@ export class TextParser {
     processor: Processor;
 
     constructor(plugin: Plugin) {
-        this.plugin = plugin
+        this.plugin = plugin;
         this.processor = unified()
             .use(retextEnglish)
             .use(this.addPhrases())
@@ -29,27 +29,29 @@ export class TextParser {
     }
 
     async parse(data: string) {
-        let newHTML = await this.text2HTML(data.trim())
-        return newHTML
+        let newHTML = await this.text2HTML(data.trim());
+        return newHTML;
     }
 
     async countWords(text: string): Promise<[number, number, number]> {
-        const ast = this.processor.parse(text)
+        const ast = this.processor.parse(text);
         let wordSet: Set<string> = new Set();
         visit(ast, "WordNode", (word) => {
-            let text = toString(word).toLowerCase()
-            if (/[0-9\u4e00-\u9fa5]/.test(text)) return
-            wordSet.add(text)
+            let text = toString(word).toLowerCase();
+            if (/[0-9\u4e00-\u9fa5]/.test(text)) return;
+            wordSet.add(text);
         });
-        let stored = await this.plugin.db.getStoredWords({ article: "", words: [...wordSet] });
-        let ignore = 0
-        stored.words.forEach(word => {
-            if (word.status === 0)
-                ignore++
-        })
-        let learn = stored.words.length - ignore
-        let unknown = wordSet.size - stored.words.length
-        return [unknown, learn, ignore]
+        let stored = await this.plugin.db.getStoredWords({
+            article: "",
+            words: [...wordSet],
+        });
+        let ignore = 0;
+        stored.words.forEach((word) => {
+            if (word.status === 0) ignore++;
+        });
+        let learn = stored.words.length - ignore;
+        let unknown = wordSet.size - stored.words.length;
+        return [unknown, learn, ignore];
     }
 
     async text2HTML(text: string) {
@@ -58,7 +60,10 @@ export class TextParser {
 
         // 查找文本中的已知词组，用于构造ast中的PhraseNode
         this.phrases = (
-            await this.plugin.db.getStoredWords({ article: text.toLowerCase(), words: [] })
+            await this.plugin.db.getStoredWords({
+                article: text.toLowerCase(),
+                words: [],
+            })
         ).phrases;
 
         const ast = this.processor.parse(text);
@@ -69,7 +74,10 @@ export class TextParser {
         });
 
         // 查询这些单词的status
-        let stored = await this.plugin.db.getStoredWords({ article: "", words: [...wordSet] });
+        let stored = await this.plugin.db.getStoredWords({
+            article: "",
+            words: [...wordSet],
+        });
 
         stored.words.forEach((w) => this.words.set(w.text, w));
 
@@ -81,31 +89,32 @@ export class TextParser {
         const ast = this.processor.parse(text);
         let words: Set<string> = new Set();
         visit(ast, "WordNode", (word) => {
-            words.add(toString(word).toLowerCase())
+            words.add(toString(word).toLowerCase());
         });
-        let wordsPhrases = await this.plugin.db.getStoredWords({ article: text.toLowerCase(), words: [...words] })
+        let wordsPhrases = await this.plugin.db.getStoredWords({
+            article: text.toLowerCase(),
+            words: [...words],
+        });
 
         let payload = [] as string[];
-        wordsPhrases.phrases.forEach(word => {
-            if (word.status > 0)
-                payload.push(word.text)
-        })
-        wordsPhrases.words.forEach(word => {
-            if (word.status > 0)
-                payload.push(word.text)
-        })
+        wordsPhrases.phrases.forEach((word) => {
+            if (word.status > 0) payload.push(word.text);
+        });
+        wordsPhrases.words.forEach((word) => {
+            if (word.status > 0) payload.push(word.text);
+        });
 
-        let res = await this.plugin.db.getExpressionsSimple(payload)
-        return res
+        let res = await this.plugin.db.getExpressionsSimple(payload);
+        return res;
     }
 
     // Plugin：在retextEnglish基础上，把AST上一些单词包裹成短语
     addPhrases() {
-        let selfThis = this
+        let selfThis = this;
         return function (option = {}) {
             const proto = this.Parser.prototype;
             proto.useFirst("tokenizeParagraph", selfThis.phraseModifier);
-        }
+        };
     }
 
     phraseModifier = modifyChildren(this.wrapWord2Phrase.bind(this));
@@ -124,13 +133,16 @@ export class TextParser {
         let p: number;
         while (
             (p = children.findIndex(
-                (child) => child.position.start.offset === this.phrases[this.pIdx].offset
+                (child) =>
+                    child.position.start.offset ===
+                    this.phrases[this.pIdx].offset
             )) !== -1
         ) {
             let q = children.findIndex(
                 (child) =>
                     child.position.end.offset ===
-                    this.phrases[this.pIdx].offset + this.phrases[this.pIdx].text.length
+                    this.phrases[this.pIdx].offset +
+                    this.phrases[this.pIdx].text.length
             );
 
             if (q === -1) {
@@ -159,10 +171,12 @@ export class TextParser {
 
     // Compiler部分: 在AST转换为string时包裹上相应标签
     stringfy2HTML() {
-        let selfThis = this
+        let selfThis = this;
         return function () {
-            Object.assign(this, { Compiler: selfThis.compileHTML.bind(selfThis) });
-        }
+            Object.assign(this, {
+                Compiler: selfThis.compileHTML.bind(selfThis),
+            });
+        };
     }
 
     compileHTML(tree: Root): string {
@@ -183,7 +197,7 @@ export class TextParser {
                         ? STATUS_MAP[this.words.get(textLower).status]
                         : "new";
 
-                    return /[0-9\u4e00-\u9fa5]/.test(text)  // 不把数字当做单词
+                    return /[0-9\u4e00-\u9fa5]/.test(text) // 不把数字当做单词
                         ? `<span>${text}</span>`
                         : `<span class="word ${status}">${text}</span>`;
                 }
@@ -199,13 +213,17 @@ export class TextParser {
                     return `<span class="phrase ${status}">${text}</span>`;
                 }
                 case "SentenceNode": {
-                    return `<span class="stns">${this.toHTMLString(n.children)}</span>`;
+                    return `<span class="stns">${this.toHTMLString(
+                        n.children
+                    )}</span>`;
                 }
                 case "ParagraphNode": {
                     return `<p>${this.toHTMLString(n.children)}</p>`;
                 }
                 default: {
-                    return `<div class="article">${this.toHTMLString(n.children)}</div>`;
+                    return `<div class="article">${this.toHTMLString(
+                        n.children
+                    )}</div>`;
                 }
             }
         }

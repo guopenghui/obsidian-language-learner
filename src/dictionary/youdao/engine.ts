@@ -1,5 +1,5 @@
 // from ext-saladict: https://github.com/crimx/ext-saladict
-import { Notice } from "obsidian"
+import { Notice } from "obsidian";
 import {
   getText,
   getInnerHTML,
@@ -9,43 +9,43 @@ import {
   DictSearchResult,
   removeChild,
   fetchDirtyDOM
-} from '../helpers'
+} from '../helpers';
 
 export const getSrcPage = (text: string) =>
-  'https://dict.youdao.com/w/' + encodeURIComponent(text.replace(/\s+/g, ' '))
+  'https://dict.youdao.com/w/' + encodeURIComponent(text.replace(/\s+/g, ' '));
 
-const HOST = 'http://www.youdao.com'
+const HOST = 'http://www.youdao.com';
 
 export interface YoudaoResultLex {
-  type: 'lex'
-  title: string
-  stars: number
-  rank: string
-  pattern: string
+  type: 'lex';
+  title: string;
+  stars: number;
+  rank: string;
+  pattern: string;
   prons: Array<{
-    phsym: string
-    url: string
-  }>
-  basic?: HTMLString
+    phsym: string;
+    url: string;
+  }>;
+  basic?: HTMLString;
   collins: Array<{
-    title: string
-    content: HTMLString
-  }>
-  discrimination?: HTMLString
-  sentence?: HTMLString
-  translation?: HTMLString
-  wordGroup?: HTMLString
-  relWord?: HTMLString
+    title: string;
+    content: HTMLString;
+  }>;
+  discrimination?: HTMLString;
+  sentence?: HTMLString;
+  translation?: HTMLString;
+  wordGroup?: HTMLString;
+  relWord?: HTMLString;
 }
 
 export interface YoudaoResultRelated {
-  type: 'related'
-  list: HTMLString
+  type: 'related';
+  list: HTMLString;
 }
 
-export type YoudaoResult = YoudaoResultLex | YoudaoResultRelated
+export type YoudaoResult = YoudaoResultLex | YoudaoResultRelated;
 
-type YoudaoSearchResult = DictSearchResult<YoudaoResult>
+type YoudaoSearchResult = DictSearchResult<YoudaoResult>;
 
 export const search = async (
   text: string,
@@ -59,33 +59,33 @@ export const search = async (
     translation: true,
     wordGroup: true,
     relWord: true,
-  }
+  };
 
   return fetchDirtyDOM(
     'https://dict.youdao.com/w/' + encodeURIComponent(text.replace(/\s+/g, ' '))
   )
     .catch(handleNetWorkError)
     .then(doc => checkResult(doc, options))
-    .catch(handleNoResult)
-}
+    .catch(handleNoResult);
+};
 
 function checkResult(
   doc: DocumentFragment,
   options: any,
   transform?: null | ((text: string) => string)
 ): YoudaoSearchResult | Promise<YoudaoSearchResult> {
-  const $typo = doc.querySelector('.error-typo')
+  const $typo = doc.querySelector('.error-typo');
   if (!$typo) {
-    return handleDOM(doc, options, transform)
+    return handleDOM(doc, options, transform);
   } else if (options.related) {
     return {
       result: {
         type: 'related',
         list: getInnerHTML(HOST, $typo, { transform })
       }
-    }
+    };
   }
-  return handleNoResult()
+  return handleNoResult();
 }
 
 function handleDOM(
@@ -102,56 +102,56 @@ function handleDOM(
     prons: [],
     collins: [],
 
-  }
+  };
 
-  const audio: { uk?: string; us?: string } = {}
+  const audio: { uk?: string; us?: string; } = {};
 
-  const $star = doc.querySelector('.star')
+  const $star = doc.querySelector('.star');
   if ($star) {
-    result.stars = Number(($star.className.match(/\d+/) || [0])[0])
+    result.stars = Number(($star.className.match(/\d+/) || [0])[0]);
   }
 
   doc.querySelectorAll('.baav .pronounce').forEach($pron => {
-    const phsym = $pron.textContent || ''
-    const $voice = $pron.querySelector<HTMLAnchorElement>('.dictvoice')
+    const phsym = $pron.textContent || '';
+    const $voice = $pron.querySelector<HTMLAnchorElement>('.dictvoice');
     if ($voice && $voice.dataset.rel) {
       const url =
-        'https://dict.youdao.com/dictvoice?audio=' + $voice.dataset.rel
+        'https://dict.youdao.com/dictvoice?audio=' + $voice.dataset.rel;
 
-      result.prons.push({ phsym, url })
+      result.prons.push({ phsym, url });
 
       if (phsym.includes('英')) {
-        audio.uk = url
+        audio.uk = url;
       } else if (phsym.includes('美')) {
-        audio.us = url
+        audio.us = url;
       }
     }
-  })
+  });
 
   if (options.basic) {
     result.basic = getInnerHTML(HOST, doc, {
       selector: '#phrsListTab .trans-container',
       transform
-    })
+    });
   }
 
   if (options.collins) {
     doc.querySelectorAll('#collinsResult .wt-container').forEach($container => {
-      const item = { title: '', content: '' }
+      const item = { title: '', content: '' };
 
-      const $title = $container.querySelector(':scope > .title.trans-tip')
+      const $title = $container.querySelector(':scope > .title.trans-tip');
       if ($title) {
-        removeChild($title, '.do-detail')
-        item.title = getText($title)
-        $title.remove()
+        removeChild($title, '.do-detail');
+        item.title = getText($title);
+        $title.remove();
       }
 
-      const $star = $container.querySelector('.star')
+      const $star = $container.querySelector('.star');
       if ($star) {
-        const starMatch = /star(\d+)/.exec(String($star.className))
+        const starMatch = /star(\d+)/.exec(String($star.className));
         if (starMatch) {
-          const rate = +starMatch[1]
-          let stars = ''
+          const rate = +starMatch[1];
+          let stars = '';
           for (let i = 0; i < 5; i++) {
             stars += `<svg
               xmlns="http://www.w3.org/2000/svg"
@@ -164,58 +164,58 @@ function handleDOM(
                 fill=${i < rate ? '#FAC917' : '#d1d8de'}
                 d="M213.33 10.44l65.92 133.58 147.42 21.42L320 269.4l25.17 146.83-131.84-69.32-131.85 69.34 25.2-146.82L0 165.45l147.4-21.42"
               />
-            </svg>`
+            </svg>`;
           }
-          $star.innerHTML = stars
+          $star.innerHTML = stars;
         }
       }
 
-      item.content = getInnerHTML(HOST, $container, { transform })
+      item.content = getInnerHTML(HOST, $container, { transform });
       if (item.content) {
-        result.collins.push(item)
+        result.collins.push(item);
       }
-    })
+    });
   }
 
   doc.querySelectorAll("#discriminate .wt-container .title a").forEach((el) => {
-    el.remove()
-  })
+    el.remove();
+  });
   if (options.discrimination) {
     result.discrimination = getInnerHTML(HOST, doc, {
       selector: '#discriminate',
       transform
-    })
+    });
   }
 
   if (options.sentence) {
     result.sentence = getInnerHTML(HOST, doc, {
       selector: '#authority .ol',
       transform
-    })
+    });
   }
 
   if (options.translation) {
     result.translation = getInnerHTML(HOST, doc, {
       selector: '#fanyiToggle .trans-container',
       transform
-    })
+    });
   }
 
   if (options.wordGroup) {
     result.wordGroup = getInnerHTML(HOST, doc, {
       selector: '#wordGroup',
       transform
-    })
+    });
   }
 
   if (options.relWord) {
     result.relWord = getInnerHTML(HOST, doc, {
       selector: '#relWordTab',
       transform
-    })
+    });
   }
   if (result.title || result.translation) {
-    return { result, audio }
+    return { result, audio };
   }
-  return handleNoResult()
+  return handleNoResult();
 }

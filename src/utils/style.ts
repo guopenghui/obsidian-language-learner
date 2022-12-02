@@ -1,4 +1,4 @@
-function getRGB(selector: string, property: string): { R: number, G: number, B: number } {
+function getRGB(selector: string, property: string): { R: number, G: number, B: number; } {
     let elem = document.querySelector(selector);
     if (!elem) return { R: 0, G: 0, B: 0 };
 
@@ -11,4 +11,4 @@ function getRGB(selector: string, property: string): { R: number, G: number, B: 
 
 
 
-export { getRGB }
+export { getRGB };

@@ -1,9 +1,8 @@
 import esbuild from "esbuild";
 import process from "process";
-import fs from "fs"
-import builtins from 'builtin-modules'
-import vue from 'esbuild-plugin-vue3'
-import svg from "esbuild-plugin-svg"
+import fs from "fs";
+import builtins from 'builtin-modules';
+import vue from 'esbuild-plugin-vue3';
 
 const banner =
 	`/*
@@ -18,9 +17,12 @@ await esbuild.build({
 	banner: {
 		js: banner,
 	},
+	define: {
+		// turn off vue hmr
+		"process.env.NODE_ENV": '"production"',
+	},
 	plugins: [
 		vue(),
-		svg(),
 	],
 	entryPoints: ['./src/plugin.ts'],
 	bundle: true,
@@ -62,12 +64,11 @@ await esbuild.build({
 await esbuild.build({
 	entryPoints: ["./src/main.css"],
 	outfile: "styles.css",
-	plugins: [svg()],
 	watch: !prod,
 	bundle: true,
 	allowOverwrite: true,
 	minify: false,
-})
+});
 
 // if (!prod) {
 // 	fs.rm("./main.css", () => {

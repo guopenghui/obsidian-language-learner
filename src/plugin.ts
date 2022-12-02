@@ -7,68 +7,64 @@ import {
     MarkdownView,
     Editor,
     TFile,
-    normalizePath
+    normalizePath,
 } from "obsidian";
 import { around } from "monkey-around";
 
-import { SearchPanelView, SEARCH_PANEL_VIEW } from "./views/SearchPanelView";
-import {
-    READING_VIEW_TYPE,
-    READING_ICON,
-    ReadingView,
-} from "./views/ReadingView";
-import { LearnPanelView, LEARN_PANEL_VIEW } from "./views/LearnPanelView";
-import { StatView, STAT_VIEW_TYPE } from "./views/StatView";
+import { SearchPanelView, SEARCH_ICON, SEARCH_PANEL_VIEW } from "./views/SearchPanelView";
+import { READING_VIEW_TYPE, READING_ICON, ReadingView } from "./views/ReadingView";
+import { LearnPanelView, LEARN_ICON, LEARN_PANEL_VIEW } from "./views/LearnPanelView";
+import { StatView, STAT_ICON, STAT_VIEW_TYPE } from "./views/StatView";
+import { DataPanelView, DATA_ICON, DATA_PANEL_VIEW } from "./views/DataPanelView";
 
 import { t } from "./lang/helper";
-import DbProvider from "./db/base"
+import DbProvider from "./db/base";
 import { WebDb } from "./db/web_db";
-import { LocalDb } from "./db/local_db"
-import { TextParser } from "./views/parser"
-import { FrontMatterManager } from "./utils/frontmatter"
-import Server from "./api/server"
+import { LocalDb } from "./db/local_db";
+import { TextParser } from "./views/parser";
+import { FrontMatterManager } from "./utils/frontmatter";
+import Server from "./api/server";
 
 import { DEFAULT_SETTINGS, MyPluginSettings, SettingTab } from "./settings";
-import store from "./views/store"
+import store from "./store";
 import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
 import { playAudio } from "./utils/helpers";
 
 export const FRONT_MATTER_KEY: string = "langr";
 
-
 export default class LanguageLearner extends Plugin {
-    constants: { basePath: string }
+    constants: { basePath: string; };
     settings: MyPluginSettings;
     appEl: HTMLElement;
     db: DbProvider;
     server: Server;
     parser: TextParser;
-    markdownButtons: Record<string, HTMLElement> = {}
+    markdownButtons: Record<string, HTMLElement> = {};
     frontManager: FrontMatterManager;
-    store: typeof store = store
+    store: typeof store = store;
 
     async onload() {
         // 读取设置
         await this.loadSettings();
         this.addSettingTab(new SettingTab(this.app, this));
 
-        this.registerConstants()
+        this.registerConstants();
 
         // 打开数据库
-        this.db = this.settings.use_server ?
-            new WebDb(this.settings.port) :
-            new LocalDb(this)
-        await this.db.open()
+        this.db = this.settings.use_server
+            ? new WebDb(this.settings.port)
+            : new LocalDb(this);
+        await this.db.open();
 
         // 设置解析器
-        this.parser = new TextParser(this)
-        this.frontManager = new FrontMatterManager(this.app)
+        this.parser = new TextParser(this);
+        this.frontManager = new FrontMatterManager(this.app);
 
         // 打开内置服务器
-        this.server = this.settings.self_server ?
-            new Server(this, this.settings.self_port) :
-            null
-        await this.server?.start()
+        this.server = this.settings.self_server
+            ? new Server(this, this.settings.self_port)
+            : null;
+        await this.server?.start();
 
         // test
         // this.addCommand({
@@ -77,61 +73,89 @@ export default class LanguageLearner extends Plugin {
         // 	callback: () => new Notice("hello!")
         // })
 
-        await this.replacePDF()
+        await this.replacePDF();
 
-        this.storeSettings()
+        this.initStore();
 
-        this.addCommands()
-        this.registerCustomViews()
-        this.registerReadingToggle()
+        this.addCommands();
+        this.registerCustomViews();
+        this.registerReadingToggle();
         this.registerContextMenu();
         this.registerLeftClick();
         this.registerMouseup();
-        this.registerEvent(this.app.workspace.on("css-change", () => {
-            store.dark = document.body.hasClass("theme-dark");
-            store.themeChange = !store.themeChange
-        }))
+        this.registerEvent(
+            this.app.workspace.on("css-change", () => {
+                store.dark = document.body.hasClass("theme-dark");
+                store.themeChange = !store.themeChange;
+            })
+        );
     }
 
     async onunload() {
         this.app.workspace.detachLeavesOfType(SEARCH_PANEL_VIEW);
-        this.db.close()
-        this.server?.close()
-        if (await app.vault.adapter.exists(".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html")) {
-            this.registerExtensions([PDF_FILE_EXTENSION], "pdf")
+        this.app.workspace.detachLeavesOfType(LEARN_PANEL_VIEW);
+        this.app.workspace.detachLeavesOfType(DATA_PANEL_VIEW);
+        this.app.workspace.detachLeavesOfType(STAT_VIEW_TYPE);
+        this.app.workspace.detachLeavesOfType(READING_VIEW_TYPE);
+
+        this.db.close();
+        this.server?.close();
+        if (
+            await app.vault.adapter.exists(
+                ".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html"
+            )
+        ) {
+            this.registerExtensions([PDF_FILE_EXTENSION], "pdf");
         }
+
+        // temporarily work around for memory leak issues
+        const titles = [
+            t("Open word search panel"),
+            t("Open new word panel"),
+            t("Open statistics"),
+            t("Data Panel"),
+        ];
+        (app.workspace.leftRibbon as any).orderedRibbonActions =
+            (app.workspace.leftRibbon as any).orderedRibbonActions.filter(
+                (ent: { title: string; }) => !titles.contains(ent.title)
+            );
     }
 
     registerConstants() {
         this.constants = {
-            basePath: normalizePath((this.app.vault.adapter as any).basePath)
-        }
+            basePath: normalizePath((this.app.vault.adapter as any).basePath),
+        };
     }
 
     async replacePDF() {
-        if (await app.vault.adapter.exists(".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html")) {
+        if (
+            await app.vault.adapter.exists(
+                ".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html"
+            )
+        ) {
             this.registerView(VIEW_TYPE_PDF, (leaf) => {
                 return new PDFView(leaf);
             });
 
-            (this.app as any).viewRegistry.unregisterExtensions([PDF_FILE_EXTENSION])
+            (this.app as any).viewRegistry.unregisterExtensions([
+                PDF_FILE_EXTENSION,
+            ]);
             this.registerExtensions([PDF_FILE_EXTENSION], VIEW_TYPE_PDF);
 
             this.registerDomEvent(window, "message", (ev) => {
                 if (ev.data.type === "search") {
-                    this.queryWord(ev.data.selection)
+                    this.queryWord(ev.data.selection);
                 }
-            })
+            });
         }
-
     }
 
-    storeSettings() {
-        this.store.dark = document.body.hasClass("theme-dark")
-        this.store.themeChange = false
-        this.store.fontSize = this.settings.font_size
-        this.store.fontFamily = this.settings.font_family
-        this.store.lineHeight = this.settings.line_height
+    initStore() {
+        this.store.dark = document.body.hasClass("theme-dark");
+        this.store.themeChange = false;
+        this.store.fontSize = this.settings.font_size;
+        this.store.fontFamily = this.settings.font_family;
+        this.store.lineHeight = this.settings.line_height;
     }
 
     addCommands() {
@@ -139,25 +163,25 @@ export default class LanguageLearner extends Plugin {
         this.addCommand({
             id: "langr-refresh-word-database",
             name: t("Refresh Word Database"),
-            callback: this.refreshWordDb
+            callback: this.refreshWordDb,
         });
 
         // 注册刷新复习数据库命令
         this.addCommand({
             id: "langr-refresh-review-database",
             name: t("Refresh Review Database"),
-            callback: this.refreshReviewDb
-        })
+            callback: this.refreshReviewDb,
+        });
 
         // 注册查词命令
         this.addCommand({
             id: "langr-search-word",
             name: t("Translate"),
             callback: () => {
-                let selection = window.getSelection().toString().trim()
-                this.queryWord(selection)
-            }
-        })
+                let selection = window.getSelection().toString().trim();
+                this.queryWord(selection);
+            },
+        });
     }
 
     registerCustomViews() {
@@ -166,26 +190,18 @@ export default class LanguageLearner extends Plugin {
             SEARCH_PANEL_VIEW,
             (leaf) => new SearchPanelView(leaf, this)
         );
-        this.addRibbonIcon(
-            "book",
-            t("Open word search panel"),
-            (evt) => {
-                this.activateView(SEARCH_PANEL_VIEW, "left");
-            }
-        );
+        this.addRibbonIcon(SEARCH_ICON, t("Open word search panel"), (evt) => {
+            this.activateView(SEARCH_PANEL_VIEW, "left");
+        });
 
         // 注册新词面板视图
         this.registerView(
             LEARN_PANEL_VIEW,
             (leaf) => new LearnPanelView(leaf, this)
         );
-        this.addRibbonIcon(
-            "reading-glasses",
-            t("Open new word panel"),
-            (evt) => {
-                this.activateView(LEARN_PANEL_VIEW);
-            }
-        );
+        this.addRibbonIcon(LEARN_ICON, t("Open new word panel"), (evt) => {
+            this.activateView(LEARN_PANEL_VIEW, "right");
+        });
 
         // 注册阅读视图
         this.registerView(
@@ -195,8 +211,17 @@ export default class LanguageLearner extends Plugin {
 
         //注册统计视图
         this.registerView(STAT_VIEW_TYPE, (leaf) => new StatView(leaf, this));
-        this.addRibbonIcon("bar-chart-4", t("Open statistics"), async (evt) => {
-            this.activateView(STAT_VIEW_TYPE);
+        this.addRibbonIcon(STAT_ICON, t("Open statistics"), async (evt) => {
+            this.activateView(STAT_VIEW_TYPE, "right");
+        });
+
+        //注册单词列表视图
+        this.registerView(
+            DATA_PANEL_VIEW,
+            (leaf) => new DataPanelView(leaf, this)
+        );
+        this.addRibbonIcon(DATA_ICON, t("Data Panel"), async (evt) => {
+            this.activateView(DATA_PANEL_VIEW, "tab");
         });
     }
 
@@ -222,17 +247,19 @@ export default class LanguageLearner extends Plugin {
     async refreshTextDB() {
         await this.refreshWordDb();
         await this.refreshReviewDb();
-        (this.app as any).commands.executeCommandById("various-complements:reload-custom-dictionaries")
+        (this.app as any).commands.executeCommandById(
+            "various-complements:reload-custom-dictionaries"
+        );
     }
 
     refreshWordDb = async () => {
         if (!this.settings.word_database) {
-            return
+            return;
         }
 
         let dataBase = this.app.vault.getAbstractFileByPath(
             this.settings.word_database
-        )
+        );
         if (!dataBase || dataBase.hasOwnProperty("children")) {
             new Notice("Invalid refresh database path");
             return;
@@ -255,13 +282,18 @@ export default class LanguageLearner extends Plugin {
             t("Learned"),
         ];
 
-        let del = this.settings.col_delimiter
+        let del = this.settings.col_delimiter;
 
         // 正向查询
         let classified_texts = classified.map((w, idx) => {
             return (
                 `#### ${statusMap[idx]}\n` +
-                w.map((i) => `${words[i].expression}${del}    ${words[i].meaning}`).join("\n") +
+                w
+                    .map(
+                        (i) =>
+                            `${words[i].expression}${del}    ${words[i].meaning}`
+                    )
+                    .join("\n") +
                 "\n"
             );
         });
@@ -271,76 +303,96 @@ export default class LanguageLearner extends Plugin {
         // 反向查询
         let meaning2Word = classified
             .flat()
-            .map(
-                (i) => `${words[i].meaning}  ${del}  ${words[i].expression}`
-            )
+            .map((i) => `${words[i].meaning}  ${del}  ${words[i].expression}`)
             .join("\n");
 
-        let text =
-            word2Meaning + "\n\n" + "#### 反向查询\n" + meaning2Word;
+        let text = word2Meaning + "\n\n" + "#### 反向查询\n" + meaning2Word;
         let db = dataBase as TFile;
         this.app.vault.modify(db, text);
-    }
+    };
 
     refreshReviewDb = async () => {
         if (!this.settings.review_database) {
-            return
+            return;
         }
 
-        let dataBase = this.app.vault.getAbstractFileByPath(this.settings.review_database)
+        let dataBase = this.app.vault.getAbstractFileByPath(
+            this.settings.review_database
+        );
         if (!dataBase || "children" in dataBase) {
-            new Notice("Invalid word database path")
-            return
+            new Notice("Invalid word database path");
+            return;
         }
 
-        let db = dataBase as TFile
-        let text = await this.app.vault.read(db)
-        let oldRecord = {} as { [K in string]: string }
+        let db = dataBase as TFile;
+        let text = await this.app.vault.read(db);
+        let oldRecord = {} as { [K in string]: string };
         text.match(/#word(\n.+)+\n(<!--SR.*?-->)/g)
-            ?.map(v => v.match(/#### (.+)[\s\S]+(<!--SR.*-->)/))
-            ?.forEach(v => {
-                oldRecord[v[1]] = v[2]
-            })
+            ?.map((v) => v.match(/#### (.+)[\s\S]+(<!--SR.*-->)/))
+            ?.forEach((v) => {
+                oldRecord[v[1]] = v[2];
+            });
 
         // let data = await this.db.getExpressionAfter(this.settings.last_sync)
-        let data = await this.db.getExpressionAfter("1970-01-01T00:00:00Z")
+        let data = await this.db.getExpressionAfter("1970-01-01T00:00:00Z");
         if (data.length === 0) {
             // new Notice("Nothing new")
-            return
+            return;
         }
 
-        data.sort((a, b) => a.expression.localeCompare(b.expression))
+        data.sort((a, b) => a.expression.localeCompare(b.expression));
 
-        let newText = data.map(word => {
-            let notes = word.notes.length === 0 ?
-                "" :
-                "**Notes**:\n" + word.notes.join("\n").trim() + "\n";
-            let sentences = word.sentences.length === 0 ?
-                "" :
-                "**Sentences**:\n" + word.sentences.map(sen => {
-                    return (`*${sen.text.trim()}*` + "\n") +
-                        (sen.trans ? sen.trans.trim() + "\n" : "") +
-                        (sen.origin ? sen.origin.trim() : "")
-                }).join("\n").trim() + "\n"
+        let newText =
+            data
+                .map((word) => {
+                    let notes =
+                        word.notes.length === 0
+                            ? ""
+                            : "**Notes**:\n" +
+                            word.notes.join("\n").trim() +
+                            "\n";
+                    let sentences =
+                        word.sentences.length === 0
+                            ? ""
+                            : "**Sentences**:\n" +
+                            word.sentences
+                                .map((sen) => {
+                                    return (
+                                        `*${sen.text.trim()}*` +
+                                        "\n" +
+                                        (sen.trans
+                                            ? sen.trans.trim() + "\n"
+                                            : "") +
+                                        (sen.origin ? sen.origin.trim() : "")
+                                    );
+                                })
+                                .join("\n")
+                                .trim() +
+                            "\n";
 
-            return `#word\n` +
-                `#### ${word.expression}\n` +
-                "?\n" +
-                `${word.meaning}\n` +
-                `${notes}` +
-                `${sentences}` +
-                (oldRecord[word.expression] ? oldRecord[word.expression] + "\n" : "")
-        }).join("\n") + "\n"
+                    return (
+                        `#word\n` +
+                        `#### ${word.expression}\n` +
+                        "?\n" +
+                        `${word.meaning}\n` +
+                        `${notes}` +
+                        `${sentences}` +
+                        (oldRecord[word.expression]
+                            ? oldRecord[word.expression] + "\n"
+                            : "")
+                    );
+                })
+                .join("\n") + "\n";
 
-        newText = "#flashcards\n\n" + newText
-        await this.app.vault.modify(db, newText)
+        newText = "#flashcards\n\n" + newText;
+        await this.app.vault.modify(db, newText);
 
-        this.saveSettings()
-    }
+        this.saveSettings();
+    };
 
     // 在MardownView的扩展菜单加一个转为Reading模式的选项
     registerReadingToggle = () => {
-        const pluginSelf = this
+        const pluginSelf = this;
         pluginSelf.register(
             around(MarkdownView.prototype, {
                 onPaneMenu(next) {
@@ -369,47 +421,75 @@ export default class LanguageLearner extends Plugin {
                         next.call(this, m);
                     };
                 },
-
             })
-        )
+        );
 
         // 增加标题栏切换阅读模式和mardown模式的按钮
         pluginSelf.register(
             around(WorkspaceLeaf.prototype, {
                 setViewState(next) {
-                    return function (state: ViewState, ...rest: any[]): Promise<void> {
-                        return (next.apply(this, [state, ...rest]) as Promise<void>).then(() => {
-                            if (state.type === "markdown" &&
+                    return function (
+                        state: ViewState,
+                        ...rest: any[]
+                    ): Promise<void> {
+                        return (
+                            next.apply(this, [state, ...rest]) as Promise<void>
+                        ).then(() => {
+                            if (
+                                state.type === "markdown" &&
                                 state.state?.file
                             ) {
-                                const cache = pluginSelf.app.metadataCache.getCache(state.state.file)
-                                if (cache?.frontmatter && cache.frontmatter[FRONT_MATTER_KEY]) {
-                                    if (!pluginSelf.markdownButtons["reading"]) {
+                                const cache =
+                                    pluginSelf.app.metadataCache.getCache(
+                                        state.state.file
+                                    );
+                                if (
+                                    cache?.frontmatter &&
+                                    cache.frontmatter[FRONT_MATTER_KEY]
+                                ) {
+                                    if (
+                                        !pluginSelf.markdownButtons["reading"]
+                                    ) {
                                         pluginSelf.markdownButtons["reading"] =
-                                            (this.view as MarkdownView).addAction("view", t("Open as Reading View"), () => {
-                                                pluginSelf.setReadingView(this)
-                                            })
-                                        pluginSelf.markdownButtons["reading"].addClass("change-to-reading")
+                                            (
+                                                this.view as MarkdownView
+                                            ).addAction(
+                                                "view",
+                                                t("Open as Reading View"),
+                                                () => {
+                                                    pluginSelf.setReadingView(
+                                                        this
+                                                    );
+                                                }
+                                            );
+                                        pluginSelf.markdownButtons[
+                                            "reading"
+                                        ].addClass("change-to-reading");
                                     }
                                 } else {
-                                    pluginSelf.markdownButtons["reading"]?.remove()
-                                    pluginSelf.markdownButtons["reading"] = null
+                                    pluginSelf.markdownButtons[
+                                        "reading"
+                                    ]?.remove();
+                                    pluginSelf.markdownButtons["reading"] =
+                                        null;
                                 }
                             } else {
-                                pluginSelf.markdownButtons["reading"] = null
+                                pluginSelf.markdownButtons["reading"] = null;
                             }
-                        })
-                    }
+                        });
+                    };
                 },
             })
-        )
-    }
+        );
+    };
 
     async queryWord(word: string, target?: HTMLElement): Promise<void> {
         await this.activateView(SEARCH_PANEL_VIEW, "left");
-        const view = this.app.workspace.getLeavesOfType(
-            SEARCH_PANEL_VIEW
-        )[0].view as SearchPanelView;
+        const view = this.app.workspace.getLeavesOfType(SEARCH_PANEL_VIEW)[0]
+            .view as SearchPanelView;
+        if (target) {
+            await this.activateView(LEARN_PANEL_VIEW, "right");
+        }
         view.query(word, target);
     }
 
@@ -441,7 +521,11 @@ export default class LanguageLearner extends Plugin {
         );
         // markdown 预览模式 右键菜单
         this.registerDomEvent(document.body, "contextmenu", (evt) => {
-            if ((evt.target as HTMLElement).matchParent(".markdown-preview-view")) {
+            if (
+                (evt.target as HTMLElement).matchParent(
+                    ".markdown-preview-view"
+                )
+            ) {
                 const selection = window.getSelection().toString().trim();
                 if (!selection) return;
 
@@ -458,19 +542,21 @@ export default class LanguageLearner extends Plugin {
     // 管理所有的左键抬起
     registerMouseup() {
         this.registerDomEvent(document.body, "mouseup", (evt) => {
-            const target = evt.target as HTMLElement
-            if (!target.matchParent(".stns")) { // 处理普通模式
+            const target = evt.target as HTMLElement;
+            if (!target.matchParent(".stns")) {
+                // 处理普通模式
                 const funcKey = this.settings.function_key;
                 if (funcKey === "disable" || evt[funcKey] === false) return;
 
-                let selection = window.getSelection().toString().trim()
+                let selection = window.getSelection().toString().trim();
                 if (!selection) return;
 
-                this.queryWord(selection)
-                return
-            } else {	// 处理阅读模式下
-                let start: Node
-                let end: Node
+                this.queryWord(selection);
+                return;
+            } else {
+                // 处理阅读模式下
+                let start: Node;
+                let end: Node;
 
                 // test
                 const selection = window.getSelection();
@@ -493,18 +579,18 @@ export default class LanguageLearner extends Plugin {
                     start = range.startContainer;
                     end = range.endContainer;
                 } else if (target.hasClass("word")) {
-                    start = end = target
+                    start = end = target;
                 } else {
-                    return
+                    return;
                 }
 
                 // 保证最多只有一个select块
-                let view = this.app.workspace.getActiveViewOfType(ReadingView)
+                let view = this.app.workspace.getActiveViewOfType(ReadingView);
                 if (view) {
-                    view.removeSelect()
+                    view.removeSelect();
                 }
 
-                if ((start as HTMLElement).matchParent(".select")) return
+                if ((start as HTMLElement).matchParent(".select")) return;
 
                 let parent = start.parentNode;
                 let newSpan = document.body.createSpan({ cls: "select" });
@@ -528,16 +614,17 @@ export default class LanguageLearner extends Plugin {
                 });
 
                 //selection.collapseToStart()
-                this.queryWord(newSpan.innerText, newSpan)
+                this.queryWord(newSpan.innerText, newSpan);
             }
-        })
+        });
     }
 
     // 管理所有的鼠标左击
     registerLeftClick() {
         this.registerDomEvent(document.body, "click", (evt) => {
             let target = evt.target as HTMLElement;
-            if (target.classList.contains("word") ||
+            if (
+                target.classList.contains("word") ||
                 target.classList.contains("select") ||
                 target.classList.contains("phrase")
             ) {
@@ -546,40 +633,47 @@ export default class LanguageLearner extends Plugin {
                 !!target.matchParent(".text-area") &&
                 !target.matchParent(".stns")
             ) {
-                let selection = window.getSelection()
+                let selection = window.getSelection();
                 if (!selection.isCollapsed) {
-                    selection.collapseToStart()
+                    selection.collapseToStart();
                 }
 
                 // 消除select块
-                let view =
-                    this.app.workspace.getActiveViewOfType(ReadingView)
+                let view = this.app.workspace.getActiveViewOfType(ReadingView);
                 if (view) {
-                    view.removeSelect()
+                    view.removeSelect();
                 }
-            } else if (target.tagName === "H4" && target.matchParent("#sr-flashcard-view")) {
+            } else if (
+                target.tagName === "H4" &&
+                target.matchParent("#sr-flashcard-view")
+            ) {
                 let word = target.textContent;
-                let accent = this.settings.review_prons
-                let wordUrl = `http://dict.youdao.com/dictvoice?type=${accent}&audio=` + encodeURIComponent(word);
+                let accent = this.settings.review_prons;
+                let wordUrl =
+                    `http://dict.youdao.com/dictvoice?type=${accent}&audio=` +
+                    encodeURIComponent(word);
                 playAudio(wordUrl);
             }
         });
     }
 
     async loadSettings() {
-        let settings: { [K in string]: any } = Object.assign({}, DEFAULT_SETTINGS)
-        let data = (await this.loadData()) || {}
+        let settings: { [K in string]: any } = Object.assign(
+            {},
+            DEFAULT_SETTINGS
+        );
+        let data = (await this.loadData()) || {};
         for (let key in DEFAULT_SETTINGS) {
-            let k = key as keyof typeof DEFAULT_SETTINGS
+            let k = key as keyof typeof DEFAULT_SETTINGS;
             if (!data[k]) continue;
 
             if (typeof DEFAULT_SETTINGS[k] === "object") {
-                Object.assign(settings[k], data[k])
+                Object.assign(settings[k], data[k]);
             } else {
-                settings[k] = data[k]
+                settings[k] = data[k];
             }
         }
-        (this.settings as any) = settings
+        (this.settings as any) = settings;
         // this.settings = Object.assign(
         //     {},
         //     DEFAULT_SETTINGS,
@@ -591,25 +685,30 @@ export default class LanguageLearner extends Plugin {
         await this.saveData(this.settings);
     }
 
-    async activateView(VIEW_TYPE: string, side: "left" | "right" = "right") {
+    async activateView(
+        VIEW_TYPE: string,
+        side: "left" | "right" | "tab"
+    ) {
         if (this.app.workspace.getLeavesOfType(VIEW_TYPE).length === 0) {
-            if (side === "left") {
-                await this.app.workspace.getLeftLeaf(false).setViewState({
-                    type: VIEW_TYPE,
-                    active: true,
-                });
-            } else {
-                await this.app.workspace.getRightLeaf(false).setViewState({
-                    type: VIEW_TYPE,
-                    active: true,
-                });
+            let leaf;
+            switch (side) {
+                case "left":
+                    leaf = this.app.workspace.getLeftLeaf(false);
+                    break;
+                case "right":
+                    leaf = this.app.workspace.getRightLeaf(false);
+                    break;
+                case "tab":
+                    leaf = this.app.workspace.getLeaf("tab");
+                    break;
             }
+            await leaf.setViewState({
+                type: VIEW_TYPE,
+                active: true,
+            });
         }
-
         this.app.workspace.revealLeaf(
             this.app.workspace.getLeavesOfType(VIEW_TYPE)[0]
         );
     }
 }
-
-

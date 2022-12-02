@@ -9,10 +9,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref } from "vue";
 
 interface Collins {
-    [index:number]: {
+    [index: number]: {
         title: string,
         content: string,
     };
@@ -20,23 +20,23 @@ interface Collins {
 
 const props = defineProps({
     mydata: {
-        type: Object ,
+        type: Object,
         default: () => {
-            return [] as Collins[]
+            return [] as Collins[];
         }
     }
-})
+});
 
-let mode = ref("word")
+let mode = ref("word");
 
 let showedHTML = computed(() => {
-    if(props.mydata.length === 0)
-        return ""
-    if(props.mydata.length === 2) {
-        if(mode.value === "phase")
-            return props.mydata[1].content
+    if (props.mydata.length === 0)
+        return "";
+    if (props.mydata.length === 2) {
+        if (mode.value === "phase")
+            return props.mydata[1].content;
     }
-    return props.mydata[0].content
+    return props.mydata[0].content;
 })
 
 </script>

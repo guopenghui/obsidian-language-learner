@@ -10,6 +10,9 @@ export default {
     "Refresh Word Database": "Refresh Word Database",
     "Refresh Review Database": "Refresh Review Database",
 
+    // DataPanelView.ts
+    "Data Panel": "Data Panel",
+
 
     // SearchPanelView.ts
     "Search Panel": "Search Panel",

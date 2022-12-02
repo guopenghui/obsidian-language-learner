@@ -1,3 +1,3 @@
 export function playAudio(src: string) {
-    new Audio(src).play()
+    new Audio(src).play();
 }

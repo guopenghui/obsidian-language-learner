@@ -40,6 +40,10 @@ interface ExpressionInfoSimple {
     meaning: string;
     status: number;
     t: string;
+    tags: string[];
+    note_num: number;
+    sen_num: number;
+    date: number;
 }
 
 interface CountInfo {
@@ -62,4 +66,4 @@ interface WordCount {
 export type {
     ArticleWords, Word, Phrase, WordsPhrase, Sentence,
     ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
-}
+};

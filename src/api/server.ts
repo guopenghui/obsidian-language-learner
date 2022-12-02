@@ -1,7 +1,7 @@
-import http from "http"
-import url from "url"
-import LanguageLearner from "../plugin"
-import { dict } from "../constant"
+import http from "http";
+import url from "url";
+import LanguageLearner from "@/plugin";
+import { dict } from "@/constant";
 
 const ALLOWED_HEADERS =
     'Access-Control-Allow-Headers, Origin, Authorization,Accept,x-client-id, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, hypothesis-client-version';
@@ -24,7 +24,7 @@ const mimeType = {
     '.ttf': 'application/x-font-ttf'
 };
 
-type RequestType = "LOAD" | "STORE" | "TAG" | "ECHO" | "OTHER"
+type RequestType = "LOAD" | "STORE" | "TAG" | "ECHO" | "OTHER";
 
 
 export default class Server {
@@ -33,38 +33,38 @@ export default class Server {
     port: number;
 
     constructor(plugin: LanguageLearner, port: number) {
-        this.plugin = plugin
-        this.port = port
+        this.plugin = plugin;
+        this.port = port;
     }
 
     async _startListen(port: number): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this._server.listen(port, () => {
-                resolve()
-            })
-        })
+                resolve();
+            });
+        });
     }
 
     async start() {
-        const server = http.createServer()
-        this._server = server
-        server.on("request", this.process)
-        await this._startListen(this.port)
-        console.log(`${dict["NAME"]}: Server established on port ${this.port}`)
+        const server = http.createServer();
+        this._server = server;
+        server.on("request", this.process);
+        await this._startListen(this.port);
+        console.log(`${dict["NAME"]}: Server established on port ${this.port}`);
     }
 
     async _closeServer() {
         return new Promise<void>((resolve, reject) => {
             this._server.close(() => {
-                resolve()
-            })
-        })
+                resolve();
+            });
+        });
     }
 
     async close() {
-        await this._closeServer()
-        this._server = null
-        console.log(`${dict["NAME"]}: Server on port ${this.port} has closed`)
+        await this._closeServer();
+        this._server = null;
+        console.log(`${dict["NAME"]}: Server on port ${this.port} has closed`);
     }
 
     process = async (req: http.IncomingMessage, res: http.ServerResponse) => {
@@ -73,69 +73,69 @@ export default class Server {
         res.setHeader('Access-Control-Allow-Headers', ALLOWED_HEADERS);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         if (req.method === "OPTIONS") {
-            res.end()
-            return
+            res.end();
+            return;
         }
 
-        let type = this.parseUrl(req.url)
+        let type = this.parseUrl(req.url);
         switch (type) {
             case "ECHO": {
                 // console.log("hello from chrome")
-                res.setHeader("Keep-Alive", "timeout=0")
+                res.setHeader("Keep-Alive", "timeout=0");
                 res.statusCode = 200;
-                res.end("hi")
-                break
+                res.end("hi");
+                break;
             }
             case "LOAD": {
-                let data = await this.parseData(req, res)
-                let expr = await this.plugin.db.getExpression(data)
-                res.setHeader('Content-type', mimeType[".json"])
+                let data = await this.parseData(req, res);
+                let expr = await this.plugin.db.getExpression(data);
+                res.setHeader('Content-type', mimeType[".json"]);
                 res.statusCode = 200;
-                res.end(JSON.stringify(expr))
-                break
+                res.end(JSON.stringify(expr));
+                break;
             }
             case "STORE": {
-                let data = await this.parseData(req, res)
-                await this.plugin.db.postExpression(data)
+                let data = await this.parseData(req, res);
+                await this.plugin.db.postExpression(data);
                 res.statusCode = 200;
-                res.end()
+                res.end();
                 if (this.plugin.settings.auto_refresh_db) {
-                    this.plugin.refreshTextDB()
+                    this.plugin.refreshTextDB();
                 }
-                break
+                break;
             }
             case "TAG": {
-                let tags = await this.plugin.db.getTags()
-                res.setHeader('Content-type', mimeType[".json"])
+                let tags = await this.plugin.db.getTags();
+                res.setHeader('Content-type', mimeType[".json"]);
                 res.statusCode = 200;
-                res.end(JSON.stringify(tags))
-                break
+                res.end(JSON.stringify(tags));
+                break;
             }
             default: {
-                res.statusCode = 400
-                res.end("Bad Request")
+                res.statusCode = 400;
+                res.end("Bad Request");
             }
         }
-    }
+    };
 
     async parseData(req: http.IncomingMessage, res: http.ServerResponse): Promise<any> {
         return new Promise<any>((resolve, reject) => {
-            let _data: number[] = []
+            let _data: number[] = [];
             req.on("data", chunk => {
-                _data.push(...chunk)
-            })
+                _data.push(...chunk);
+            });
             req.on("end", async () => {
-                let rawtext = new TextDecoder().decode(new Uint8Array(_data))
-                if (!rawtext) rawtext = '"hello"'
-                let data = JSON.parse(rawtext)
-                resolve(data)
-            })
-        })
+                let rawtext = new TextDecoder().decode(new Uint8Array(_data));
+                if (!rawtext) rawtext = '"hello"';
+                let data = JSON.parse(rawtext);
+                resolve(data);
+            });
+        });
 
     }
 
     parseUrl(_url: string): RequestType {
-        let urlObj = url.parse(_url, true)
+        let urlObj = url.parse(_url, true);
         if (urlObj.path === "/word") return "LOAD";
         if (urlObj.path === "/update") return "STORE";
         if (urlObj.path === "/tags") return "TAG";

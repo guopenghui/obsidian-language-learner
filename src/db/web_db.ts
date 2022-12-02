@@ -2,16 +2,16 @@ import { requestUrl, RequestUrlParam, moment } from "obsidian";
 import {
     ArticleWords, Word, Phrase, WordsPhrase, Sentence,
     ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
-} from "./interface"
+} from "./interface";
 
-import DbProvider from "./base"
+import DbProvider from "./base";
 
 
 export class WebDb extends DbProvider {
     port: number;
     constructor(port: number) {
-        super()
-        this.port = port
+        super();
+        this.port = port;
     }
     async open() { }
 
@@ -46,7 +46,7 @@ export class WebDb extends DbProvider {
             method: "POST",
             body: JSON.stringify(expression.toLowerCase()),
             contentType: "application/json",
-        }
+        };
 
         try {
             let response = await requestUrl(request);
@@ -57,37 +57,37 @@ export class WebDb extends DbProvider {
     }
 
     async getExpressionsSimple(expressions: string[]): Promise<ExpressionInfoSimple[]> {
-        expressions = expressions.map(v => v.toLowerCase())
+        expressions = expressions.map(v => v.toLowerCase());
         let request: RequestUrlParam = {
             url: `http://localhost:${this.port}/words_simple`,
             method: "POST",
             body: JSON.stringify(expressions),
             contentType: "application/json",
-        }
+        };
 
         try {
             let response = await requestUrl(request);
-            return response.json
+            return response.json;
         } catch (e) {
-            console.error("Error getting simple data from server: " + e)
+            console.error("Error getting simple data from server: " + e);
         }
     }
 
 
     // 获取某一时间之后的所有单词的详细信息
     async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
-        let unixStamp = moment.utc(time).unix()
+        let unixStamp = moment.utc(time).unix();
         let request: RequestUrlParam = {
             url: `http://localhost:${this.port}/words/after`,
             method: "POST",
             body: JSON.stringify(unixStamp),
             contentType: "application/json",
-        }
+        };
         try {
-            let response = await requestUrl(request)
-            return response.json
+            let response = await requestUrl(request);
+            return response.json;
         } catch (e) {
-            console.warn("Error getting exprs after time from server" + e)
+            console.warn("Error getting exprs after time from server" + e);
         }
     }
 

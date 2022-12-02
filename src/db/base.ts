@@ -1,7 +1,7 @@
 import {
     ArticleWords, Word, Phrase, WordsPhrase, Sentence,
     ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
-} from "./interface"
+} from "./interface";
 
 
 abstract class DbProvider {
@@ -34,8 +34,8 @@ abstract class DbProvider {
     // 导入数据库
     abstract importDB(data: any): Promise<void>;
     // 导出数据库
-    abstract exportDB(): Promise<void>
+    abstract exportDB(): Promise<void>;
 }
 
 
-export default DbProvider
+export default DbProvider;

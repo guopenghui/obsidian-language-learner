@@ -1,12 +1,12 @@
-import { reactive } from "vue"
+import { reactive } from "vue";
 
-let store = reactive({
+const store = reactive({
     text: "",
     dark: false,
     themeChange: false,
     fontSize: "",
     fontFamily: "",
     lineHeight: "",
-})
+});
 
-export default store
+export default store;

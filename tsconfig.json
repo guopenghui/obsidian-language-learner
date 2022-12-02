@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    "paths":{
+        "@/*": ["./src/*"],
+        "@dict/*": ["./src/dictionary/*"],
+        "@comp/*": ["./src/component/*"],
+    },
     "inlineSourceMap": true,
     "inlineSources": true,
     "module": "ESNext",
@@ -23,5 +28,5 @@
   "include": [
     "**/*.ts",
     "**/*.vue"
-  ]
+  ],
 }

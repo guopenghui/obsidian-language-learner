@@ -10,6 +10,8 @@ export default {
     "Refresh Word Database": "重新整理單字資料庫",
     "Refresh Review Database": "重新整理復習資料庫",
 
+    // DataPanelView.ts
+    "Data Panel": "單字列表",
 
     // SearchPanelView.ts
     "Search Panel": "查字面板",
