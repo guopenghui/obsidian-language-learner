@@ -288,13 +288,8 @@ export default class LanguageLearner extends Plugin {
         let classified_texts = classified.map((w, idx) => {
             return (
                 `#### ${statusMap[idx]}\n` +
-                w
-                    .map(
-                        (i) =>
-                            `${words[i].expression}${del}    ${words[i].meaning}`
-                    )
-                    .join("\n") +
-                "\n"
+                w.map((i) => `${words[i].expression}${del}    ${words[i].meaning}`)
+                    .join("\n") + "\n"
             );
         });
         classified_texts.shift();
@@ -342,47 +337,31 @@ export default class LanguageLearner extends Plugin {
 
         data.sort((a, b) => a.expression.localeCompare(b.expression));
 
-        let newText =
-            data
-                .map((word) => {
-                    let notes =
-                        word.notes.length === 0
-                            ? ""
-                            : "**Notes**:\n" +
-                            word.notes.join("\n").trim() +
-                            "\n";
-                    let sentences =
-                        word.sentences.length === 0
-                            ? ""
-                            : "**Sentences**:\n" +
-                            word.sentences
-                                .map((sen) => {
-                                    return (
-                                        `*${sen.text.trim()}*` +
-                                        "\n" +
-                                        (sen.trans
-                                            ? sen.trans.trim() + "\n"
-                                            : "") +
-                                        (sen.origin ? sen.origin.trim() : "")
-                                    );
-                                })
-                                .join("\n")
-                                .trim() +
-                            "\n";
-
+        let newText = data.map((word) => {
+            let notes = word.notes.length === 0
+                ? ""
+                : "**Notes**:\n" + word.notes.join("\n").trim() + "\n";
+            let sentences = word.sentences.length === 0
+                ? ""
+                : "**Sentences**:\n" +
+                word.sentences.map((sen) => {
                     return (
-                        `#word\n` +
-                        `#### ${word.expression}\n` +
-                        "?\n" +
-                        `${word.meaning}\n` +
-                        `${notes}` +
-                        `${sentences}` +
-                        (oldRecord[word.expression]
-                            ? oldRecord[word.expression] + "\n"
-                            : "")
+                        `*${sen.text.trim()}*` + "\n" +
+                        (sen.trans ? sen.trans.trim() + "\n" : "") +
+                        (sen.origin ? sen.origin.trim() : "")
                     );
-                })
-                .join("\n") + "\n";
+                }).join("\n").trim() + "\n";
+
+            return (
+                `#word\n` +
+                `#### ${word.expression}\n` +
+                "?\n" +
+                `${word.meaning}\n` +
+                `${notes}` +
+                `${sentences}` +
+                (oldRecord[word.expression] ? oldRecord[word.expression] + "\n" : "")
+            );
+        }).join("\n") + "\n";
 
         newText = "#flashcards\n\n" + newText;
         await this.app.vault.modify(db, newText);
@@ -402,8 +381,7 @@ export default class LanguageLearner extends Plugin {
                             ? pluginSelf.app.metadataCache.getFileCache(file)
                             : null;
 
-                        if (
-                            !file ||
+                        if (!file ||
                             !cache?.frontmatter ||
                             !cache?.frontmatter[FRONT_MATTER_KEY]
                         ) {
@@ -413,9 +391,7 @@ export default class LanguageLearner extends Plugin {
                         m.addItem((item) => {
                             item.setTitle(t("Open as Reading View"))
                                 .setIcon(READING_ICON)
-                                .onClick(() => {
-                                    pluginSelf.setReadingView(this.leaf);
-                                });
+                                .onClick(() => { pluginSelf.setReadingView(this.leaf); });
                         });
 
                         next.call(this, m);
@@ -428,50 +404,26 @@ export default class LanguageLearner extends Plugin {
         pluginSelf.register(
             around(WorkspaceLeaf.prototype, {
                 setViewState(next) {
-                    return function (
-                        state: ViewState,
-                        ...rest: any[]
-                    ): Promise<void> {
-                        return (
-                            next.apply(this, [state, ...rest]) as Promise<void>
-                        ).then(() => {
-                            if (
-                                state.type === "markdown" &&
-                                state.state?.file
-                            ) {
-                                const cache =
-                                    pluginSelf.app.metadataCache.getCache(
-                                        state.state.file
-                                    );
-                                if (
-                                    cache?.frontmatter &&
-                                    cache.frontmatter[FRONT_MATTER_KEY]
-                                ) {
-                                    if (
-                                        !pluginSelf.markdownButtons["reading"]
-                                    ) {
+                    return function (state: ViewState, ...rest: any[]): Promise<void> {
+                        return (next.apply(this, [state, ...rest]) as Promise<void>).then(() => {
+                            if (state.type === "markdown" && state.state?.file) {
+                                const cache = pluginSelf.app.metadataCache
+                                    .getCache(state.state.file);
+                                if (cache?.frontmatter && cache.frontmatter[FRONT_MATTER_KEY]) {
+                                    if (!pluginSelf.markdownButtons["reading"]) {
                                         pluginSelf.markdownButtons["reading"] =
-                                            (
-                                                this.view as MarkdownView
-                                            ).addAction(
+                                            (this.view as MarkdownView).addAction(
                                                 "view",
                                                 t("Open as Reading View"),
                                                 () => {
-                                                    pluginSelf.setReadingView(
-                                                        this
-                                                    );
+                                                    pluginSelf.setReadingView(this);
                                                 }
                                             );
-                                        pluginSelf.markdownButtons[
-                                            "reading"
-                                        ].addClass("change-to-reading");
+                                        pluginSelf.markdownButtons["reading"].addClass("change-to-reading");
                                     }
                                 } else {
-                                    pluginSelf.markdownButtons[
-                                        "reading"
-                                    ]?.remove();
-                                    pluginSelf.markdownButtons["reading"] =
-                                        null;
+                                    pluginSelf.markdownButtons["reading"]?.remove();
+                                    pluginSelf.markdownButtons["reading"] = null;
                                 }
                             } else {
                                 pluginSelf.markdownButtons["reading"] = null;
@@ -510,10 +462,7 @@ export default class LanguageLearner extends Plugin {
                 "editor-menu",
                 (menu: Menu, editor: Editor, view: MarkdownView) => {
                     let selection = editor.getSelection();
-                    if (
-                        selection ||
-                        selection.trim().length === selection.length
-                    ) {
+                    if (selection || selection.trim().length === selection.length) {
                         addMemu(menu, selection);
                     }
                 }
@@ -521,11 +470,7 @@ export default class LanguageLearner extends Plugin {
         );
         // markdown 预览模式 右键菜单
         this.registerDomEvent(document.body, "contextmenu", (evt) => {
-            if (
-                (evt.target as HTMLElement).matchParent(
-                    ".markdown-preview-view"
-                )
-            ) {
+            if ((evt.target as HTMLElement).matchParent(".markdown-preview-view")) {
                 const selection = window.getSelection().toString().trim();
                 if (!selection) return;
 
@@ -687,10 +632,7 @@ export default class LanguageLearner extends Plugin {
         await this.saveData(this.settings);
     }
 
-    async activateView(
-        VIEW_TYPE: string,
-        side: "left" | "right" | "tab"
-    ) {
+    async activateView(VIEW_TYPE: string, side: "left" | "right" | "tab") {
         if (this.app.workspace.getLeavesOfType(VIEW_TYPE).length === 0) {
             let leaf;
             switch (side) {

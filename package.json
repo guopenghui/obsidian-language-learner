@@ -13,6 +13,7 @@
 	"license": "MIT",
 	"dependencies": {
 		"@types/downloadjs": "^1.4.3",
+		"@vueuse/core": "^9.6.0",
 		"ac-auto": "^2.0.0",
 		"dexie": "^3.2.2",
 		"dexie-export-import": "^1.0.3",
