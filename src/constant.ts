@@ -11,7 +11,7 @@ interface EventMap extends GlobalEventHandlersEventMap {
     }>;
     "obsidian-langr-refresh": CustomEvent<{
         expression: string,
-        type: "WORD" | "PHRASE",
+        type: string,
         status: number,
     }>;
     "obsidian-langr-refresh-stat": CustomEvent<{}>;
