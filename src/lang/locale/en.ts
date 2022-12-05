@@ -87,6 +87,8 @@ export default {
     "Spanish": "Spanish",
 
     "Translate": "Translate",
+    "Popup Search Panel": "Popup Search Panel",
+    "Use a popup search panel": "Use a popup search panel",
     "Word Select": "Word Select",
     "Press function key and select text to translate": "Press function key and select text to translate",
     "Disable": "Disable",
@@ -160,4 +162,4 @@ export default {
     "Self as Server": "Self as Server",
     "Make plugin a server and interact with chrome extension": "Make plugin a server and interact with chrome extension",
     "when changing port, you should restart the server": "when changing port, you should restart the server",
-}
+};

@@ -7,6 +7,7 @@ const store = reactive({
     fontSize: "",
     fontFamily: "",
     lineHeight: "",
+    searchPinned: false,
 });
 
 export default store;

@@ -132,6 +132,8 @@ watch(
         overflow: hidden;
         padding-top: 10px;
         transition: max-height 0.5s;
+        padding-left: 10px;
+        padding-right: 10px;
 
         .fold-mask {
             position: absolute;

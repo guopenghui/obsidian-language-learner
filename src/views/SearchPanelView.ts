@@ -15,14 +15,6 @@ export class SearchPanelView extends ItemView {
         super(leaf);
         this.plugin = plugin;
     }
-    query(selection: string, target?: HTMLElement) {
-        dispatchEvent(new CustomEvent('obsidian-langr-search', {
-            detail: {
-                selection,
-                target
-            }
-        }));
-    }
     getViewType(): string {
         return SEARCH_PANEL_VIEW;
     }

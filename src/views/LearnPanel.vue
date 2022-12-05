@@ -1,5 +1,5 @@
 <template>
-	<div id="langr-learn-panel">
+	<div id="langr-learn-panel" style="height: 100%;">
 		<NConfigProvider :theme="theme" :theme-overrides="themeOverrides">
 			<!-- <NThemeEditor> -->
 			<NForm :model="model" label-placement="top" label-width="auto" :rules="rules"

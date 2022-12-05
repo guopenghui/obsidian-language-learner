@@ -39,7 +39,7 @@ interface ExpressionInfoSimple {
     expression: string;
     meaning: string;
     status: number;
-    t: string;
+    t: "WORD" | "PHRASE";
     tags: string[];
     note_num: number;
     sen_num: number;

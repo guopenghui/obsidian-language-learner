@@ -54,6 +54,8 @@
   overflow: hidden;
   padding-top: 10px;
   transition: max-height 0.5s;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 .dict-item .dict-item-body .fold-mask {
   position: absolute;
@@ -549,6 +551,43 @@
 }
 #langr-data .data-more .data-sens .data-sen p:first-child {
   font-style: italic;
+}
+#popup-search {
+  position: fixed;
+  border-radius: 5px;
+  background-color: var(--background-secondary);
+  z-index: 1000;
+  box-shadow: 0px 0px 6px 3px #CECECE;
+  box-shadow: var(--shadow-l);
+}
+#popup-search .pop-handle {
+  height: 20px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  background-color: var(--interactive-accent);
+  cursor: move;
+  display: flex;
+}
+#popup-search .pop-handle .empty {
+  flex: 1;
+}
+#popup-search .pop-handle .pin-button {
+  margin-right: 5px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 20px;
+  justify-content: center;
+}
+#popup-search .pop-handle .pin-button:hover {
+  background-color: rgba(128, 128, 128, 0.415);
+}
+#popup-search .pop-handle .pin-button.pinned svg {
+  transform: rotate(45deg);
+}
+#popup-search .pop-body {
+  height: 500px;
+  width: 450px;
 }
 
 /* src/main.css */

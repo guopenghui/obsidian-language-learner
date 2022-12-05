@@ -16,6 +16,7 @@ export interface MyPluginSettings {
     native: string;
     foreign: string;
     // search
+    popup_search: boolean;
     function_key: "ctrlKey" | "altKey" | "metaKey" | "disable";
     dictionaries: { [K in string]: { enable: boolean, priority: number; } };
     dict_height: string;
@@ -46,6 +47,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     native: "zh",
     foreign: "en",
     // search
+    popup_search: true,
     function_key: "ctrlKey",
     dictionaries: {
         "youdao": { enable: true, priority: 1 },
@@ -175,6 +177,17 @@ export class SettingTab extends PluginSettingTab {
 
     querySettings(containerEl: HTMLElement) {
         containerEl.createEl("h3", { text: t("Translate") });
+
+        new Setting(containerEl)
+            .setName(t("Popup Search Panel"))
+            .setDesc(t("Use a popup search panel"))
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.popup_search)
+                .onChange(async (value) => {
+                    this.plugin.settings.popup_search = value;
+                    await this.plugin.saveSettings();
+                })
+            );
 
         new Setting(containerEl)
             .setName(t("Word Select"))

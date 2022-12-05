@@ -10,6 +10,7 @@ import {
     normalizePath,
 } from "obsidian";
 import { around } from "monkey-around";
+import { createApp, App as VueApp } from "vue";
 
 import { SearchPanelView, SEARCH_ICON, SEARCH_PANEL_VIEW } from "./views/SearchPanelView";
 import { READING_VIEW_TYPE, READING_ICON, ReadingView } from "./views/ReadingView";
@@ -30,12 +31,15 @@ import store from "./store";
 import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
 import { playAudio } from "./utils/helpers";
 
+import Global from "./views/Global.vue";
+
 export const FRONT_MATTER_KEY: string = "langr";
 
 export default class LanguageLearner extends Plugin {
     constants: { basePath: string; };
     settings: MyPluginSettings;
     appEl: HTMLElement;
+    vueApp: VueApp;
     db: DbProvider;
     server: Server;
     parser: TextParser;
@@ -89,6 +93,12 @@ export default class LanguageLearner extends Plugin {
                 store.themeChange = !store.themeChange;
             })
         );
+
+        // 创建全局app用于各种浮动元素
+        this.appEl = document.body.createDiv({ cls: "langr-app" });
+        this.vueApp = createApp(Global);
+        this.vueApp.config.globalProperties.plugin = this;
+        this.vueApp.mount(this.appEl);
     }
 
     async onunload() {
@@ -100,13 +110,13 @@ export default class LanguageLearner extends Plugin {
 
         this.db.close();
         this.server?.close();
-        if (
-            await app.vault.adapter.exists(
-                ".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html"
-            )
-        ) {
+        if (await app.vault.adapter.exists(".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html")) {
             this.registerExtensions([PDF_FILE_EXTENSION], "pdf");
         }
+
+        this.vueApp.unmount();
+        this.appEl.remove();
+        this.appEl = null;
 
         // temporarily work around for memory leak issues
         const titles = [
@@ -128,11 +138,9 @@ export default class LanguageLearner extends Plugin {
     }
 
     async replacePDF() {
-        if (
-            await app.vault.adapter.exists(
-                ".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html"
-            )
-        ) {
+        if (await app.vault.adapter.exists(
+            ".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html"
+        )) {
             this.registerView(VIEW_TYPE_PDF, (leaf) => {
                 return new PDFView(leaf);
             });
@@ -142,9 +150,10 @@ export default class LanguageLearner extends Plugin {
             ]);
             this.registerExtensions([PDF_FILE_EXTENSION], VIEW_TYPE_PDF);
 
-            this.registerDomEvent(window, "message", (ev) => {
-                if (ev.data.type === "search") {
-                    this.queryWord(ev.data.selection);
+            this.registerDomEvent(window, "message", (evt) => {
+                if (evt.data.type === "search") {
+                    // if (evt.data.funckey || this.store.searchPinned)
+                    this.queryWord(evt.data.selection);
                 }
             });
         }
@@ -156,6 +165,7 @@ export default class LanguageLearner extends Plugin {
         this.store.fontSize = this.settings.font_size;
         this.store.fontFamily = this.settings.font_family;
         this.store.lineHeight = this.settings.line_height;
+        this.store.searchPinned = false;
     }
 
     addCommands() {
@@ -436,13 +446,17 @@ export default class LanguageLearner extends Plugin {
     };
 
     async queryWord(word: string, target?: HTMLElement): Promise<void> {
-        await this.activateView(SEARCH_PANEL_VIEW, "left");
-        const view = this.app.workspace.getLeavesOfType(SEARCH_PANEL_VIEW)[0]
-            .view as SearchPanelView;
-        if (target) {
-            await this.activateView(LEARN_PANEL_VIEW, "right");
+        if (!this.settings.popup_search) {
+            await this.activateView(SEARCH_PANEL_VIEW, "left");
+            const view = this.app.workspace.getLeavesOfType(SEARCH_PANEL_VIEW)[0]
+                .view as SearchPanelView;
+            if (target) {
+                await this.activateView(LEARN_PANEL_VIEW, "right");
+            }
         }
-        view.query(word, target);
+        dispatchEvent(new CustomEvent('obsidian-langr-search', {
+            detail: { selection: word, target }
+        }));
     }
 
     // 管理所有的右键菜单
@@ -491,11 +505,12 @@ export default class LanguageLearner extends Plugin {
             if (!target.matchParent(".stns")) {
                 // 处理普通模式
                 const funcKey = this.settings.function_key;
-                if (funcKey === "disable" || evt[funcKey] === false) return;
+                if ((funcKey === "disable" || evt[funcKey] === false) && !this.store.searchPinned) return;
 
                 let selection = window.getSelection().toString().trim();
                 if (!selection) return;
 
+                evt.stopImmediatePropagation();
                 this.queryWord(selection);
                 return;
             } else {
@@ -573,6 +588,7 @@ export default class LanguageLearner extends Plugin {
                 target.classList.contains("select") ||
                 target.classList.contains("phrase")
             ) {
+                evt.stopImmediatePropagation();
                 this.queryWord(target.textContent, target);
             } else if (
                 !!target.matchParent(".text-area") &&

@@ -4,8 +4,22 @@ const dict = {
     NAME: "Language Learner"
 };
 
+interface EventMap extends GlobalEventHandlersEventMap {
+    "obsidian-langr-search": CustomEvent<{
+        selection: string,
+        target?: HTMLElement,
+    }>;
+    "obsidian-langr-refresh": CustomEvent<{
+        expression: string,
+        type: "WORD" | "PHRASE",
+        status: number,
+    }>;
+    "obsidian-langr-refresh-stat": CustomEvent<{}>;
+}
 
 
-export { dict }
+
+export { dict };
+export type { EventMap }
 
 

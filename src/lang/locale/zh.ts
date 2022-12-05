@@ -86,6 +86,8 @@ export default {
     "Spanish": "西",
 
     "Translate": "查词",
+    "Popup Search Panel": "弹出式查词面板",
+    "Use a popup search panel": "使用弹出式查词面板",
     "Word Select": "划词翻译",
     "Press function key and select text to translate": "按下功能键同时划词或双击单词即可打开翻译",
     "Disable": "关闭",
@@ -157,4 +159,4 @@ export default {
     "Self as Server": "开启服务器功能",
     "Make plugin a server and interact with chrome extension": "插件打开一个服务器提供api，由此可以与谷歌浏览器插件交互",
     "when changing port, you should restart the server": "如果改变端口，请重启服务器"
-}
+};
