@@ -27,7 +27,7 @@ export async function fetchDirtyDOM(url: string, config?: any): Promise<Document
         param.headers = headers;
     }
     let response = await request(param);
-    response = response.replace(/<img.+?>/, "");
+    response = response.replace(/<img.+?>/g, "");
     return sanitizeHTMLToDom(response);
 }
 
