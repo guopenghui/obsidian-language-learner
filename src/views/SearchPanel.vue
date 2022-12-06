@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, getCurrentInstance } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted, getCurrentInstance } from "vue";
 import { NConfigProvider, NButton, NButtonGroup, NInput, darkTheme, GlobalThemeOverrides } from "naive-ui";
 
 import DictItem from "./DictItem.vue";
@@ -38,31 +38,38 @@ const themeConfig: GlobalThemeOverrides = {
 
 };
 
-let collection = Object.keys(plugin.settings.dictionaries)
-    .map((dict: keyof typeof dicts) => {
-        return {
-            id: dict,
-            priority: plugin.settings.dictionaries[dict].priority,
-            name: dicts[dict].name,
-        };
-    })
-    .filter((dict) => plugin.settings.dictionaries[dict.id].enable);
-collection.sort((a, b) => a.priority - b.priority);
-
-let components = collection.map((dict) => {
-    return {
-        name: dict.name,
-        type: dicts[dict.id].Cp,
-    };
-});
-
+let components = ref([]);
 let map: { [K in string]: number } = {};
-collection.forEach((v, i) => {
-    map[v.id] = i;
+let loadings = ref<boolean[]>([]);
+let shows = ref<boolean[]>([]);
+watch(() => plugin.store.dictsChange, () => {
+    let collection = Object.keys(plugin.settings.dictionaries)
+        .map((dict: keyof typeof dicts) => {
+            return {
+                id: dict,
+                priority: plugin.settings.dictionaries[dict].priority,
+                name: dicts[dict].name,
+            };
+        })
+        .filter((dict) => plugin.settings.dictionaries[dict.id].enable);
+    collection.sort((a, b) => a.priority - b.priority);
+
+    components.value = collection.map((dict) => {
+        return {
+            name: dict.name,
+            type: dicts[dict.id].Cp,
+        };
+    });
+    collection.forEach((v, i) => {
+        map[v.id] = i;
+    });
+    loadings.value = Array(collection.length).fill(false);
+    shows.value = Array(collection.length).fill(false);
+
+}, {
+    immediate: true
 });
 
-let loadings = ref<boolean[]>(Array(collection.length).fill(false));
-let shows = ref<boolean[]>(Array(collection.length).fill(false));
 function loading({ id, loading, result }: { id: string, loading: boolean, result: boolean; }) {
     loadings.value[map[id]] = loading;
     shows.value[map[id]] = result;

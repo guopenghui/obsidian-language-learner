@@ -185,6 +185,7 @@ export class SettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.popup_search)
                 .onChange(async (value) => {
                     this.plugin.settings.popup_search = value;
+                    this.plugin.store.popupSearch = value;
                     await this.plugin.saveSettings();
                 })
             );
@@ -214,6 +215,7 @@ export class SettingTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.dictionaries[id].enable)
                     .onChange((value) => {
                         this.plugin.settings.dictionaries[id].enable = value;
+                        this.plugin.store.dictsChange = !this.plugin.store.dictsChange;
                         this.plugin.saveSettings();
                     }))
                 .addDropdown(num => num
@@ -230,6 +232,7 @@ export class SettingTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.dictionaries[id].priority.toString())
                     .onChange(async (value: string) => {
                         this.plugin.settings.dictionaries[id].priority = parseInt(value);
+                        this.plugin.store.dictsChange = !this.plugin.store.dictsChange;
                         await this.plugin.saveSettings();
                     })
                 );

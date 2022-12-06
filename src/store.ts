@@ -7,7 +7,9 @@ const store = reactive({
     fontSize: "",
     fontFamily: "",
     lineHeight: "",
+    popupSearch: true,
     searchPinned: false,
+    dictsChange: false,
 });
 
 export default store;

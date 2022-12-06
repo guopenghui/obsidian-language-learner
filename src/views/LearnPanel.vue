@@ -122,6 +122,7 @@ import {
 
 import { ExpressionInfo, Sentence } from "@/db/interface";
 import { t } from "@/lang/helper";
+import { useEvent } from "@/utils/use";
 import { LearnPanelView } from "./LearnPanelView";
 import { ReadingView } from "./ReadingView";
 import Plugin from "@/plugin";
@@ -304,7 +305,7 @@ async function submit() {
 }
 
 // 查询词汇时自动填充新词表单
-async function onSearch(evt: CustomEvent) {
+useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 	let selection = evt.detail.selection as string;
 	let expr = await plugin.db.getExpression(selection);
 
@@ -403,13 +404,6 @@ async function onSearch(evt: CustomEvent) {
 				],
 		};
 	}
-}
-
-onMounted(() => {
-	addEventListener("obsidian-langr-search", onSearch);
 });
 
-onUnmounted(() => {
-	removeEventListener("obsidian-langr-search", onSearch);
-});
 </script>

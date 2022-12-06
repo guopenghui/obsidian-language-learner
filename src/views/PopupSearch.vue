@@ -10,16 +10,22 @@
             </div>
         </header>
         <div class="pop-body">
-            <SearchPanel />
+            <SearchPanel style="max-height: 500px;" />
         </div>
     </div>
 </template>
 
 <script setup lang='ts'>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useDraggable } from "@vueuse/core";
 import store from "@/store";
 import SearchPanel from "./SearchPanel.vue";
+
+const props = defineProps<{
+    x?: number,
+    y?: number,
+}>();
+
 
 let popup = ref(null);
 let handle = ref(null);
@@ -28,6 +34,13 @@ let { x, y, style } = useDraggable(popup, {
     initialValue: {
         x: 50,
         y: 50,
+    }
+});
+
+watch([() => props.x, () => props.y,], ([newX, newY]) => {
+    if (!pinned.value) {
+        x.value = newX;
+        y.value = newY;
     }
 });
 
@@ -67,6 +80,10 @@ defineExpose({
         cursor: move;
         display: flex;
 
+        &:active {
+            cursor: grab;
+        }
+
         .empty {
             flex: 1
         }
@@ -93,7 +110,6 @@ defineExpose({
     }
 
     .pop-body {
-        height: 500px;
         width: 450px;
     }
 }

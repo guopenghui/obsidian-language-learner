@@ -4,10 +4,16 @@ const dict = {
     NAME: "Language Learner"
 };
 
+type Position = {
+    x: number;
+    y: number;
+};
+
 interface EventMap extends GlobalEventHandlersEventMap {
     "obsidian-langr-search": CustomEvent<{
         selection: string,
         target?: HTMLElement,
+        evtPosition?: Position,
     }>;
     "obsidian-langr-refresh": CustomEvent<{
         expression: string,
@@ -20,6 +26,6 @@ interface EventMap extends GlobalEventHandlersEventMap {
 
 
 export { dict };
-export type { EventMap }
+export type { EventMap, Position }
 
 

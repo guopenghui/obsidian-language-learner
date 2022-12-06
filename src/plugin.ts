@@ -33,6 +33,9 @@ import { playAudio } from "./utils/helpers";
 
 import Global from "./views/Global.vue";
 
+import type { Position } from "./constant";
+
+
 export const FRONT_MATTER_KEY: string = "langr";
 
 export default class LanguageLearner extends Plugin {
@@ -165,7 +168,9 @@ export default class LanguageLearner extends Plugin {
         this.store.fontSize = this.settings.font_size;
         this.store.fontFamily = this.settings.font_family;
         this.store.lineHeight = this.settings.line_height;
+        this.store.popupSearch = this.settings.popup_search;
         this.store.searchPinned = false;
+        this.store.dictsChange = false;
     }
 
     addCommands() {
@@ -445,7 +450,7 @@ export default class LanguageLearner extends Plugin {
         );
     };
 
-    async queryWord(word: string, target?: HTMLElement): Promise<void> {
+    async queryWord(word: string, target?: HTMLElement, evtPosition?: Position): Promise<void> {
         if (!this.settings.popup_search) {
             await this.activateView(SEARCH_PANEL_VIEW, "left");
             const view = this.app.workspace.getLeavesOfType(SEARCH_PANEL_VIEW)[0]
@@ -455,7 +460,7 @@ export default class LanguageLearner extends Plugin {
             }
         }
         dispatchEvent(new CustomEvent('obsidian-langr-search', {
-            detail: { selection: word, target }
+            detail: { selection: word, target, evtPosition }
         }));
     }
 
@@ -511,7 +516,7 @@ export default class LanguageLearner extends Plugin {
                 if (!selection) return;
 
                 evt.stopImmediatePropagation();
-                this.queryWord(selection);
+                this.queryWord(selection, null, { x: evt.pageX, y: evt.pageY });
                 return;
             } else {
                 // 处理阅读模式下
@@ -574,7 +579,7 @@ export default class LanguageLearner extends Plugin {
                 });
 
                 //selection.collapseToStart()
-                this.queryWord(newSpan.innerText, newSpan);
+                this.queryWord(newSpan.innerText, newSpan, { x: evt.pageX, y: evt.pageY });
             }
         });
     }
@@ -589,7 +594,7 @@ export default class LanguageLearner extends Plugin {
                 target.classList.contains("phrase")
             ) {
                 evt.stopImmediatePropagation();
-                this.queryWord(target.textContent, target);
+                this.queryWord(target.textContent, target, { x: evt.pageX, y: evt.pageY });
             } else if (
                 !!target.matchParent(".text-area") &&
                 !target.matchParent(".stns")
