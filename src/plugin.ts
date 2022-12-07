@@ -456,13 +456,19 @@ export default class LanguageLearner extends Plugin {
     async queryWord(word: string, target?: HTMLElement, evtPosition?: Position): Promise<void> {
         if (!this.settings.popup_search) {
             await this.activateView(SEARCH_PANEL_VIEW, "left");
-            if (target) {
-                await this.activateView(LEARN_PANEL_VIEW, "right");
-            }
+        }
+        if (target && Platform.isDesktopApp) {
+            await this.activateView(LEARN_PANEL_VIEW, "right");
         }
         dispatchEvent(new CustomEvent('obsidian-langr-search', {
             detail: { selection: word, target, evtPosition }
         }));
+
+        let accent = this.settings.review_prons;
+        let wordUrl =
+            `http://dict.youdao.com/dictvoice?type=${accent}&audio=` +
+            encodeURIComponent(word);
+        playAudio(wordUrl);
     }
 
     // 管理所有的右键菜单
@@ -507,7 +513,6 @@ export default class LanguageLearner extends Plugin {
     // 管理所有的左键抬起
     registerMouseup() {
         this.registerDomEvent(document.body, "pointerup", (evt) => {
-            console.log("pointer up");
             const target = evt.target as HTMLElement;
             if (!target.matchParent(".stns")) {
                 // 处理普通模式
@@ -520,68 +525,6 @@ export default class LanguageLearner extends Plugin {
                 evt.stopImmediatePropagation();
                 this.queryWord(selection, null, { x: evt.pageX, y: evt.pageY });
                 return;
-            } else {
-                // 处理阅读模式下
-                let start: Node;
-                let end: Node;
-
-                // test
-                const selection = window.getSelection();
-
-                if (!selection.isCollapsed) {
-                    // if (selection.rangeCount === 0) return;
-                    evt.preventDefault();
-                    let range = selection.getRangeAt(0);
-                    if (range.collapsed) return;
-
-                    range.setStart(range.startContainer.parentNode, 0);
-                    range.setEnd(range.endContainer.parentNode, 0);
-
-                    if (
-                        range.startContainer.parentNode !==
-                        range.endContainer.parentNode
-                    )
-                        return;
-
-                    start = range.startContainer;
-                    end = range.endContainer;
-                } else if (target.hasClass("word")) {
-                    start = end = target;
-                } else {
-                    return;
-                }
-
-                // 保证最多只有一个select块
-                let view = this.app.workspace.getActiveViewOfType(ReadingView);
-                if (view) {
-                    view.removeSelect();
-                }
-
-                if ((start as HTMLElement).matchParent(".select")) return;
-
-                let parent = start.parentNode;
-                let newSpan = document.body.createSpan({ cls: "select" });
-                parent.insertBefore(newSpan, start);
-
-                let beginInsert = false;
-                let collection = [] as any[];
-                parent.childNodes.forEach((item) => {
-                    if (item === newSpan) {
-                        beginInsert = true;
-                        return;
-                    }
-                    if (!beginInsert) return;
-                    collection.push(item);
-                    if (item === end) {
-                        beginInsert = false;
-                    }
-                });
-                collection.forEach((item) => {
-                    newSpan.appendChild(item);
-                });
-
-                //selection.collapseToStart()
-                this.queryWord(newSpan.innerText, newSpan, { x: evt.pageX, y: evt.pageY });
             }
         });
     }
@@ -589,30 +532,8 @@ export default class LanguageLearner extends Plugin {
     // 管理所有的鼠标左击
     registerLeftClick() {
         this.registerDomEvent(document.body, "click", (evt) => {
-            console.log("click");
             let target = evt.target as HTMLElement;
             if (
-                target.classList.contains("word") ||
-                target.classList.contains("select") ||
-                target.classList.contains("phrase")
-            ) {
-                evt.stopImmediatePropagation();
-                this.queryWord(target.textContent, target, { x: evt.pageX, y: evt.pageY });
-            } else if (
-                !!target.matchParent(".text-area") &&
-                !target.matchParent(".stns")
-            ) {
-                let selection = window.getSelection();
-                if (!selection.isCollapsed) {
-                    selection.collapseToStart();
-                }
-
-                // 消除select块
-                let view = this.app.workspace.getActiveViewOfType(ReadingView);
-                if (view) {
-                    view.removeSelect();
-                }
-            } else if (
                 target.tagName === "H4" &&
                 target.matchParent("#sr-flashcard-view")
             ) {

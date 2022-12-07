@@ -1,5 +1,5 @@
 <template>
-    <div id="langr-reading" style="height: 100%">
+    <div id="langr-reading" ref="reading" style="height: 100%">
         <NConfigProvider :theme="theme" :theme-overrides="themeConfig"
             style="height: 100%; display: flex; flex-direction: column">
             <!-- 功能区 -->
@@ -82,6 +82,7 @@ import {
 import { MarkdownRenderer, Platform } from "obsidian";
 import PluginType from "@/plugin";
 import { t } from "@/lang/helper";
+import { useEvent } from "@/utils/use";
 import store from "@/store";
 import { ReadingView } from "./ReadingView";
 import CountBar from "./CountBar.vue";
@@ -107,8 +108,9 @@ const themeConfig: GlobalThemeOverrides = {
 let frontMatter = plugin.app.metadataCache.getFileCache(view.file).frontmatter;
 let audioSource = (frontMatter["langr-audio"] || "") as string;
 if (audioSource && audioSource.startsWith("~/")) {
+    const prefix = Platform.isDesktopApp ? "app://local/" : "http://localhost/_capacitor_file_";
     audioSource =
-        "app://local/" + plugin.constants.basePath + audioSource.slice(1);
+        prefix + plugin.constants.basePath + audioSource.slice(1);
 }
 
 // 记笔记
@@ -263,6 +265,63 @@ async function addIgnores() {
 
     refreshCount();
 }
+
+let reading = ref(null);
+let prevEl: HTMLElement = null;
+if (plugin.constants.platform === "mobile") {
+    useEvent(reading, "click", (e) => {
+        let target = e.target as HTMLElement;
+        if (target.hasClass("word") || target.hasClass("phrase")) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (prevEl) {
+                let selectSpan = view.wrapSelect(prevEl, target);
+                if (selectSpan) {
+                    plugin.queryWord(
+                        selectSpan.textContent,
+                        selectSpan,
+                        { x: e.pageX, y: e.pageY }
+                    );
+                }
+                prevEl = null;
+            } else {
+                prevEl = target;
+            }
+        } else {
+            view.removeSelect();
+            prevEl = null;
+        }
+
+    });
+} else {
+    useEvent(reading, "pointerdown", (e) => {
+        let target = e.target as HTMLElement;
+        if (target.hasClass("word") || target.hasClass("phrase") || target.hasClass("select")) {
+            prevEl = target;
+        }
+    });
+    useEvent(reading, "pointerup", (e) => {
+        let target = e.target as HTMLElement;
+        if (target.hasClass("word") || target.hasClass("phrase") || target.hasClass("select")) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (prevEl) {
+                let selectSpan = view.wrapSelect(prevEl, target);
+                if (selectSpan) {
+                    plugin.queryWord(
+                        selectSpan.textContent,
+                        selectSpan,
+                        { x: e.pageX, y: e.pageY }
+                    );
+                }
+                prevEl = null;
+            }
+        } else {
+            view.removeSelect();
+        }
+    });
+}
+
 </script>
 
 <style lang="scss">

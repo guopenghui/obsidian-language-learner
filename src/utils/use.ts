@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, unref } from "vue";
+import { onMounted, onBeforeUnmount, unref } from "vue";
 import type { Ref } from "vue";
 import type { EventMap } from "@/constant";
 
@@ -10,7 +10,7 @@ function useEvent<T extends keyof EventMap>(
     onMounted(() => {
         unref(elRef).addEventListener(type, listener);
     });
-    onUnmounted(() => {
+    onBeforeUnmount(() => {
         unref(elRef).removeEventListener(type, listener);
     });
 }

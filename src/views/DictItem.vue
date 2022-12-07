@@ -145,7 +145,7 @@ watch(
         position: relative;
         overflow: hidden;
         padding-top: 10px;
-        transition: max-height 0.5s;
+        transition: max-height 1s cubic-bezier(0, 1, 0, 1);
         padding-left: 10px;
         padding-right: 10px;
 
@@ -190,7 +190,7 @@ watch(
 
         .dict-item-body {
             max-height: 5000px;
-            transition: max-height 2s;
+            transition: max-height 2s ease-in-out;
         }
     }
 

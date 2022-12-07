@@ -35,7 +35,7 @@ export class PDFView extends FileView {
         //         });
         // });
         // menu.addSeparator();
-        // super.onPaneMenu(menu, "");
+        super.onPaneMenu(menu, "");
     }
 
     getFileName() {

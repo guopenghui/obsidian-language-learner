@@ -211,6 +211,25 @@ export class ReadingView extends TextFileView {
         }
     };
 
+    wrapSelect(elStart: HTMLElement, elEnd: HTMLElement) {
+        this.removeSelect();
+        if (!elStart.matchParent(".stns") ||
+            !elEnd.matchParent(".stns") ||
+            elStart.parentElement !== elEnd.parentElement) {
+            return null;
+        }
+        let parent = elStart.parentNode;
+        let selectSpan = document.body.createSpan({ cls: "select" });
+        parent.insertBefore(selectSpan, elStart);
+        for (let el: Node = elStart; el !== elEnd;) {
+            let next = el.nextSibling;
+            selectSpan.appendChild(el);
+            el = next;
+        }
+        selectSpan.appendChild(elEnd);
+        return selectSpan;
+    }
+
     removeSelect() {
         //把span.select里面的东西拿出来
         let selects = this.contentEl.querySelectorAll("span.select");

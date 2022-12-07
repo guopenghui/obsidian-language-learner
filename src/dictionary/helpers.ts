@@ -23,7 +23,10 @@ export async function fetchDirtyDOM(url: string, config?: any): Promise<Document
         let cookie = Object.keys(config.cookies)
             .map(name => `${name}=${config.cookies[name]}`)
             .join("; ");
-        let headers = { "cookie": cookie };
+        let headers = {
+            "cookie": cookie,
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) obsidian/1.0.3 Chrome/100.0.4896.160 Electron/18.3.5 Safari/537.36"
+        };
         param.headers = headers;
     }
     let response = await request(param);
