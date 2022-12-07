@@ -47,7 +47,7 @@
 ## 安装
 
 + 从realease下载压缩包`obsidian-language-leaner.zip`
-+ 解压到obsidian库的`.obsidian/plugins/`文件夹下，即保证`main.js`的路径为`.obsidian/plugins/obsidian-language-leaner/main.js`
++ 解压到obsidian库的`.obsidian/plugins/`文件夹下，即保证`main.js`的路径为`.obsidian/plugins/obsidian-language-learner/main.js`
 + 打开obsidian，在插件中启用本插件`Language Learner`.
 + 配置见[使用指南](#使用指南)
 ## 自行构建
@@ -62,10 +62,8 @@ git clone https://github.com/guopenghui/obsidian-language-learner.git
 cd obsidian-language-learner
 # 安装依赖
 npm install 
-# 构建
+# 构建 会自动压缩代码体积
 npm run build 
-# 压缩体积(可选，可以加快加载速度，然后把生成的main.min.js改名为main.js)
-npm run minify 
 ```
 
 ## 问题或建议
