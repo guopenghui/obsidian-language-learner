@@ -164,4 +164,14 @@ onUnmounted(() => {
         flex: 1;
     }
 }
+
+.is-mobile #langr-search {
+    button:not(.fold-mask) {
+        width: auto;
+    }
+
+    input[type='text'] {
+        padding: 0;
+    }
+}
 </style>

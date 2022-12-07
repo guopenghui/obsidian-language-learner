@@ -10,7 +10,7 @@
             </div>
         </header>
         <div class="pop-body">
-            <SearchPanel style="max-height: 500px;" />
+            <SearchPanel />
         </div>
     </div>
 </template>
@@ -34,7 +34,8 @@ let { x, y, style } = useDraggable(popup, {
     initialValue: {
         x: 50,
         y: 50,
-    }
+    },
+    preventDefault: true,
 });
 
 watch([() => props.x, () => props.y,], ([newX, newY]) => {
@@ -69,7 +70,7 @@ defineExpose({
     border-radius: 5px;
     background-color: var(--background-secondary);
     z-index: 1000;
-    box-shadow: 0px 0px 6px 3px #CECECE;
+    touch-action: none;
     box-shadow: var(--shadow-l);
 
     .pop-handle {
@@ -111,6 +112,20 @@ defineExpose({
 
     .pop-body {
         width: 450px;
+
+        #langr-search {
+            max-height: 500px;
+        }
+    }
+}
+
+.is-mobile #popup-search {
+    .pop-body {
+        width: 350px;
+
+        #langr-search {
+            max-height: 300px;
+        }
     }
 }
 </style>

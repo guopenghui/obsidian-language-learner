@@ -6,6 +6,7 @@
 
 <script setup lang='ts'>
 import { ref, watch } from 'vue';
+import { Platform } from "obsidian";
 import { onClickOutside } from "@vueuse/core";
 import store from "@/store";
 import { getPageSize, optimizedPos } from "@/utils/style";
@@ -44,10 +45,16 @@ useEvent(window, "obsidian-langr-search", (evt) => {
     let { pageW, pageH } = getPageSize();
     let evtPos = evt.detail.evtPosition;
     if (evtPos) {
-        let { x, y } = optimizedPos({ h: pageH, w: pageW }, { h: 520, w: 450 }, evtPos, 60, 30);
+        let h = 520, w = 450;
+        if (Platform.isMobileApp) {
+            h = 320;
+            w = 350;
+        }
+
+        let { x, y } = optimizedPos({ h: pageH, w: pageW }, { h, w }, evtPos, 60, 30);
+
         searchX.value = x;
         searchY.value = y;
-
     }
     showSearch.value = true;
 })

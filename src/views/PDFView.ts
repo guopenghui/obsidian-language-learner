@@ -5,6 +5,7 @@ import {
     Menu,
     Notice,
     normalizePath,
+    Platform,
 } from "obsidian";
 import Plugin from "@/plugin";
 
@@ -52,11 +53,13 @@ export class PDFView extends FileView {
         // console.log(file)
 
         let basePath = normalizePath((this.app.vault.adapter as any).basePath);
-        const viewerPath = `app://local/${basePath}/%2Eobsidian/plugins/obsidian-language-learner/pdf/web/viewer.html`;
+        const prefix = Platform.isDesktopApp ? "app://local/" : "http://localhost/_capacitor_file_";
+        const viewerPath =
+            `${prefix}${basePath}/%2Eobsidian/plugins/obsidian-language-learner/pdf/web/viewer.html`;
         let content =
             '<iframe class="pdf" style="height:100%; width:100%;" ' +
             `src="${viewerPath}` +
-            `?file=app://local/${basePath}/${file.path}" />`;
+            `?file=${prefix}${basePath}/${file.path}" />`;
         this.contentEl.innerHTML = content;
     }
 

@@ -29,13 +29,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, getCurrentInstance } from "vue";
+import { ref, watch, getCurrentInstance, toRef } from "vue";
+import { Platform } from "obsidian";
 import PluginType from "@/plugin";
 import { getRGB } from "@/utils/style";
 
 const plugin = getCurrentInstance().appContext.config.globalProperties
     .plugin as PluginType;
-let defaultHeight = plugin.settings.dict_height;
+let defaultHeight = toRef(plugin.store, "dictHeight");
 
 let isOpen = ref(false);
 let isExpand = ref(false);
@@ -73,16 +74,29 @@ function onExpand() {
 }
 
 // react to theme change
-let bgRGB = getRGB(".workspace-leaf", "background-color");
+let bgRGB = Platform.isMobileApp ?
+    getRGB(".workspace-drawer.mod-left", "background-color") :
+    getRGB(".workspace-leaf", "background-color");
 let makeRGBA = (rgb: typeof bgRGB, alpha: number) =>
     `rgba(${rgb.R},${rgb.G},${rgb.B}, ${alpha})`;
 let bgRGBA1 = ref(makeRGBA(bgRGB, 0));
 let bgRGBA2 = ref(makeRGBA(bgRGB, 0.5));
 let bgRGBA3 = ref(makeRGBA(bgRGB, 1));
+setTimeout(() => {
+    // 有时加载太慢，workspace的颜色还没出来，所以强制刷新一次
+    let bgRGB = Platform.isMobileApp ?
+        getRGB(".workspace-drawer.mod-left", "background-color") :
+        getRGB(".workspace-leaf", "background-color");
+    bgRGBA1.value = makeRGBA(bgRGB, 0);
+    bgRGBA2.value = makeRGBA(bgRGB, 0.5);
+    bgRGBA3.value = makeRGBA(bgRGB, 1);
+}, 5000);
 watch(
     () => plugin.store.themeChange,
     () => {
-        bgRGB = getRGB(".workspace-leaf", "background-color");
+        bgRGB = Platform.isMobileApp ?
+            getRGB(".workspace-drawer.mod-left", "background-color") :
+            getRGB(".workspace-leaf", "background-color");
         bgRGBA1.value = makeRGBA(bgRGB, 0);
         bgRGBA2.value = makeRGBA(bgRGB, 0.5);
         bgRGBA3.value = makeRGBA(bgRGB, 1);

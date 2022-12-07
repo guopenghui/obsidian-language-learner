@@ -4,7 +4,7 @@
             <div style="display:flex; align-items:center;">
                 <span
                     style="display: inline-block; width: 70px; font-size: 1.2em; font-weight: bold; margin-right: 15px;">Search:</span>
-                <NInput v-model:value="searchText" />
+                <NInput size="small" v-model:value="searchText" />
             </div>
             <NSpace style="margin: 10px 0;" align="center">
                 <span
@@ -59,7 +59,7 @@ const plugin = getCurrentInstance().appContext.config.globalProperties
 
 const themeConfig: GlobalThemeOverrides = {
     DataTable: {
-        fontSizeSmall: "14px",
+        fontSizeSmall: plugin.constants.platform === "mobile" ? "10px" : "14px",
         tdPaddingSmall: "8px",
     },
 };
@@ -166,7 +166,7 @@ let collumns = reactive<DataTableColumns<Row>>([
     {
         title: "Status",
         key: "status",
-        width: "100",
+        width: "70",
         defaultFilterOptionValues: statusMap.slice(1),
         filterOptions: [
             { label: t("Ignore"), value: t("Ignore") },
@@ -195,7 +195,7 @@ let collumns = reactive<DataTableColumns<Row>>([
                     {
                         style: { marginRight: "6px" },
                         type: "info",
-                        size: "small",
+                        size: "tiny",
                     },
                     { default: () => tag }
                 )
@@ -227,6 +227,15 @@ let collumns = reactive<DataTableColumns<Row>>([
 #langr-data {
     #data-tags {
         display: flex;
+    }
+
+    .n-data-table-filter {
+        width: 19px;
+    }
+
+    .n-data-table-th--filterable {
+        width: 19px;
+
     }
 
     .n-data-table__pagination {

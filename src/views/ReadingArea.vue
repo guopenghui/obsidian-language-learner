@@ -3,7 +3,7 @@
         <NConfigProvider :theme="theme" :theme-overrides="themeConfig"
             style="height: 100%; display: flex; flex-direction: column">
             <!-- 功能区 -->
-            <div class="function-area" style="padding-bottom: 10px; border-bottom: 2px solid gray">
+            <div class="function-area">
                 <audio controls v-if="audioSource" :src="audioSource" />
                 <div style="display: flex">
                     <button @click="activeNotes = true">做笔记</button>
@@ -43,7 +43,7 @@
                     flex-direction: column;
                 ">
                 <NPagination style="justify-content: center" v-model:page="page" v-model:page-size="pageSize"
-                    :item-count="totalLines" show-size-picker :page-sizes="pageSizes" />
+                    :item-count="totalLines" show-size-picker :page-sizes="pageSizes" :page-slot="pageSlot" />
             </div>
             <NDrawer v-model:show="activeNotes" :placement="'bottom'" :close-on-esc="true" :auto-focus="true"
                 :on-after-enter="afterNoteEnter" :on-after-leave="afterNoteLeave" to="#langr-reading"
@@ -79,7 +79,7 @@ import {
     NInput,
     GlobalThemeOverrides,
 } from "naive-ui";
-import { MarkdownRenderer } from "obsidian";
+import { MarkdownRenderer, Platform } from "obsidian";
 import PluginType from "@/plugin";
 import { t } from "@/lang/helper";
 import store from "@/store";
@@ -110,15 +110,6 @@ if (audioSource && audioSource.startsWith("~/")) {
     audioSource =
         "app://local/" + plugin.constants.basePath + audioSource.slice(1);
 }
-
-const pageSizes = [
-    { label: `1 ${t("paragraph")} / ${t("page")}`, value: 2 },
-    { label: `2 ${t("paragraph")} / ${t("page")}`, value: 4 },
-    { label: `4 ${t("paragraph")} / ${t("page")}`, value: 8 },
-    { label: `8 ${t("paragraph")} / ${t("page")}`, value: 16 },
-    { label: `16 ${t("paragraph")} / ${t("page")}`, value: 32 },
-    { label: `${t("All")}`, value: Number.MAX_VALUE },
-];
 
 // 记笔记
 let activeNotes = ref(false);
@@ -192,7 +183,19 @@ if (plugin.settings.word_count) {
     });
 }
 
-// 渲染文本
+// 分页渲染文本
+
+const pageSizes = [
+    { label: `1 ${t("paragraph")} / ${t("page")}`, value: 2 },
+    { label: `2 ${t("paragraph")} / ${t("page")}`, value: 4 },
+    { label: `4 ${t("paragraph")} / ${t("page")}`, value: 8 },
+    { label: `8 ${t("paragraph")} / ${t("page")}`, value: 16 },
+    { label: `16 ${t("paragraph")} / ${t("page")}`, value: 32 },
+    { label: `${t("All")}`, value: Number.MAX_VALUE },
+];
+
+const pageSlot = Platform.isMobileApp ? 5 : null;
+
 let dp = plugin.settings.default_paragraphs;
 let pageSize = dp === "all" ? ref(Number.MAX_VALUE) : ref(parseInt(dp));
 let page = view.lastPos
@@ -266,9 +269,20 @@ async function addIgnores() {
 #langr-reading {
     user-select: none;
 
+    .function-area {
+        padding-bottom: 10px;
+        border-bottom: 2px solid gray;
+
+        button {
+            width: auto;
+        }
+    }
+
     .text-area {
+        touch-action: none;
+
         span.word {
-            user-select: text;
+            user-select: contain;
             border: 1px solid transparent;
             cursor: pointer;
             border-radius: 4px;
@@ -317,6 +331,10 @@ async function addIgnores() {
             }
         }
 
+        span.other {
+            user-select: text;
+        }
+
         .select {
             background-color: #90ee9060;
             padding-top: 3px;
@@ -348,6 +366,12 @@ async function addIgnores() {
             margin-left: 2px;
             overflow: auto;
         }
+    }
+}
+
+.is-mobile #langr-reading {
+    .pagination {
+        padding-bottom: 48px;
     }
 }
 </style>

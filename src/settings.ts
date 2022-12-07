@@ -6,6 +6,7 @@ import Server from "./api/server";
 import LanguageLearner from "./plugin";
 import { t } from "./lang/helper";
 import { dicts } from "@dict/list";
+import store from "./store";
 
 export interface MyPluginSettings {
     use_server: boolean;
@@ -248,6 +249,7 @@ export class SettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.dict_height)
                 .onChange(debounce(async (value) => {
                     this.plugin.settings.dict_height = value;
+                    store.dictHeight = value;
                     await this.plugin.saveSettings();
                 }, 500))
             );

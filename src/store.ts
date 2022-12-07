@@ -10,6 +10,7 @@ const store = reactive({
     popupSearch: true,
     searchPinned: false,
     dictsChange: false,
+    dictHeight: "",
 });
 
 export default store;

@@ -198,7 +198,7 @@ export class TextParser {
                         : "new";
 
                     return /[0-9\u4e00-\u9fa5]/.test(text) // 不把数字当做单词
-                        ? `<span>${text}</span>`
+                        ? `<span class="other">${text}</span>`
                         : `<span class="word ${status}">${text}</span>`;
                 }
                 case "PhraseNode": {

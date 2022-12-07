@@ -8,6 +8,7 @@ import {
     Editor,
     TFile,
     normalizePath,
+    Platform,
 } from "obsidian";
 import { around } from "monkey-around";
 import { createApp, App as VueApp } from "vue";
@@ -39,7 +40,7 @@ import type { Position } from "./constant";
 export const FRONT_MATTER_KEY: string = "langr";
 
 export default class LanguageLearner extends Plugin {
-    constants: { basePath: string; };
+    constants: { basePath: string; platform: "mobile" | "desktop"; };
     settings: MyPluginSettings;
     appEl: HTMLElement;
     vueApp: VueApp;
@@ -137,6 +138,7 @@ export default class LanguageLearner extends Plugin {
     registerConstants() {
         this.constants = {
             basePath: normalizePath((this.app.vault.adapter as any).basePath),
+            platform: Platform.isMobile ? "mobile" : "desktop",
         };
     }
 
@@ -171,6 +173,7 @@ export default class LanguageLearner extends Plugin {
         this.store.popupSearch = this.settings.popup_search;
         this.store.searchPinned = false;
         this.store.dictsChange = false;
+        this.store.dictHeight = this.settings.dict_height;
     }
 
     addCommands() {
@@ -453,8 +456,6 @@ export default class LanguageLearner extends Plugin {
     async queryWord(word: string, target?: HTMLElement, evtPosition?: Position): Promise<void> {
         if (!this.settings.popup_search) {
             await this.activateView(SEARCH_PANEL_VIEW, "left");
-            const view = this.app.workspace.getLeavesOfType(SEARCH_PANEL_VIEW)[0]
-                .view as SearchPanelView;
             if (target) {
                 await this.activateView(LEARN_PANEL_VIEW, "right");
             }
@@ -505,7 +506,8 @@ export default class LanguageLearner extends Plugin {
 
     // 管理所有的左键抬起
     registerMouseup() {
-        this.registerDomEvent(document.body, "mouseup", (evt) => {
+        this.registerDomEvent(document.body, "pointerup", (evt) => {
+            console.log("pointer up");
             const target = evt.target as HTMLElement;
             if (!target.matchParent(".stns")) {
                 // 处理普通模式
@@ -587,6 +589,7 @@ export default class LanguageLearner extends Plugin {
     // 管理所有的鼠标左击
     registerLeftClick() {
         this.registerDomEvent(document.body, "click", (evt) => {
+            console.log("click");
             let target = evt.target as HTMLElement;
             if (
                 target.classList.contains("word") ||
