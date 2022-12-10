@@ -88,6 +88,8 @@ export default {
 
     "Translate": "Translate",
     "Popup Search Panel": "Popup Search Panel",
+    "Auto pronounce": "Auto pronounce",
+    "Auto pronounce when searching": "Auto pronounce when searching",
     "Use a popup search panel": "Use a popup search panel",
     "Word Select": "Word Select",
     "Press function key and select text to translate": "Press function key and select text to translate",

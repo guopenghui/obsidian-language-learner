@@ -464,11 +464,13 @@ export default class LanguageLearner extends Plugin {
             detail: { selection: word, target, evtPosition }
         }));
 
-        let accent = this.settings.review_prons;
-        let wordUrl =
-            `http://dict.youdao.com/dictvoice?type=${accent}&audio=` +
-            encodeURIComponent(word);
-        playAudio(wordUrl);
+        if(this.settings.auto_pron) {
+            let accent = this.settings.review_prons;
+            let wordUrl =
+                `http://dict.youdao.com/dictvoice?type=${accent}&audio=` +
+                encodeURIComponent(word);
+            playAudio(wordUrl);
+        }
     }
 
     // 管理所有的右键菜单
