@@ -4,7 +4,7 @@
     "paths":{
         "@/*": ["./src/*"],
         "@dict/*": ["./src/dictionary/*"],
-        "@comp/*": ["./src/component/*"],
+        "@comp/*": ["./src/component/*"]
     },
     "inlineSourceMap": true,
     "inlineSources": true,
@@ -27,6 +27,12 @@
   },
   "include": [
     "**/*.ts",
+    "**/*.tsx",
     "**/*.vue"
-  ],
+  ]
+  // "vueCompilerOptions": {
+  //   "target": 3,
+  //   "jsxTemplates": true,
+  //   "experimentalRfc436": true,
+  // }  
 }

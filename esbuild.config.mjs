@@ -1,8 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
-import fs from "fs";
 import builtins from 'builtin-modules';
-import vue from 'esbuild-plugin-vue3';
+import vue from "@the_tree/esbuild-plugin-vue3";
 
 const banner =
 	`/*
@@ -17,12 +16,8 @@ await esbuild.build({
 	banner: {
 		js: banner,
 	},
-	define: {
-		// turn off vue hmr
-		"process.env.NODE_ENV": '"production"',
-	},
 	plugins: [
-		vue(),
+		vue({ isProd: true }),
 	],
 	entryPoints: ['./src/plugin.ts'],
 	bundle: true,
