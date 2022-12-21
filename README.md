@@ -12,6 +12,7 @@
 + [文字教程](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/tutorial.pdf)
 + [视频教程](https://www.bilibili.com/video/BV1914y1Y7mT)
 + [一些做好的文本](https://github.com/guopenghui/language-learner-texts)
++ @emisjerry 制作的使用教程: [Youtube](https://www.youtube.com/watch?v=lK3oFpUg7-o), [Bilibili](https://www.bilibili.com/video/BV1N24y1k7SL/)
 
 
 

@@ -440,7 +440,10 @@ export default class LanguageLearner extends Plugin {
                                         pluginSelf.markdownButtons["reading"].addClass("change-to-reading");
                                     }
                                 } else {
-                                    pluginSelf.markdownButtons["reading"]?.remove();
+                                    (this.view.actionsEl as HTMLElement)
+                                        .querySelectorAll(".change-to-reading")
+                                        .forEach(el => el.remove());
+                                    // pluginSelf.markdownButtons["reading"]?.remove();
                                     pluginSelf.markdownButtons["reading"] = null;
                                 }
                             } else {
