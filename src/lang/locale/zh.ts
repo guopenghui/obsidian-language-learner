@@ -87,6 +87,8 @@ export default {
 
     "Translate": "查词",
     "Popup Search Panel": "弹出式查词面板",
+    "Auto pronounce": "自动拼读",
+    "Auto pronounce when searching": "查词时自动发音",
     "Use a popup search panel": "使用弹出式查词面板",
     "Word Select": "划词翻译",
     "Press function key and select text to translate": "按下功能键同时划词或双击单词即可打开翻译",

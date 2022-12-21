@@ -6,5 +6,5 @@
 	"description": "阅读、查词、复习、使用、统计全部合一的语言学习插件",
 	"author": "the_tree",
 	"authorUrl": "",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }

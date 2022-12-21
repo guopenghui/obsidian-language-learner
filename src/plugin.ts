@@ -440,7 +440,10 @@ export default class LanguageLearner extends Plugin {
                                         pluginSelf.markdownButtons["reading"].addClass("change-to-reading");
                                     }
                                 } else {
-                                    pluginSelf.markdownButtons["reading"]?.remove();
+                                    (this.view.actionsEl as HTMLElement)
+                                        .querySelectorAll(".change-to-reading")
+                                        .forEach(el => el.remove());
+                                    // pluginSelf.markdownButtons["reading"]?.remove();
                                     pluginSelf.markdownButtons["reading"] = null;
                                 }
                             } else {
@@ -464,11 +467,13 @@ export default class LanguageLearner extends Plugin {
             detail: { selection: word, target, evtPosition }
         }));
 
-        let accent = this.settings.review_prons;
-        let wordUrl =
-            `http://dict.youdao.com/dictvoice?type=${accent}&audio=` +
-            encodeURIComponent(word);
-        playAudio(wordUrl);
+        if (this.settings.auto_pron) {
+            let accent = this.settings.review_prons;
+            let wordUrl =
+                `http://dict.youdao.com/dictvoice?type=${accent}&audio=` +
+                encodeURIComponent(word);
+            playAudio(wordUrl);
+        }
     }
 
     // 管理所有的右键菜单
@@ -517,7 +522,9 @@ export default class LanguageLearner extends Plugin {
             if (!target.matchParent(".stns")) {
                 // 处理普通模式
                 const funcKey = this.settings.function_key;
-                if ((funcKey === "disable" || evt[funcKey] === false) && !this.store.searchPinned) return;
+                if ((funcKey === "disable" || evt[funcKey] === false)
+                    && !(this.store.searchPinned && !target.matchParent("#langr-search,#langr-learn-panel"))
+                ) return;
 
                 let selection = window.getSelection().toString().trim();
                 if (!selection) return;

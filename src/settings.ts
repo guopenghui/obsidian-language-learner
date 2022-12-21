@@ -18,6 +18,7 @@ export interface MyPluginSettings {
     foreign: string;
     // search
     popup_search: boolean;
+    auto_pron: boolean;
     function_key: "ctrlKey" | "altKey" | "metaKey" | "disable";
     dictionaries: { [K in string]: { enable: boolean, priority: number; } };
     dict_height: string;
@@ -49,6 +50,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     foreign: "en",
     // search
     popup_search: true,
+    auto_pron: true,
     function_key: "ctrlKey",
     dictionaries: {
         "youdao": { enable: true, priority: 1 },
@@ -187,6 +189,17 @@ export class SettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.popup_search = value;
                     this.plugin.store.popupSearch = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+
+        new Setting(containerEl)
+            .setName(t("Auto pronounce"))
+            .setDesc(t("Auto pronounce when searching"))
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.auto_pron)
+                .onChange(async (value) => {
+                    this.plugin.settings.auto_pron = value;
                     await this.plugin.saveSettings();
                 })
             );
