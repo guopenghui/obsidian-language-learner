@@ -1,7 +1,8 @@
 <template>
     <section class="dict-item" :class="{ open: isOpen, expand: isExpand, loading: isLoading }">
         <header class="dict-item-header" @click="onOpen">
-            <span>{{ props.name }}</span>
+            <div :class="['dict-icon', props.id]"></div>
+            <span class="dict-name">{{ props.name }}</span>
             <div class="dict-loading" style="padding-left: 20px">
                 searching...
             </div>
@@ -45,6 +46,7 @@ let isLoading = ref(false);
 const props = defineProps<{
     loading: boolean;
     name: string;
+    id: string;
 }>();
 
 watch(
@@ -114,6 +116,17 @@ watch(
         border-top: 2px dashed gray;
         background-color: v-bind(bgRGBA3);
         height: 22px;
+
+        .dict-icon {
+            height: 20px;
+            width: 20px;
+            background-size: cover;
+        }
+
+        .dict-name {
+            padding-left: 3px;
+            line-height: 20px;
+        }
 
         .empty-area {
             flex: 1;

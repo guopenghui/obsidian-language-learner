@@ -121,18 +121,6 @@ export default class LanguageLearner extends Plugin {
         this.vueApp.unmount();
         this.appEl.remove();
         this.appEl = null;
-
-        // temporarily work around for memory leak issues
-        const titles = [
-            t("Open word search panel"),
-            t("Open new word panel"),
-            t("Open statistics"),
-            t("Data Panel"),
-        ];
-        (app.workspace.leftRibbon as any).orderedRibbonActions =
-            (app.workspace.leftRibbon as any).orderedRibbonActions.filter(
-                (ent: { title: string; }) => !titles.contains(ent.title)
-            );
     }
 
     registerConstants() {

@@ -13,7 +13,7 @@
             </div>
         </NConfigProvider>
         <div class="dict-area" style="overflow:auto;">
-            <DictItem v-for="(cp, i) in components" :loading="loadings[i]" :name="cp.name">
+            <DictItem v-for="(cp, i) in components" :loading="loadings[i]" :name="cp.name" :id="cp.id">
                 <KeepAlive>
                     <Component @loading="loading" :is="cp.type" :word="word" v-show="shows[i]"></Component>
                 </KeepAlive>
@@ -56,6 +56,7 @@ watch(() => plugin.store.dictsChange, () => {
 
     components.value = collection.map((dict) => {
         return {
+            id: dict.id,
             name: dict.name,
             type: dicts[dict.id].Cp,
         };
