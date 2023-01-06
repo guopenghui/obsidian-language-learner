@@ -3,6 +3,7 @@ import Youdao from "./youdao/View.vue";
 import Cambridge from "./cambridge/View.vue";
 import Jukuu from "./jukuu/View.vue";
 import HJdict from "./hjdict/View.vue";
+import DeepL from "./deepl/View.vue";
 
 const dicts = {
     "youdao": {
@@ -25,6 +26,11 @@ const dicts = {
         description: `${t("English")},${t("Japanese")}, ${t("Korean")}, ${t("Spanish")}, ${t("French")}, ${t("Deutsch")} <=> ${t("Chinese")}`,
         Cp: HJdict
     },
+    "deepl": {
+        name: "DeepL",
+        description: `All <=> ${t("Chinese")}`,
+        Cp: DeepL
+    }
 };
 
 export { dicts };

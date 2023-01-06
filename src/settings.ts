@@ -58,6 +58,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
         "cambridge": { enable: true, priority: 2 },
         "jukuu": { enable: true, priority: 3 },
         "hjdict": { enable: true, priority: 4 },
+        "deepl": { enable: true, priority: 5 },
     },
     dict_height: "250px",
     // indexed

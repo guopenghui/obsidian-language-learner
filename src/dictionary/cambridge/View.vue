@@ -11,6 +11,8 @@
 import { Notice } from "obsidian";
 import { ref, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { CambridgeResult, search } from "./engine";
+import { useLoading } from "@dict/uses"
+
 const props = defineProps<{
     word: string;
 }>();
@@ -21,33 +23,21 @@ const emits = defineEmits<{
 
 let result = ref<CambridgeResult>([]);
 
-async function searchWord(text: string) {
-    emits("loading", { id: "cambridge", loading: true, result: false });
+async function onSearch(): Promise<boolean> {
+    let res = await search(props.word);
+    if (!res) return false;
 
-    try {
-        let res = await search(text);
-        result.value = res.result;
-
-        await nextTick();
-        emits("loading", { id: "cambridge", loading: false, result: true });
-    } catch (e) {
-        emits("loading", { id: "cambridge", loading: false, result: false });
-        // new Notice(e.message)
-    }
+    result.value = res.result;
+    await nextTick();
+    return true;
 }
 
-
-watch(
-    () => props.word,
-    (word) => {
-        searchWord(word);
-    }
-);
+useLoading(() => props.word, "cambridge", onSearch, emits);
 
 onMounted(() => {
     let cam = document.querySelector("#cambridge");
     if (!cam) return;
-    // 管理点击事件
+    // 管理“更多范例”的展开和折叠
     cam.addEventListener("click", (evt) => {
         let target = evt.target as HTMLElement;
         // console.log(target)

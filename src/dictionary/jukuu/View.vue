@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
 import { reactive, watch } from "vue";
+import { useLoading } from "@dict/uses"
 import { search, JukuuResult } from "./engine";
 
 const props = defineProps<{
@@ -23,24 +24,16 @@ const emits = defineEmits<{
 
 let result = reactive<JukuuResult>({ lang: "zheng", sens: [] });
 
-async function onSearch(word: string) {
-    try {
-        emits("loading", { id: "jukuu", loading: true, result: false });
-        let res = await search(word);
-        result.sens = res.result.sens;
-        emits("loading", { id: "jukuu", loading: false, result: true });
-    } catch (e) {
-        emits("loading", { id: "jukuu", loading: false, result: false });
-    }
+async function onSearch() {
+    let res = await search(props.word);
+    if (!res) return false;
 
+    result.sens = res.result.sens;
+    return true;
 }
 
-watch(
-    () => props.word,
-    async (word) => {
-        onSearch(word);
-    }
-);
+useLoading(() => props.word, "jukuu", onSearch, emits)
+
 </script>
 
 <style lang="scss">

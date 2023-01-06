@@ -7,7 +7,8 @@
 <script setup lang="ts">
 import { ref, watch, getCurrentInstance } from "vue";
 import { search } from "./engine";
-import PluginType from "../../plugin";
+import { useLoading } from "@dict/uses";
+import PluginType from "@/plugin";
 let plugin = getCurrentInstance().appContext.config.globalProperties.plugin as PluginType;
 
 const props = defineProps<{
@@ -18,27 +19,17 @@ const emits = defineEmits<{
 }>();
 
 let entries = ref<string[]>([]);
-async function onSearch(word: string) {
-    try {
-        emits("loading", { id: "hjdict", loading: true, result: false });
-        let res = await search(word, { lang: plugin.settings.foreign });
-        if (res.result.type === "lex") {
-            entries.value = res.result.entries;
-            emits("loading", { id: "hjdict", loading: false, result: true });
-        } else {
-            emits("loading", { id: "hjdict", loading: false, result: false });
-        }
-    } catch (e) {
-        emits("loading", { id: "hjdict", loading: false, result: false });
+async function onSearch(): Promise<boolean> {
+    let res = await search(props.word, { lang: plugin.settings.foreign });
+    if (res.result.type === "lex") {
+        entries.value = res.result.entries;
+        return true;
+    } else {
+        return false;
     }
 }
 
-watch(
-    () => props.word,
-    (word) => {
-        onSearch(word);
-    }
-)
+useLoading(() => props.word, "hjdict", onSearch, emits);
 
 </script>
 
