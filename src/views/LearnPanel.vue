@@ -1,5 +1,5 @@
 <template>
-	<div id="langr-learn-panel" style="height: 100%;">
+	<div id="langr-learn-panel">
 		<NConfigProvider :theme="theme" :theme-overrides="themeOverrides">
 			<!-- <NThemeEditor> -->
 			<NForm :model="model" label-placement="top" label-width="auto" :rules="rules"
@@ -49,7 +49,7 @@
 				<!-- 可选,例句也可以记多条 -->
 				<div style="margin-bottom: 8px">
 					<label for="Sentences" :style="[labelStyle]">{{
-							t("Sentences")
+						t("Sentences")
 					}}</label>
 				</div>
 				<NDynamicInput v-model:value="model.sentences" :create-button-props="{ size: 'small' }"
@@ -58,8 +58,7 @@
 						{{ t("Create") }}
 					</template>
 					<template #="{ index, value }">
-						<div style="
-                                display: flex;
+						<div style="display: flex;
                                 flex-direction: column;
                                 flex: 1;
                                 border: 2px solid gray;
@@ -159,7 +158,7 @@ const themeOverrides: GlobalThemeOverrides = {
 		paddingSmall: "0 5px",
 	},
 	DynamicInput: {
-		actionMargin: "0 0 0 10px",
+		actionMargin: "0 0 0 5px",
 	},
 };
 
@@ -407,3 +406,36 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 });
 
 </script>
+
+<style lang="scss">
+#langr-learn-panel {
+	padding-bottom: 18px;
+
+	.n-input {
+		margin: 1px 0;
+	}
+
+	.n-dynamic-input .n-button-group {
+		flex-direction: column;
+
+		button {
+			height: 26px;
+			width: 26px;
+
+			&:nth-child(1) {
+				border-top-left-radius: 34px !important;
+				border-top-right-radius: 34px !important;
+				border-bottom-left-radius: 0 !important;
+				border-bottom-right-radius: 0 !important;
+			}
+
+			&:nth-child(2) {
+				border-top-left-radius: 0 !important;
+				border-top-right-radius: 0 !important;
+				border-bottom-left-radius: 34px !important;
+				border-bottom-right-radius: 34px !important;
+			}
+		}
+	}
+}
+</style>

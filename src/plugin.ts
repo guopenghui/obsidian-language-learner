@@ -445,12 +445,16 @@ export default class LanguageLearner extends Plugin {
     };
 
     async queryWord(word: string, target?: HTMLElement, evtPosition?: Position): Promise<void> {
+        if (!word) return;
+
         if (!this.settings.popup_search) {
             await this.activateView(SEARCH_PANEL_VIEW, "left");
         }
+
         if (target && Platform.isDesktopApp) {
             await this.activateView(LEARN_PANEL_VIEW, "right");
         }
+
         dispatchEvent(new CustomEvent('obsidian-langr-search', {
             detail: { selection: word, target, evtPosition }
         }));

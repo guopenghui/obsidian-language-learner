@@ -56,6 +56,7 @@ function pin() {
         pinBtn.value.removeClass("pinned");
         store.searchPinned = false;
     }
+    window.getSelection().collapseToStart();
 }
 
 defineExpose({
