@@ -158,6 +158,7 @@ export default {
     "Choose your preferred accent": "Choose your preferred accent",
     "American": "American",
     "British": "British",
+    "Delimiter": "Delimiter",
 
 
     "As Server": "As Server",

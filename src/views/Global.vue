@@ -7,7 +7,7 @@
 <script setup lang='ts'>
 import { ref, watch } from 'vue';
 import { Platform } from "obsidian";
-import { onClickOutside } from "@vueuse/core";
+import { onClickOutside, onKeyStroke } from "@vueuse/core";
 import store from "@/store";
 import { getPageSize, optimizedPos } from "@/utils/style";
 import { useEvent } from "@/utils/use";
@@ -38,6 +38,10 @@ function closeSearch(evt: MouseEvent) {
     showSearch.value = false;
 }
 onClickOutside(search, closeSearch);
+onKeyStroke("Escape", (e) => {
+    if (!search.value.pinned)
+        showSearch.value = false;
+})
 
 let searchX = ref(0);
 let searchY = ref(0);

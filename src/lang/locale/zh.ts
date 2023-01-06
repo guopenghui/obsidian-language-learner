@@ -156,6 +156,7 @@ export default {
     "Choose your preferred accent": "选择你更喜欢的口音",
     "American": "美式",
     "British": "英式",
+    "Delimiter": "分隔符",
 
     "As Server": "成为服务器",
     "Self as Server": "开启服务器功能",

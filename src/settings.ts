@@ -38,6 +38,7 @@ export interface MyPluginSettings {
     auto_refresh_db: boolean;
     // review
     review_prons: "0" | "1";
+    review_delimiter: string;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -75,6 +76,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     word_count: true,
     // review
     review_prons: "0",
+    review_delimiter: "?",
 };
 
 export class SettingTab extends PluginSettingTab {
@@ -523,6 +525,15 @@ export class SettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.review_prons)
                 .onChange(async (value: "0" | "1") => {
                     this.plugin.settings.review_prons = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+        new Setting(containerEl)
+            .setName(t("Delimiter"))
+            .addText(text => text
+                .setValue(this.plugin.settings.review_delimiter)
+                .onChange(async (value) => {
+                    this.plugin.settings.review_delimiter = value;
                     await this.plugin.saveSettings();
                 })
             );

@@ -185,6 +185,7 @@ export default class LanguageLearner extends Plugin {
             name: t("Translate"),
             callback: () => {
                 let selection = window.getSelection().toString().trim();
+                new Notice(selection);
                 this.queryWord(selection);
             },
         });
@@ -361,7 +362,7 @@ export default class LanguageLearner extends Plugin {
             return (
                 `#word\n` +
                 `#### ${word.expression}\n` +
-                "?\n" +
+                `${this.settings.review_delimiter}\n` +
                 `${word.meaning}\n` +
                 `${notes}` +
                 `${sentences}` +
