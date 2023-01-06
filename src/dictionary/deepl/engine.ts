@@ -9,7 +9,7 @@ const langMap: Record<string, string> = {
     es: "ES",
 };
 
-export async function search(text: string, lang?: string): Promise<string | undefined> {
+export async function search(text: string, lang: string = ""): Promise<string | undefined> {
     let target = (/[\u4e00-\u9fa5]/.test(text) && !/[\u0800-\u4e00]/.test(text)) // chinese
         ? langMap[lang] || "ZH"
         : "ZH";
