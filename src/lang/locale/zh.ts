@@ -86,6 +86,8 @@ export default {
     "Spanish": "西",
 
     "Translate": "查词",
+    "Translate Select": "选中查词",
+    "Translate Input": "输入查词",
     "Popup Search Panel": "弹出式查词面板",
     "Auto pronounce": "自动拼读",
     "Auto pronounce when searching": "查词时自动发音",

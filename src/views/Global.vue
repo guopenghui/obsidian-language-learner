@@ -39,8 +39,10 @@ function closeSearch(evt: MouseEvent) {
 }
 onClickOutside(search, closeSearch);
 onKeyStroke("Escape", (e) => {
-    if (!search.value.pinned)
-        showSearch.value = false;
+    if (search.value?.pinned)
+        return;
+
+    showSearch.value = false;
 })
 
 let searchX = ref(0);

@@ -32,6 +32,8 @@
 
 ![阅读界面](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/reading.png)
 
+单词列表：
+![单词列表](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/table.png)
 
 自动补全/提示：
 

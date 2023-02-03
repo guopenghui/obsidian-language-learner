@@ -5,6 +5,7 @@ import { LocalDb } from "./db/local_db";
 import Server from "./api/server";
 import LanguageLearner from "./plugin";
 import { t } from "./lang/helper";
+import { WarningModal, OpenFileModal } from "./modals"
 import { dicts } from "@dict/list";
 import store from "./store";
 
@@ -585,82 +586,3 @@ export class SettingTab extends PluginSettingTab {
 
 }
 
-
-// 打开某个文件
-class OpenFileModal extends Modal {
-    input: HTMLInputElement;
-    file: File;
-    onSubmit: (file: File) => Promise<void>;
-    constructor(app: App, onSubmit: (file: File) => Promise<void>) {
-        super(app);
-        this.onSubmit = onSubmit;
-    }
-
-    onOpen() {
-        const { contentEl } = this;
-
-        this.input = contentEl.createEl("input", {
-            attr: {
-                type: "file"
-            }
-        });
-
-        this.input.addEventListener("change", () => {
-            this.file = this.input.files[0];
-        });
-
-        new Setting(contentEl)
-            .addButton(button => button
-                .setButtonText(t("Yes"))
-                .onClick((evt) => {
-                    this.onSubmit(this.file);
-                    this.close();
-                })
-            );
-    }
-
-    onClose(): void {
-
-    }
-}
-
-
-// 做某些危险操作前问一句
-export class WarningModal extends Modal {
-    onSubmit: () => Promise<void>;
-    message: string;
-
-    constructor(app: App, message: string, onSubmit: () => Promise<void>) {
-        super(app);
-        this.message = message;
-        this.onSubmit = onSubmit;
-    }
-
-    onOpen() {
-        const { contentEl } = this;
-
-        contentEl.createEl("h2", { text: this.message });
-
-        new Setting(contentEl)
-            .addButton((btn) => btn
-                .setButtonText(t("Yes"))
-                .setWarning()
-                .setCta()
-                .onClick(() => {
-                    this.close();
-                    this.onSubmit();
-                })
-            )
-            .addButton((btn) => btn
-                .setButtonText(t("No!!!"))
-                .setCta() // what is this?
-                .onClick(() => {
-                    this.close();
-                }));
-    }
-
-    onClose() {
-        let { contentEl } = this;
-        contentEl.empty();
-    }
-}

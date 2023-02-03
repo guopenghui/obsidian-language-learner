@@ -18,6 +18,7 @@ import { READING_VIEW_TYPE, READING_ICON, ReadingView } from "./views/ReadingVie
 import { LearnPanelView, LEARN_ICON, LEARN_PANEL_VIEW } from "./views/LearnPanelView";
 import { StatView, STAT_ICON, STAT_VIEW_TYPE } from "./views/StatView";
 import { DataPanelView, DATA_ICON, DATA_PANEL_VIEW } from "./views/DataPanelView";
+import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
 
 import { t } from "./lang/helper";
 import DbProvider from "./db/base";
@@ -29,12 +30,12 @@ import Server from "./api/server";
 
 import { DEFAULT_SETTINGS, MyPluginSettings, SettingTab } from "./settings";
 import store from "./store";
-import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
 import { playAudio } from "./utils/helpers";
+import type { Position } from "./constant";
+import { InputModal } from "./modals"
 
 import Global from "./views/Global.vue";
 
-import type { Position } from "./constant";
 
 
 export const FRONT_MATTER_KEY: string = "langr";
@@ -181,12 +182,21 @@ export default class LanguageLearner extends Plugin {
 
         // 注册查词命令
         this.addCommand({
-            id: "langr-search-word",
-            name: t("Translate"),
+            id: "langr-search-word-select",
+            name: t("Translate Select"),
             callback: () => {
                 let selection = window.getSelection().toString().trim();
-                new Notice(selection);
                 this.queryWord(selection);
+            },
+        });
+        this.addCommand({
+            id: "langr-search-word-input",
+            name: t("Translate Input"),
+            callback: () => {
+                const modal = new InputModal(this.app, (text) => {
+                    this.queryWord(text);
+                });
+                modal.open();
             },
         });
     }

@@ -87,6 +87,8 @@ export default {
     "Spanish": "Spanish",
 
     "Translate": "Translate",
+    "Translate Select": "Translate Select",
+    "Translate Input": "Translate Input",
     "Popup Search Panel": "Popup Search Panel",
     "Auto pronounce": "Auto pronounce",
     "Auto pronounce when searching": "Auto pronounce when searching",
