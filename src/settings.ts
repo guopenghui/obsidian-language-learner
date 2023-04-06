@@ -1,4 +1,4 @@
-import { App, Notice, PluginSettingTab, Setting, Modal, moment, debounce } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting, TFile, Modal, moment, debounce } from "obsidian";
 
 import { WebDb } from "./db/web_db";
 import { LocalDb } from "./db/local_db";
@@ -325,6 +325,26 @@ export class SettingTab extends PluginSettingTab {
                 .onClick(async () => {
                     await this.plugin.db.exportDB();
                     new Notice("Exported");
+                })
+            )
+            .addButton(button => button
+                .setButtonText(t("Backup"))
+                .onClick(async () => {
+                    let backupFile = this.app.vault.getAbstractFileByPath(
+                        // TODO: support for setting path
+                        "wordDB_backup.json"
+                    );
+
+                    if (!backupFile || "children" in backupFile) {
+                        new Notice("Invalid word database path");
+                        return;
+                    }
+                    const db_json = await this.plugin.db.readDB();
+                    let db = backupFile as TFile;
+                    await this.app.vault.modify(db, db_json)
+                    new Notice("Done");
+                    // }
+                    // fr.readAsText(file)
                 })
             );
         // 获取所有非无视单词

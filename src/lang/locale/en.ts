@@ -9,6 +9,7 @@ export default {
     "Search word": "Search word",
     "Refresh Word Database": "Refresh Word Database",
     "Refresh Review Database": "Refresh Review Database",
+    "Backup Local Database": "Backup Local Database",
 
     // DataPanelView.ts
     "Data Panel": "Data Panel",
@@ -132,6 +133,7 @@ export default {
     "Warning: Import will override current database": "Warning: Import will override current database",
     "Import": "Import",
     "Export": "Export",
+    "Backup": "Backup",
     "Get all ignores": "Get all ignores",
     "Get all non-ignores": "Get all non-ignores",
     "Copied to clipboard": "Copied to clipboard",

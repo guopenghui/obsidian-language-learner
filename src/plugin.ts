@@ -180,6 +180,13 @@ export default class LanguageLearner extends Plugin {
             callback: this.refreshReviewDb,
         });
 
+        // 注册备份数据库命令
+        this.addCommand({
+            id: "langr-backup-database",
+            name: t("Backup Local Database"),
+            callback: this.backupDb,
+        });
+
         // 注册查词命令
         this.addCommand({
             id: "langr-search-word-select",
@@ -382,6 +389,25 @@ export default class LanguageLearner extends Plugin {
 
         newText = "#flashcards\n\n" + newText;
         await this.app.vault.modify(db, newText);
+
+        this.saveSettings();
+    };
+
+    backupDb = async () => {
+
+        let backupFile = this.app.vault.getAbstractFileByPath(
+            // TODO: add setting for backup filename
+            "wordDB_backup.json"
+        );
+
+        if (!backupFile || "children" in backupFile) {
+            new Notice("Invalid word database path");
+            return;
+        }
+        const db_json = await this.db.readDB();
+        let db = backupFile as TFile;
+        await this.app.vault.modify(db, db_json)
+        new Notice("Done");
 
         this.saveSettings();
     };
