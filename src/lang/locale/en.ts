@@ -10,7 +10,7 @@ export default {
     "Refresh Word Database": "Refresh Word Database",
     "Refresh Review Database": "Refresh Review Database",
     "Backup Local Database": "Backup Local Database",
-
+    "Recover Database From Backup": "Recover Database From Backup",
     // DataPanelView.ts
     "Data Panel": "Data Panel",
 

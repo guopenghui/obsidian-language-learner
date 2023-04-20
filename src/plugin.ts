@@ -187,6 +187,14 @@ export default class LanguageLearner extends Plugin {
             callback: this.backupDb,
         });
 
+        // 注册恢复数据库命令
+        this.addCommand({
+            id: "langr-recover-backup-database",
+            name: t("Recover Database From Backup"),
+            callback: this.recoverDB,
+        });
+
+
         // 注册查词命令
         this.addCommand({
             id: "langr-search-word-select",
@@ -407,6 +415,46 @@ export default class LanguageLearner extends Plugin {
         const db_json = await this.db.readDB();
         let db = backupFile as TFile;
         await this.app.vault.modify(db, db_json)
+        new Notice("Done");
+        this.saveSettings();
+    };
+
+    recoverDB = async () => {
+
+        // TODO: add setting for backup filename
+        let backupFile = "wordDB_backup.json"
+
+
+        // if (!backupFile || "children" in backupFile) {
+        //     new Notice("Invalid word database path");
+        //     return;
+        // }
+
+
+        let dataBase = this.app.vault.getAbstractFileByPath(
+            backupFile
+        );
+        if (!dataBase || "children" in dataBase) {
+            new Notice("Invalid word database path");
+            return;
+        }
+
+        let db = dataBase as TFile;
+        let text = await this.app.vault.read(db);
+        // Read the file as a string
+
+        // Create a Blob from the JSON string
+        const blob = new Blob([text], { type: 'application/json' });
+
+        // Create a File object from the Blob
+        const file = new File([blob], backupFile,
+        {
+            type: "application/json",
+        });
+        console.log(file)
+        // let db = backupFile as TFile;
+        // const db_json = await this.app.vault.read(db);
+        await this.db.importDB(file)
         new Notice("Done");
 
         this.saveSettings();
