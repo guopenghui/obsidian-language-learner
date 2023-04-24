@@ -222,6 +222,10 @@ export class WebDb extends DbProvider {
     async importDB() { }
 
     async exportDB() { }
+   
+    async readDB() {
+        return "Not implemented."
+    }
 
     async destroyAll() {
         // 什么也没有发生
