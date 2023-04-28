@@ -1,13 +1,14 @@
-import { App, Notice, PluginSettingTab, Setting, Modal, moment, debounce } from "obsidian";
+import {App, Notice, PluginSettingTab, Setting, Modal, moment, debounce} from "obsidian";
 
-import { WebDb } from "./db/web_db";
-import { LocalDb } from "./db/local_db";
+import {WebDb} from "./db/web_db";
+import {LocalDb} from "./db/local_db";
 import Server from "./api/server";
 import LanguageLearner from "./plugin";
-import { t } from "./lang/helper";
-import { WarningModal, OpenFileModal } from "./modals"
-import { dicts } from "@dict/list";
+import {t} from "./lang/helper";
+import {WarningModal, OpenFileModal} from "./modals"
+import {dicts} from "@dict/list";
 import store from "./store";
+import Sqllit3DB from "@/db/sqllit3";
 
 export interface MyPluginSettings {
     use_server: boolean;
@@ -30,8 +31,16 @@ export interface MyPluginSettings {
     font_family: string;
     line_height: string;
     use_machine_trans: boolean;
+
+    //db type
+    db_type: "indexedDB" | "sqllit3",
+
     // indexed db
     db_name: string;
+
+    // sqllit3
+    db_dir: string
+
     // text db
     word_database: string;
     review_database: string;
@@ -55,13 +64,15 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     auto_pron: true,
     function_key: "ctrlKey",
     dictionaries: {
-        "youdao": { enable: true, priority: 1 },
-        "cambridge": { enable: true, priority: 2 },
-        "jukuu": { enable: true, priority: 3 },
-        "hjdict": { enable: true, priority: 4 },
-        "deepl": { enable: true, priority: 5 },
+        "youdao": {enable: true, priority: 1},
+        "cambridge": {enable: true, priority: 2},
+        "jukuu": {enable: true, priority: 3},
+        "hjdict": {enable: true, priority: 4},
+        "deepl": {enable: true, priority: 5},
     },
     dict_height: "250px",
+    db_type: 'indexedDB',
+    db_dir: "",
     // indexed
     db_name: "WordDB",
     // text db
@@ -90,10 +101,10 @@ export class SettingTab extends PluginSettingTab {
     }
 
     display() {
-        const { containerEl } = this;
+        const {containerEl} = this;
 
         containerEl.empty();
-        containerEl.createEl("h1", { text: "Settings for Language Learner" });
+        containerEl.createEl("h1", {text: "Settings for Language Learner"});
 
         this.backendSettings(containerEl);
         this.langSettings(containerEl);
@@ -149,7 +160,7 @@ export class SettingTab extends PluginSettingTab {
     }
 
     langSettings(containerEl: HTMLElement) {
-        containerEl.createEl("h3", { text: t("Language") });
+        containerEl.createEl("h3", {text: t("Language")});
 
         new Setting(containerEl)
             .setName(t("Native"))
@@ -183,7 +194,7 @@ export class SettingTab extends PluginSettingTab {
     }
 
     querySettings(containerEl: HTMLElement) {
-        containerEl.createEl("h3", { text: t("Translate") });
+        containerEl.createEl("h3", {text: t("Translate")});
 
         new Setting(containerEl)
             .setName(t("Popup Search Panel"))
@@ -223,7 +234,7 @@ export class SettingTab extends PluginSettingTab {
                 })
             );
 
-        containerEl.createEl("h4", { text: t("Dictionaries") });
+        containerEl.createEl("h4", {text: t("Dictionaries")});
 
         let createDictSetting = (id: string, name: string, description: string) => {
             new Setting(containerEl)
@@ -278,7 +289,19 @@ export class SettingTab extends PluginSettingTab {
             return;
         }
 
-        containerEl.createEl("h3", { text: t("IndexDB Database") });
+        containerEl.createEl("h3", {text: t("IndexDB Database")});
+
+        new Setting(containerEl)
+            .setName(t("Database Type"))
+            .addDropdown(funcKey => funcKey
+                .addOption("indexedDB", "indexedDB")
+                .addOption("sqllit3", "sqllit3")
+                .setValue(this.plugin.settings.db_type)
+                .onChange(async (value: "indexedDB" | "sqllit3") => {
+                    this.plugin.settings.db_type = value;
+                    await this.plugin.saveSettings();
+                })
+            );
 
         new Setting(containerEl)
             .setName(t("Database Name"))
@@ -294,12 +317,30 @@ export class SettingTab extends PluginSettingTab {
                 .setButtonText(t("Reopen"))
                 .onClick(async () => {
                     this.plugin.db.close();
+                    // todo 待同步修改数据读写方式
                     this.plugin.db = new LocalDb(this.plugin);
-                    await this.plugin.db.open();
+                    // await this.plugin.db.open();
                     new Notice("DB is Reopened");
                 })
             );
 
+        // 本地数据库写入类型
+        if (this.plugin.settings.db_type === "sqllit3") {
+            new Setting(containerEl)
+                .setName(t("Database Dir"))
+                .addText(text => text
+                    .setValue(this.plugin.settings.db_dir)
+                    .onChange(debounce(async (path) => {
+                        this.plugin.settings.db_dir = path;
+
+                        // this.plugin.db.close();
+                        this.plugin.db = new Sqllit3DB(this.plugin);
+                        // this.plugin.db.open();
+
+                        this.plugin.saveSettings();
+                    }, 1000, true))
+                )
+        }
 
         // 导入导出数据库
         new Setting(containerEl)
@@ -384,7 +425,7 @@ export class SettingTab extends PluginSettingTab {
     }
 
     textDBSettings(containerEl: HTMLElement) {
-        containerEl.createEl("h3", { text: t("Text Database") });
+        containerEl.createEl("h3", {text: t("Text Database")});
 
         new Setting(containerEl)
             .setName(t("Auto refresh"))
@@ -423,7 +464,7 @@ export class SettingTab extends PluginSettingTab {
     }
 
     readingSettings(containerEl: HTMLElement) {
-        containerEl.createEl("h3", { text: t("Reading Mode") });
+        containerEl.createEl("h3", {text: t("Reading Mode")});
 
         new Setting(containerEl)
             .setName(t("Font Size"))
@@ -498,7 +539,7 @@ export class SettingTab extends PluginSettingTab {
     }
 
     completionSettings(containerEl: HTMLElement) {
-        containerEl.createEl("h3", { text: t("Auto Completion") });
+        containerEl.createEl("h3", {text: t("Auto Completion")});
 
         new Setting(containerEl)
             .setName(t("Column delimiter"))
@@ -516,7 +557,7 @@ export class SettingTab extends PluginSettingTab {
     }
 
     reviewSettings(containerEl: HTMLElement) {
-        containerEl.createEl("h3", { text: t("Review") });
+        containerEl.createEl("h3", {text: t("Review")});
 
         new Setting(containerEl)
             .setName(t("Accent"))
@@ -542,7 +583,7 @@ export class SettingTab extends PluginSettingTab {
     }
 
     selfServerSettings(containerEl: HTMLElement) {
-        containerEl.createEl("h3", { text: t("As Server") });
+        containerEl.createEl("h3", {text: t("As Server")});
 
         new Setting(containerEl)
             .setName(t("Self as Server"))
