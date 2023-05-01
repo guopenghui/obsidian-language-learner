@@ -330,9 +330,9 @@ export class SettingTab extends PluginSettingTab {
             .addButton(button => button
                 .setButtonText(t("Backup"))
                 .onClick(async () => {
+                    const backupFile_name = `${this.plugin.settings.db_name}_backup.json`
                     let backupFile = this.app.vault.getAbstractFileByPath(
-                        // TODO: support for setting path
-                        "wordDB_backup.json"
+                        backupFile_name
                     );
 
                     if (!backupFile || "children" in backupFile) {
@@ -343,8 +343,6 @@ export class SettingTab extends PluginSettingTab {
                     let db = backupFile as TFile;
                     await this.app.vault.modify(db, db_json)
                     new Notice("Done");
-                    // }
-                    // fr.readAsText(file)
                 })
             );
         // 获取所有非无视单词

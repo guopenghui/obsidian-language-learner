@@ -7,6 +7,7 @@ import {
     MarkdownView,
     Editor,
     TFile,
+    TFolder,
     normalizePath,
     Platform,
 } from "obsidian";
@@ -402,15 +403,17 @@ export default class LanguageLearner extends Plugin {
     };
 
     backupDb = async () => {
-
+        const backupFile_name = `${this.settings.db_name}_backup.json`
         let backupFile = this.app.vault.getAbstractFileByPath(
-            // TODO: add setting for backup filename
-            "wordDB_backup.json"
+            backupFile_name
         );
-
-        if (!backupFile || "children" in backupFile) {
-            new Notice("Invalid word database path");
-            return;
+        if (backupFile !== null ) {
+            if (backupFile instanceof TFolder){
+                new Notice("Invalid backup file path");
+                return;
+            }
+        }else{
+            backupFile = await this.app.vault.create(backupFile_name, '')
         }
         const db_json = await this.db.readDB();
         let db = backupFile as TFile;
@@ -421,21 +424,15 @@ export default class LanguageLearner extends Plugin {
 
     recoverDB = async () => {
 
-        // TODO: add setting for backup filename
-        let backupFile = "wordDB_backup.json"
+        let backupFile_name = `${this.settings.db_name}_backup.json`
 
-
-        // if (!backupFile || "children" in backupFile) {
-        //     new Notice("Invalid word database path");
-        //     return;
-        // }
 
 
         let dataBase = this.app.vault.getAbstractFileByPath(
-            backupFile
+            backupFile_name
         );
         if (!dataBase || "children" in dataBase) {
-            new Notice("Invalid word database path");
+            new Notice("Invalid backup path");
             return;
         }
 
@@ -447,7 +444,7 @@ export default class LanguageLearner extends Plugin {
         const blob = new Blob([text], { type: 'application/json' });
 
         // Create a File object from the Blob
-        const file = new File([blob], backupFile,
+        const file = new File([blob], backupFile_name,
         {
             type: "application/json",
         });
