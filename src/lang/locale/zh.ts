@@ -9,6 +9,7 @@ export default {
     "Search word": "查找单词/短语",
     "Refresh Word Database": "刷新单词数据库",
     "Refresh Review Database": "刷新复习数据库",
+    "Backup Local Database": "备份学习数据库",
 
     // DataPanelView.ts
     "Data Panel": "单词列表",
@@ -131,6 +132,7 @@ export default {
     "Warning: Import will override current database": "警告: 导入会覆盖掉当前的数据库",
     "Import": "导入",
     "Export": "导出",
+    "Backup": "备份",
     "Get all ignores": "获取所有无视单词",
     "Get all non-ignores": "获取所有非无视单词",
     "Copied to the clipboard": "已复制到剪贴板",
