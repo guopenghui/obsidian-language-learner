@@ -18,6 +18,24 @@ await esbuild.build({
     },
     plugins: [
         vue({ isProd: true }),
+        {
+            name: 'better-sqlite3',
+            setup(build) {
+              build.onLoad({ filter: /\.*$/ }, async (args) => {
+
+                const patchStr = `
+  const libPath = app.vault.adapter.getResourcePath(app.vault.configDir)
+  addon = DEFAULT_ADDON || (DEFAULT_ADDON = require(path.resolve(libPath, "better_sqlite3.node")));
+`
+
+                const contents = await fs.promises.readFile(args.path, 'utf8');
+                const replaced = contents.replace(/import\s+{\s+foo\s+}\s+from\s+'bar';/, 'const foo = require("baz");');
+                const transformedContents = replaced.replace( /addon\s=\sDEFAULT_ADDON\s\|\|\s\(DEFAULT_ADDON\s=\srequire.*\;/, patchStr);
+
+                return { contents: transformedContents };
+              });
+            },
+          },
     ],
     entryPoints: ['./src/plugin.ts'],
     bundle: true,

@@ -1,4 +1,3 @@
-import sqlite3, {Database} from 'sqlite3'
 import DbProvider from './base';
 import  Plugin from '@/plugin';
 import {
@@ -11,6 +10,18 @@ import {
     WordsPhrase
 } from "@/db/interface";
 import {Structure} from "@/db/sqllite/structure";
+import Database from 'better-sqlite3';
+import path from 'path';
+
+const pluginInfo = app.vault.adapter.getResourcePath(app.vault.configDir)
+const dbPath = path.join(pluginInfo, 'WordDB.db');
+
+console.log(dbPath)
+const db = new Database(dbPath);
+db.pragma('journal_mode = WAL');
+
+const rows = db.prepare('SELECT * FROM mytable').all();
+console.log(rows);
 
 
 export default class Sqllit3DB extends DbProvider {
@@ -18,7 +29,7 @@ export default class Sqllit3DB extends DbProvider {
     dbName: string;
     dbPath: string;
     dbDir: string;
-    db: Database = null
+    // db: Database = null
 
     constructor(plugin: Plugin) {
         super();
@@ -31,7 +42,7 @@ export default class Sqllit3DB extends DbProvider {
     }
 
     close(): void {
-        this.db.close()
+        // this.db.close()
     }
 
     countSeven(): Promise<WordCount[]> {
@@ -80,8 +91,8 @@ export default class Sqllit3DB extends DbProvider {
 
     open(): Promise<void> {
 
-        let sqlite =  sqlite3.verbose();
-        console.info(this.dbPath, sqlite)
+        // let sqlite =  sqlite3.verbose();
+        // console.info(this.dbPath, sqlite)
         // this.db = new sqlite.Database('./' + this.dbPath, (err) => {
         //     console.log(111, err)
         //     // new Notice(err.message)
