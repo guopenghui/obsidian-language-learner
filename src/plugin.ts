@@ -22,8 +22,8 @@ import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
 
 import { t } from "./lang/helper";
 import DbProvider from "./db/base";
-import { WebDb } from "./db/web_db";
-import { LocalDb } from "./db/local_db";
+import { WebDb } from "./db/drive/api/handler";
+import { LocalDb } from "./db/drive/Indexed/handler";
 import { TextParser } from "./views/parser";
 import { FrontMatterManager } from "./utils/frontmatter";
 import Server from "./api/server";

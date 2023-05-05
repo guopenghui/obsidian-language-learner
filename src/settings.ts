@@ -1,14 +1,14 @@
 import {App, Notice, PluginSettingTab, Setting, Modal, moment, debounce} from "obsidian";
 
-import {WebDb} from "./db/web_db";
-import {LocalDb} from "./db/local_db";
+import {WebDb} from "./db/drive/api/handler";
+import {LocalDb} from "./db/drive/Indexed/handler";
 import Server from "./api/server";
 import LanguageLearner from "./plugin";
 import {t} from "./lang/helper";
 import {WarningModal, OpenFileModal} from "./modals"
 import {dicts} from "@dict/list";
 import store from "./store";
-import Sqllit3DB from "@/db/sqllit3";
+import Sqllit3DB from "@/db/drive/file/handler";
 
 export interface MyPluginSettings {
     use_server: boolean;
@@ -335,7 +335,7 @@ export class SettingTab extends PluginSettingTab {
 
                         // this.plugin.db.close();
                         this.plugin.db = new Sqllit3DB(this.plugin);
-                        // this.plugin.db.open();
+                        this.plugin.db.open();
 
                         this.plugin.saveSettings();
                     }, 1000, true))
