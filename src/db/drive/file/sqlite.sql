@@ -1,0 +1,48 @@
+-- Your SQL goes here
+
+CREATE TABLE  IF NOT EXISTS expressions(
+    id INTEGER PRIMARY KEY NOT NULL,
+    expression TEXT NOT NULL UNIQUE,
+    meaning TEXT NOT NULL,
+    status INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    --- 现在没办法生成TIMESTAMPTZ,自己在schema.rs里面改一下
+    date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS connections(
+    eid_from INTEGER NOT NULL REFERENCES expressions(id) ON DELETE CASCADE,
+    eid_to INTEGER NOT NULL REFERENCES expressions(id) ON DELETE CASCADE,
+    what TEXT,
+    PRIMARY KEY(eid_from,eid_to)
+);
+
+CREATE TABLE IF NOT EXISTS tags(
+    id INTEGER PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS expression_tag(
+    eid INTEGER NOT NULL REFERENCES expressions(id) ON DELETE CASCADE,
+    tid INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY(eid,tid)
+);
+
+CREATE TABLE IF NOT EXISTS notes(
+    id INTEGER NOT NULL PRIMARY kEY,
+    eid INTEGER NOT NULL REFERENCES expressions(id) ON DELETE CASCADE,
+    text TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sentences(
+    id INTEGER NOT NULL PRIMARY kEY,
+    source TEXT NOT NULL UNIQUE,
+    trans TEXT,
+    origin TEXT
+);
+
+CREATE TABLE IF NOT EXISTS expression_sentence(
+    eid INTEGER NOT NULL REFERENCES expressions(id) ON DELETE CASCADE,
+    sid INTEGER NOT NULL REFERENCES sentences(id) ON DELETE CASCADE,
+    PRIMARY KEY(eid,sid)
+);
