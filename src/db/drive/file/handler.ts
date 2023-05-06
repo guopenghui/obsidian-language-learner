@@ -10,12 +10,14 @@ import {
     WordsPhrase
 } from "@/db/interface";
 import * as tedb from "tedb";
-import {ElectronStorage} from "tedb-electron-storage";
+import { Storage } from './storage';
+import { Tables } from './types';
 
 
 
 const fs = require("fs")
-const pluginInfo = app.vault.adapter.getResourcePath(app.vault.configDir)
+const pluginInfo = app.vault.adapter;
+console.log(pluginInfo)
 var dbPath = "F:/soft/github/note-test/note-test";
 
 const Users = new tedb.Datastore({storage: new Storage("wordDb", "user", dbPath)});
@@ -36,6 +38,9 @@ export default class Sqllit3DB extends DbProvider {
     dbName: string;
     dbPath: string;
     dbDir: string;
+
+    private tables: any;
+
     // db: Database = null
 
     constructor(plugin: Plugin) {
@@ -46,6 +51,13 @@ export default class Sqllit3DB extends DbProvider {
         this.dbDir = plugin.settings.db_dir;
         this.dbPath = this.dbDir + this.dbName;
         console.log(this.dbPath, 'path')
+    }
+
+    init() {
+        this.tables[Tables.Connections] = null;
+        this.tables[Tables.Connections] = null;
+        this.tables[Tables.Connections] = null;
+        this.tables[Tables.Connections] = null;
     }
 
     close(): void {
@@ -97,6 +109,10 @@ export default class Sqllit3DB extends DbProvider {
     }
 
     open(): Promise<void> {
+
+        foreach 
+        console.log(Tables.Connections.toString()
+, 1111)
 
         // let sqlite =  sqlite3.verbose();
         // console.info(this.dbPath, sqlite)

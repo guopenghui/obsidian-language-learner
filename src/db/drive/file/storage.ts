@@ -5,6 +5,7 @@ const path = require('path');
 
 export class Storage extends ElectronStorage {
     constructor(db: string, collection: string, dir: string) {
+        // todo 由于原作者没有提供可以指定目录，需要继承后进行覆盖
         super("", "");
 
         this.collectionPath = path.join(dir, 'db', collection);
