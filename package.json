@@ -13,6 +13,7 @@
     "author": "",
     "license": "MIT",
     "dependencies": {
+        "@qiyangxy/tedb-electron-storage": "^0.2.2",
         "@vueuse/core": "^9.6.0",
         "ac-auto": "^2.0.0",
         "dexie": "^3.2.2",
@@ -25,7 +26,6 @@
         "parse-english": "^5.0.0",
         "retext-english": "^4.1.0",
         "tedb": "^0.5.1",
-        "tedb-electron-storage": "^0.2.0",
         "unified": "^10.1.2",
         "unist-util-modify-children": "^3.0.0",
         "unist-util-visit": "^4.1.0",

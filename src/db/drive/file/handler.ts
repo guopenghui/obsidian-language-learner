@@ -1,5 +1,5 @@
 import DbProvider from '../../base';
-import  Plugin from '@/plugin';
+import Plugin from '@/plugin';
 import {
     ArticleWords,
     CountInfo,
@@ -10,58 +10,45 @@ import {
     WordsPhrase
 } from "@/db/interface";
 import * as tedb from "tedb";
-import { Storage } from './storage';
 import { Tables } from './types';
-
-
-
-const fs = require("fs")
-const pluginInfo = app.vault.adapter;
-console.log(pluginInfo)
-var dbPath = "F:/soft/github/note-test/note-test";
-
-const Users = new tedb.Datastore({storage: new Storage("wordDb", "user", dbPath)});
-
-Users.insert({"a": 1})    .then((doc) => {
-
-        console.log(doc) // {_id: "...", name: "xyz", age: 30} 
-    })
-    .catch();
-console.log(Users.find({a: 1})  .exec()
-    .then((docs) => {
-        console.log(docs); // {_id: "...", name: "xyz", age: 30}
-    }))
-
+import { ElectronStorage } from '@qiyangxy/tedb-electron-storage';
+import path from 'path';
 
 export default class Sqllit3DB extends DbProvider {
     plugin: Plugin;
     dbName: string;
     dbPath: string;
     dbDir: string;
+    basePath: string;
 
-    private tables: any;
+    private tables: Map<string, tedb.Datastore> = new Map();
 
     // db: Database = null
 
     constructor(plugin: Plugin) {
         super();
+        this.basePath = app.vault.adapter.getBasePath();
 
         this.plugin = plugin;
         this.dbName = plugin.settings.db_name;
         this.dbDir = plugin.settings.db_dir;
-        this.dbPath = this.dbDir + this.dbName;
+        this.dbPath = path.join(this.basePath, this.dbDir);
         console.log(this.dbPath, 'path')
     }
 
     init() {
-        this.tables[Tables.Connections] = null;
-        this.tables[Tables.Connections] = null;
-        this.tables[Tables.Connections] = null;
-        this.tables[Tables.Connections] = null;
+        this.tables
+        .set(Tables.Expressions, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.Expressions, this.dbPath) }))
+        .set(Tables.Connections, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.Connections, this.dbPath) }))
+        .set(Tables.Tags, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.Tags, this.dbPath) }))
+        .set(Tables.ExpressionTag, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.ExpressionTag, this.dbPath) }))
+        .set(Tables.Notes, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.Notes, this.dbPath) }))
+        .set(Tables.Sentences, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.Sentences, this.dbPath) }))
+        .set(Tables.ExpressionSentence, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.ExpressionSentence, this.dbPath) }));
     }
 
     close(): void {
-        // this.db.close()
+        this.tables = new Map();
     }
 
     countSeven(): Promise<WordCount[]> {
@@ -69,6 +56,9 @@ export default class Sqllit3DB extends DbProvider {
     }
 
     destroyAll(): Promise<void> {
+        this.tables.forEach(item => {
+            item.remove()
+        })
         return null
     }
 
@@ -109,19 +99,7 @@ export default class Sqllit3DB extends DbProvider {
     }
 
     open(): Promise<void> {
-
-        foreach 
-        console.log(Tables.Connections.toString()
-, 1111)
-
-        // let sqlite =  sqlite3.verbose();
-        // console.info(this.dbPath, sqlite)
-        // this.db = new sqlite.Database('./' + this.dbPath, (err) => {
-        //     console.log(111, err)
-        //     // new Notice(err.message)
-        // });
-        // (new Structure()).createTables(this.db);
-
+        this.init();
         return null;
     }
 

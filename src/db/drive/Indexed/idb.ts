@@ -1,5 +1,6 @@
 import Dexie from "dexie";
 import Plugin from "@/plugin";
+import { Expression, Sentence } from "../types";
 
 export default class WordDB extends Dexie {
     expressions: Dexie.Table<Expression, number>;
@@ -17,21 +18,3 @@ export default class WordDB extends Dexie {
     }
 }
 
-interface Expression {
-    id?: number,
-    expression: string,
-    meaning: string,
-    status: number,
-    t: string,
-    date: number,
-    notes: string[],
-    tags: Set<string>,
-    sentences: Set<number>,
-    connections: Map<string, string>,
-}
-interface Sentence {
-    id?: number;
-    text: string,
-    trans: string,
-    origin: string,
-}
