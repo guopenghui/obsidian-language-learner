@@ -12,7 +12,7 @@ import WordDB from "./idb";
 import Plugin from "@/plugin";
 
 
-export class LocalDb extends DbProvider {
+export class IndexedDB extends DbProvider {
     idb: WordDB;
     plugin: Plugin;
     constructor(plugin: Plugin) {

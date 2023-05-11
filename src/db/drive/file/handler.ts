@@ -14,7 +14,7 @@ import { Tables } from './types';
 import { ElectronStorage } from '@qiyangxy/tedb-electron-storage';
 import path from 'path';
 
-export default class Sqllit3DB extends DbProvider {
+export default class FileDB extends DbProvider {
     plugin: Plugin;
     dbName: string;
     dbPath: string;
