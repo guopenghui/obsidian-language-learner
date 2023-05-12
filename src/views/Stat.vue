@@ -122,7 +122,7 @@ option = {
 
 
 async function updateChart() {
-	let data = await plugin.db.countSeven();
+	let data = await plugin.db.DB().countSeven();
 	let dayIgnoreWords = data.map((d) => d.today[0]);
 	let dayNoIgnoreWords = data.map((d) =>
 		d.today.slice(1).reduce((a, b) => a + b)

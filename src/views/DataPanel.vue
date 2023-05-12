@@ -91,7 +91,7 @@ const statusMap = [
 
 let loading = ref(true);
 watchEffect(async () => {
-    let rawData = await plugin.db.getAllExpressionSimple(false);
+    let rawData = await plugin.db.DB().DB().getAllExpressionSimple(false);
     data.value = rawData.map((entry, i): Row => {
         return {
             expr: entry.expression,
@@ -103,7 +103,7 @@ watchEffect(async () => {
             date: moment.unix(entry.date).format("YYYY-MM-DD"),
         };
     });
-    tags.value = await plugin.db.getTags();
+    tags.value = await plugin.db.DB().DB().getTags();
     checkedTags.value = Array(tags.value.length).map((_) => false);
     loading.value = false;
 });

@@ -254,7 +254,7 @@ async function addIgnores() {
     ignores.forEach((el) => {
         ignore_words.add(el.textContent.toLowerCase());
     });
-    await plugin.db.postIgnoreWords([...ignore_words]);
+    await plugin.db.DB().postIgnoreWords([...ignore_words]);
     // this.setViewData(this.data)
     refreshHandle.value = !refreshHandle.value;
     dispatchEvent(new CustomEvent("obsidian-langr-refresh-stat"));

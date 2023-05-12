@@ -233,7 +233,7 @@ let tags: string[] = [];
 async function tagSearch(query: string) {
 	tagLoading.value = true;
 	if (query.length < 2) {
-		tags = await plugin.db.getTags();
+		tags = await plugin.db.DB().DB().DB().getTags();
 	}
 	tagLoading.value = false;
 
@@ -275,7 +275,7 @@ async function submit() {
 	let data = JSON.parse(JSON.stringify(model.value));
 	(data as any).expression = (data as any).expression.trim().toLowerCase();
 	// 超过1条例句时，sentences中的对象会变成Proxy，尚不知原因，因此用JSON转换一下
-	let statusCode = await plugin.db.postExpression(data);
+	let statusCode = await plugin.db.DB().DB().postExpression(data);
 	submitLoading.value = false;
 
 	if (statusCode !== 200) {
@@ -306,7 +306,7 @@ async function submit() {
 // 查询词汇时自动填充新词表单
 useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 	let selection = evt.detail.selection as string;
-	let expr = await plugin.db.getExpression(selection);
+	let expr = await plugin.db.DB().DB().getExpression(selection);
 
 	let exprType = "WORD";
 	if (selection.trim().contains(" ")) {
@@ -326,7 +326,7 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 			: target.parentElement.parentElement;
 		sentenceText = sentenceEl.textContent;
 
-		storedSen = await plugin.db.tryGetSen(sentenceText);
+		storedSen = await plugin.db.DB().tryGetSen(sentenceText);
 
 		let reading = view.app.workspace.getActiveViewOfType(ReadingView);
 

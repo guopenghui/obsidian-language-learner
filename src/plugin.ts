@@ -22,8 +22,6 @@ import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
 
 import { t } from "./lang/helper";
 import DbProvider from "./db/base";
-import { WebDb } from "./db/drive/api/handler";
-import { LocalDb } from "./db/drive/Indexed/handler";
 import { TextParser } from "./views/parser";
 import { FrontMatterManager } from "./utils/frontmatter";
 import Server from "./api/server";
@@ -35,6 +33,7 @@ import type { Position } from "./constant";
 import { InputModal } from "./modals"
 
 import Global from "./views/Global.vue";
+import { DbSingleton } from "./db/db";
 
 
 
@@ -45,7 +44,7 @@ export default class LanguageLearner extends Plugin {
     settings: MyPluginSettings;
     appEl: HTMLElement;
     vueApp: VueApp;
-    db: DbProvider;
+    db: DbSingleton;
     server: Server;
     parser: TextParser;
     markdownButtons: Record<string, HTMLElement> = {};
@@ -59,11 +58,13 @@ export default class LanguageLearner extends Plugin {
 
         this.registerConstants();
 
-        // 打开数据库
-        this.db = this.settings.use_server
-            ? new WebDb(this.settings.port)
-            : new LocalDb(this);
-        await this.db.open();
+        // // 打开数据库
+        // this.db = this.settings.use_server
+        //     ? new WebDb(this.settings.port)
+        //     : new LocalDb(this);
+        // await this.db.open();
+
+        this.db = new DbSingleton(this);
 
         // 设置解析器
         this.parser = new TextParser(this);
@@ -113,7 +114,7 @@ export default class LanguageLearner extends Plugin {
         this.app.workspace.detachLeavesOfType(STAT_VIEW_TYPE);
         this.app.workspace.detachLeavesOfType(READING_VIEW_TYPE);
 
-        this.db.close();
+        this.db.destroyed();
         this.server?.close();
         if (await app.vault.adapter.exists(".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html")) {
             this.registerExtensions([PDF_FILE_EXTENSION], "pdf");
@@ -282,7 +283,7 @@ export default class LanguageLearner extends Plugin {
             return;
         }
         // 获取所有非无视单词的简略信息
-        let words = await this.db.getAllExpressionSimple(false);
+        let words = await this.db.DB().getAllExpressionSimple(false);
 
         let classified: number[][] = Array(5)
             .fill(0)
@@ -346,7 +347,7 @@ export default class LanguageLearner extends Plugin {
             });
 
         // let data = await this.db.getExpressionAfter(this.settings.last_sync)
-        let data = await this.db.getExpressionAfter("1970-01-01T00:00:00Z");
+        let data = await this.db.DB().getExpressionAfter("1970-01-01T00:00:00Z");
         if (data.length === 0) {
             // new Notice("Nothing new")
             return;

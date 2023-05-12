@@ -1,30 +1,68 @@
 import DbProvider from "./base";
-import { App, Setting } from 'obsidian';
 import { WebDb } from "./drive/api/handler";
 import Plugin from "@/plugin";
 import FileDB from "./drive/file/handler";
 import { IndexedDB } from "./drive/Indexed/handler";
+import path from "path";
 
 export class DbSingleton {
-    private connects: DbProvider = null;
+    private connects: Map<string, DbProvider> = new Map();
     private plugin: Plugin = null;
+    private useConnect: DbProvider = null;
+    private useConnectKey: string = null;
 
-    public constructor(plugin: Plugin, drive: string,) {
+    public constructor(plugin: Plugin) {
+        this.syncSetting(plugin)
+    }
+
+    public syncSetting(plugin: Plugin): DbSingleton {
         this.plugin = plugin;
-        this.connect(drive);
+        return this
     }
 
-    public DB(): DbProvider {
-        return this.drive;
+    public DB(): DbProvider | null {
+        return this.useConnect;
     }
 
-    public connect(drive: string) {
-        if (this.drive !== null) {
-            return;
+    public drive(drive: string): DbProvider {
+        if (this.useConnect !== null) {
+            this.useConnect.close();
+            this.useConnect = null;
         }
 
-        this.drive = this.register(drive);
-        this.drive.open();
+        if (this.connects.has(drive)) {
+            this.useConnect = this.connects.get(drive)
+        } else {
+            this.useConnect = this.register(drive);
+        }
+
+        this.useConnectKey = drive;
+        this.useConnect.open();
+
+        return this.useConnect;
+    }
+
+    // 销毁所有服务
+    public destroyed() {
+        this.connects.forEach(item => {
+            item.close();
+        })
+
+        this.connects.clear();
+    }
+
+    public sync(plugin: Plugin) {
+        this.syncSetting(plugin)
+        this.reRegister(plugin.settings.db_type);
+    }
+
+    public reRegister(drive: string): DbProvider {
+        if (this.connects.has(drive)) {
+            this.connects.get(drive).close();
+            this.connects.delete(drive);
+        }
+
+        return this.drive(drive);
     }
 
     private register(drive: string): DbProvider {
@@ -35,13 +73,12 @@ export class DbSingleton {
                 return new FileDB(this.plugin);
             case DBDrive.INDEXED:
                 return new IndexedDB(this.plugin);
-
         }
     }
 }
 
 export enum DBDrive {
-    API = 'api',
+    API = 'webApi',
     INDEXED = 'indexed',
     FILE = 'file',
 }
