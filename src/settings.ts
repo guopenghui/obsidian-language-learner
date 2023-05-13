@@ -102,10 +102,9 @@ export class SettingTab extends PluginSettingTab {
         containerEl.empty();
         containerEl.createEl("h1", { text: "Settings for Language Learner" });
 
-        this.backendSettings(containerEl);
         this.langSettings(containerEl);
         this.querySettings(containerEl);
-        this.indexedDBSettings(containerEl);
+        this.dBSettings(containerEl);
         this.textDBSettings(containerEl);
         this.readingSettings(containerEl);
         this.completionSettings(containerEl);
@@ -240,7 +239,7 @@ export class SettingTab extends PluginSettingTab {
     }
 
 
-    indexedDBSettings(containerEl: HTMLElement) {
+    dBSettings(containerEl: HTMLElement) {
         containerEl.createEl("h3", { text: t("IndexDB Database") });
 
         new Setting(containerEl)
@@ -252,14 +251,10 @@ export class SettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.db_type)
                 .onChange(async (value: DBDrive) => {
                     this.plugin.settings.db_type = value;
-
-                    // todo 待确认更换数据库类型是否需要移除之前存储数据
-                    if (this.plugin.db.DB() !== null) {
-                        // this.plugin.db.DB().destroyAll();
-                    }
-
                     this.plugin.db.drive(value);
+
                     await this.plugin.saveSettings();
+                    this.display();
                 })
             );
 
@@ -272,7 +267,8 @@ export class SettingTab extends PluginSettingTab {
                     this.plugin.settings.db_name = name;
                     this.plugin.db.sync(this.plugin);
 
-                    this.plugin.saveSettings();
+                    await this.plugin.saveSettings();
+                    console.log(1111)
                 }, 1000, true))
             )
             .addButton(button => button
@@ -283,43 +279,47 @@ export class SettingTab extends PluginSettingTab {
                 })
             );
 
+
         // 本地数据库写入类型
-        new Setting(containerEl)
-            .setName(t("Database Dir"))
-            .addText(text => text
-                .setValue(this.plugin.settings.db_dir)
-                .onChange(debounce(async (path) => {
-                    this.plugin.settings.db_dir = path;
-                    this.plugin.db.sync(this.plugin);
+        if (this.plugin.settings.db_type === DBDrive.FILE) {
+            new Setting(containerEl)
+                .setName(t("Database Dir"))
+                .addText(text => text
+                    .setValue(this.plugin.settings.db_dir)
+                    .onChange(debounce(async (path) => {
+                        this.plugin.settings.db_dir = path;
+                        this.plugin.db.sync(this.plugin);
 
-                    this.plugin.saveSettings();
-                }, 1000, true))
-            ).setDisabled(this.plugin.settings.db_type === DBDrive.FILE)
+                        await this.plugin.saveSettings();
+                    }, 1000, true))
+                );
+        }
 
 
-        new Setting(containerEl)
-            .setName(t("Server Port"))
-            .setDesc(
-                t('An integer between 1024-65535. It should be same as "PORT" variable in .env file of server')
-            )
-            .setDisabled(this.plugin.settings.db_type === DBDrive.API)
-            .addText((text) =>
-                text
-                    .setValue(String(this.plugin.settings.port))
-                    .onChange(debounce(async (port) => {
-                        let p = Number(port);
-                        if (!isNaN(p) && p >= 1023 && p <= 65535) {
-                            this.plugin.settings.port = p;
-                            (this.plugin.db as WebDb).port = p;
-                    this.plugin.db
-                        .syncSetting(this.plugin)
-                        .reRegister(this.plugin.settings.db_type);
-                            await this.plugin.saveSettings();
-                        } else {
-                            new Notice(t("Wrong port format"));
-                        }
-                    }, 500, true))
-            );
+        if (this.plugin.settings.db_type === DBDrive.API) {
+            new Setting(containerEl)
+                .setName(t("Server Port"))
+                .setDesc(
+                    t('An integer between 1024-65535. It should be same as "PORT" variable in .env file of server')
+                )
+                .addText((text) =>
+                    text
+                        .setValue(String(this.plugin.settings.port))
+                        .onChange(debounce(async (port) => {
+                            let p = Number(port);
+                            if (!isNaN(p) && p >= 1023 && p <= 65535) {
+                                this.plugin.db.sync(this.plugin);
+                                this.plugin.settings.port = p;
+
+                                await this.plugin.saveSettings();
+                            } else {
+                                new Notice(t("Wrong port format"));
+                            }
+                        }, 500, true))
+                );
+        }
+
+
 
         // 导入导出数据库
         new Setting(containerEl)

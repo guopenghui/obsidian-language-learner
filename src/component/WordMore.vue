@@ -25,7 +25,7 @@ const props = defineProps<{
     word: string;
 }>();
 
-let { sentences, notes } = await plugin.db.DB().DB().getExpression(props.word);
+let { sentences, notes } = await plugin.db.DB().getExpression(props.word);
 
 sentences.forEach((_, i) => {
     sentences[i].text = highlight(sentences[i].text, props.word);

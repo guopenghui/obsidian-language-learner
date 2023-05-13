@@ -65,6 +65,7 @@ export default class LanguageLearner extends Plugin {
         // await this.db.open();
 
         this.db = new DbSingleton(this);
+        this.db.drive(this.settings.db_type)
 
         // 设置解析器
         this.parser = new TextParser(this);

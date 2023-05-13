@@ -62,8 +62,12 @@ interface WordCount {
     accumulated: number[];
 }
 
+export enum WordType {
+    WORD = 'WORD',
+    PHRASE = 'PHRASE'
+}
 
 export type {
     ArticleWords, Word, Phrase, WordsPhrase, Sentence,
-    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
+    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span,
 };

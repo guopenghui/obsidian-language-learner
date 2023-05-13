@@ -1,18 +1,21 @@
-import DbProvider from '../../base';
-import Plugin from '@/plugin';
 import {
     ArticleWords,
     CountInfo,
     ExpressionInfo,
     ExpressionInfoSimple,
     Sentence,
+    Span,
     WordCount,
+    WordType,
     WordsPhrase
 } from "@/db/interface";
-import * as tedb from "tedb";
-import { Tables } from './types';
+import Plugin from '@/plugin';
 import { ElectronStorage } from '@qiyangxy/tedb-electron-storage';
+import { moment, Notice } from 'obsidian';
 import path from 'path';
+import * as tedb from "tedb";
+import DbProvider from '../../base';
+import { ExpressionsTable, NotesTable, SentencesTable, Tables } from '../types';
 
 export default class FileDB extends DbProvider {
     plugin: Plugin;
@@ -27,6 +30,7 @@ export default class FileDB extends DbProvider {
 
     constructor(plugin: Plugin) {
         super();
+        // todo 待优化不确定目前是否有更好的获取当前根目录方法
         this.basePath = app.vault.adapter.getBasePath();
 
         this.plugin = plugin;
@@ -38,21 +42,76 @@ export default class FileDB extends DbProvider {
 
     init() {
         this.tables
-        .set(Tables.Expressions, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.Expressions, this.dbPath) }))
-        .set(Tables.Connections, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.Connections, this.dbPath) }))
-        .set(Tables.Tags, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.Tags, this.dbPath) }))
-        .set(Tables.ExpressionTag, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.ExpressionTag, this.dbPath) }))
-        .set(Tables.Notes, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.Notes, this.dbPath) }))
-        .set(Tables.Sentences, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.Sentences, this.dbPath) }))
-        .set(Tables.ExpressionSentence, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.ExpressionSentence, this.dbPath) }));
+            .set(Tables.EXPRESSION, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.EXPRESSION, this.dbPath) }))
+            .set(Tables.SENTENCE, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.SENTENCE, this.dbPath) }))
+            .set(Tables.CONNECTIONS, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.CONNECTIONS, this.dbPath) }))
+            .set(Tables.NOTES, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.NOTES, this.dbPath) }))
+
+        this.initIndex();
+    }
+
+    async initIndex() {
+        this.tables.get(Tables.EXPRESSION).ensureIndex(
+            { fieldName: "expression", unique: true },
+        )
+
+        this.tables.get(Tables.SENTENCE).ensureIndex(
+            { fieldName: "eid", unique: false },
+        )
+        this.tables.get(Tables.NOTES).ensureIndex(
+            { fieldName: "eid", unique: false },
+        )
+
+        this.tables.get(Tables.CONNECTIONS).ensureIndex(
+            { fieldName: "eid", unique: false },
+        )
     }
 
     close(): void {
         this.tables = new Map();
     }
 
-    countSeven(): Promise<WordCount[]> {
-        return Promise.resolve([]);
+    async countSeven(): Promise<WordCount[]> {
+        let spans: Span[] = [];
+        spans = [0, 1, 2, 3, 4, 5, 6].map((i) => {
+            let start = moment().subtract(6, "days").startOf("day");
+            let from = start.add(i, "days");
+            return {
+                from: from.unix(),
+                to: from.endOf("day").unix(),
+            };
+        });
+
+        let res: WordCount[] = [];
+
+        // 对每一天计算
+        for (let span of spans) {
+            // 当日
+            let today = new Array(5).fill(0);
+            let expressions = await this.tables.get(Tables.EXPRESSION).find({
+                type: WordType.WORD,
+                date: { $gte: span.from, $lte: span.to }
+            }).exec() as ExpressionsTable[];
+
+            expressions.forEach(item => {
+                today[item.status]++;
+            })
+
+            // 累计
+            let accumulated = new Array(5).fill(0);
+            expressions = await this.tables.get(Tables.EXPRESSION).find({
+                type: WordType.WORD,
+                date: { $gte: span.to }
+            }).exec() as ExpressionsTable[];
+
+            expressions.forEach(item => {
+                accumulated[item.status]++;
+            })
+
+            res.push({ today, accumulated });
+        }
+
+        return res;
     }
 
     destroyAll(): Promise<void> {
@@ -66,32 +125,162 @@ export default class FileDB extends DbProvider {
         return Promise.resolve(undefined);
     }
 
-    getAllExpressionSimple(ignores?: boolean): Promise<ExpressionInfoSimple[]> {
+    async getAllExpressionSimple(ignores?: boolean): Promise<ExpressionInfoSimple[]> {
+        let expressions = await this.tables.get(Tables.EXPRESSION).find({ status: { gt: ignores ? -1 : 0 } }).exec() as ExpressionsTable[];
+
+        let res: ExpressionInfoSimple[]
+        await expressions.forEach(async expr => {
+            res.push({
+                expression: expr.expression,
+                status: expr.status,
+                meaning: expr.meaning,
+                t: expr.type,
+                tags: [...expr.tags.keys()],
+                note_num: await this.tables.get(Tables.NOTES).count({ eid: expr._id }).exec() as number,
+                sen_num: expr.sentences.length,
+                date: expr.date,
+            });
+        })
+
+        return res;
+    }
+
+    async getCount(): Promise<CountInfo> {
+        let word_count = await this.tables.get(Tables.EXPRESSION).count({ type: WordType.WORD }).exec() as number;
+        let phrase_count = await this.tables.get(Tables.EXPRESSION).count({ type: WordType.PHRASE }).exec() as number;
+
+        return {
+            word_count: [word_count],
+            phrase_count: [phrase_count]
+        }
+    }
+
+    async getExpression(keyworkd: string): Promise<ExpressionInfo> {
+
+        let hasExists = await this.tables.get(Tables.EXPRESSION).find({
+            expression: keyworkd.toLocaleLowerCase()
+        }).limit(1).exec() as ExpressionsTable[];
+
+        if (hasExists === null || hasExists.length === 0) {
+            return null;
+        }
+
+        let expression: ExpressionsTable = hasExists[0];
+        let notes = await this.tables.get(Tables.NOTES).find({ eid: expression._id }).exec() as NotesTable[];
+
+        let sentences: SentencesTable[] = [];
+        for (let i in expression.sentences) {
+            let sentence = await this.tables.get(Tables.SENTENCE).find({ _id: expression._id }).exec() as SentencesTable[];
+            if (sentence.length > 0) {
+                sentences = [...sentences, ...sentence];
+            }
+        }
+
+        return {
+            expression: expression.expression,
+            meaning: expression.meaning,
+            status: expression.status,
+            t: expression.type,
+            notes: notes.map(item => item.text),
+            sentences: sentences,
+            tags: [...expression.tags.keys()],
+        }
+    }
+
+    async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
+        let unixStamp = moment.utc(time).unix();
+        let expressions = await this.tables.get(Tables.EXPRESSION).find({
+            status: 0,
+            date: { $gte: unixStamp }
+        }).exec() as ExpressionsTable[];
+
+
+        let res: ExpressionInfo[] = [];
+        for (let expr of expressions) {
+            let orWhere = [];
+            for (let i in expr.sentences) {
+                orWhere.push({ _id: expr.sentences[i]._id });
+            }
+
+            let sentences = await this.tables.get(Tables.SENTENCE).find(orWhere).exec() as SentencesTable[];
+            let notes = await this.tables.get(Tables.NOTES).find({ eid: expr._id }).exec() as NotesTable[];
+
+            res.push({
+                expression: expr.expression,
+                meaning: expr.meaning,
+                status: expr.status,
+                t: expr.type,
+                notes: notes.map(item => item.text),
+                sentences,
+                tags: [...expr.tags.keys()],
+            });
+        }
+        return res;
+
         return Promise.resolve([]);
     }
 
-    getCount(): Promise<CountInfo> {
-        return Promise.resolve(undefined);
-    }
+    async getExpressionsSimple(keywords: string[]): Promise<ExpressionInfoSimple[]> {
+        let orWhere = keywords.map(e => {
+            return { '$or': e.toLowerCase() }
+        });
 
-    getExpression(expression: string): Promise<ExpressionInfo> {
-        return Promise.resolve(undefined);
-    }
+        let expressions = await this.tables
+            .get(Tables.EXPRESSION)
+            .find(orWhere)
+            .exec() as ExpressionsTable[];
 
-    getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
-        return Promise.resolve([]);
-    }
+        let res: ExpressionInfoSimple[] = [];
+        await expressions.forEach(async v => {
+            res.push({
+                expression: v.expression,
+                meaning: v.meaning,
+                status: v.status,
+                t: v.type,
+                tags: [...v.tags.keys()],
+                sen_num: v.sentences.length,
+                note_num: await this.tables.get(Tables.NOTES).count({ eid: v._id }).exec() as number,
+                date: v.date
+            });
+        });
 
-    getExpressionsSimple(expressions: string[]): Promise<ExpressionInfoSimple[]> {
-        return Promise.resolve([]);
+        return res;
     }
 
     getStoredWords(payload: ArticleWords): Promise<WordsPhrase> {
-        return Promise.resolve(undefined);
+
+        let storedPhrases = new Map<string, number>();
+        await this.idb.expressions
+            .where("t").equals("PHRASE")
+            .each(expr => storedPhrases.set(expr.expression, expr.status));
+
+
+
+        let storedWords = (await this.idb.expressions
+            .where("expression").anyOf(payload.words)
+            .toArray()
+        ).map(expr => {
+            return { text: expr.expression, status: expr.status } as Word;
+        });
+
+        let ac = await createAutomaton([...storedPhrases.keys()]);
+        let searchedPhrases = (await ac.search(payload.article)).map(match => {
+            return { text: match[1], status: storedPhrases.get(match[1]), offset: match[0] } as Phrase;
+        });
+
+        return { words: storedWords, phrases: searchedPhrases };
     }
 
-    getTags(): Promise<string[]> {
-        return Promise.resolve([]);
+    async getTags(): Promise<string[]> {
+        let expressions = await this.tables.get(Tables.EXPRESSION).find({}).exec() as ExpressionsTable[];
+
+        let tags: string[] = [];
+        expressions.forEach(item => {
+            tags.push(...item.tags);
+        })
+
+
+        return [...tags.unique().values()];
     }
 
     importDB(data: any): Promise<void> {
@@ -103,16 +292,95 @@ export default class FileDB extends DbProvider {
         return null;
     }
 
-    postExpression(payload: ExpressionInfo): Promise<number> {
-        return Promise.resolve(0);
+    async postExpression(payload: ExpressionInfo): Promise<number> {
+        let expression: ExpressionsTable | null = null;
+        let hasExists = await this.tables.get(Tables.EXPRESSION).find({
+            'expression': payload.expression
+        }).limit(1).exec() as ExpressionsTable[];
+
+        console.log(hasExists, expression, 'info')
+
+        // update sentences
+        let sentences = [];
+        for (let i in payload.sentences) {
+            sentences.push(await this.tables.get(Tables.SENTENCE).insert({
+                source: payload.sentences[i].text,
+                trans: payload.sentences[i].trans,
+                origin: payload.sentences[i].origin,
+            }))
+        }
+
+        // 如果之前不存在情况新增
+        if (hasExists === null || hasExists.length === 0) {
+            expression = await this.tables.get(Tables.EXPRESSION).insert({
+                expression: payload.expression,
+                meaning: payload.meaning,
+                status: payload.status,
+                type: payload.t,
+                tags: new Set<string>(payload.tags),
+                sentences: sentences,
+                date: moment().format('YYYY/MM/DD hh:mm'),
+            }) as ExpressionsTable;
+        } else {
+            expression = hasExists[0]
+            this.tables.get(Tables.EXPRESSION).update({ _id: expression._id, }, { $set: { date: moment().format('YYYY/MM/DD hh:mm') } })
+
+            // remove the old Sentence
+            this.tables.get(Tables.CONNECTIONS).remove({ "nested.eid": expression._id }).then(item => {
+                return this.tables.get(Tables.CONNECTIONS).find({ "eid": expression._id });
+            })
+
+            // remove the old notes
+            this.tables.get(Tables.NOTES).remove({ "nested.eid": expression._id }).then(item => {
+                return this.tables.get(Tables.NOTES).find({ "eid": expression._id });
+            })
+        }
+        console.log(expression, 'info')
+
+        // update notes
+        for (let i in payload.notes) {
+            this.tables.get(Tables.NOTES).insert({
+                text: payload.notes[i],
+                eid: expression._id,
+            })
+        }
+
+
+        return 200;
     }
 
-    postIgnoreWords(payload: string[]): Promise<void> {
-        return Promise.resolve(undefined);
+    async postIgnoreWords(payload: string[]): Promise<void> {
+        const promises: Array<Promise<any>> = [];
+        payload.forEach(doc => {
+            promises.push(this.tables.get(Tables.EXPRESSION).update({
+                expression: doc,
+            }, {
+                $set: {
+                    expression: doc,
+                    meaning: "",
+                    status: 0,
+                    type: WordType.WORD,
+                    tags: new Set<string>(),
+                    sentences: [],
+                    date: moment().format('YYYY/MM/DD hh:mm'),
+                },
+            }, { exactObjectFind: true, upsert: true }));
+
+
+        });
+
+        await Promise.all(promises);
+
+        return;
     }
 
-    tryGetSen(text: string): Promise<Sentence> {
-        return Promise.resolve(undefined);
+    async tryGetSen(text: string): Promise<Sentence> {
+        let stored = await this.tables.get(Tables.SENTENCE).find({ "text": text }).exec() as Sentence[];
+        if (stored.length > 0) {
+            return null;
+        }
+
+        return stored[0];
     }
 }
 

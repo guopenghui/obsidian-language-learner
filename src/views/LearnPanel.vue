@@ -233,7 +233,7 @@ let tags: string[] = [];
 async function tagSearch(query: string) {
 	tagLoading.value = true;
 	if (query.length < 2) {
-		tags = await plugin.db.DB().DB().DB().getTags();
+		tags = await plugin.db.DB().getTags();
 	}
 	tagLoading.value = false;
 
@@ -275,7 +275,7 @@ async function submit() {
 	let data = JSON.parse(JSON.stringify(model.value));
 	(data as any).expression = (data as any).expression.trim().toLowerCase();
 	// 超过1条例句时，sentences中的对象会变成Proxy，尚不知原因，因此用JSON转换一下
-	let statusCode = await plugin.db.DB().DB().postExpression(data);
+	let statusCode = await plugin.db.DB().postExpression(data);
 	submitLoading.value = false;
 
 	if (statusCode !== 200) {
