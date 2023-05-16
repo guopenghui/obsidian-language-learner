@@ -1,10 +1,10 @@
 import Dexie from "dexie";
 import Plugin from "@/plugin";
-import { Expression, Sentence } from "../types";
+import { ExpressionsTable, SentencesTable } from "../types";
 
 export default class WordDB extends Dexie {
-    expressions: Dexie.Table<Expression, number>;
-    sentences: Dexie.Table<Sentence, number>;
+    expressions: Dexie.Table<ExpressionsTable, number>;
+    sentences: Dexie.Table<SentencesTable, number>;
     plugin: Plugin;
     dbName: string;
     constructor(plugin: Plugin) {

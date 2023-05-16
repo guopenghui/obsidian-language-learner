@@ -6,8 +6,8 @@ interface ExpressionsTable {
     status: number
     type: string
     date: number
-    tags: Set<string>
-    sentences: SentencesTable[]
+    tags: string | Set<string>
+    sentences: Set<number>
 }
 interface ConnectionsTable {
     _id: string | number

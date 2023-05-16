@@ -5,7 +5,7 @@ import download from "downloadjs";
 
 import {
     ArticleWords, Word, Phrase, WordsPhrase, Sentence,
-    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
+    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span, WordType
 } from "../../interface";
 import DbProvider from "../../base";
 import WordDB from "./idb";
@@ -69,10 +69,10 @@ export class IndexedDB extends DbProvider {
             expression: expr.expression,
             meaning: expr.meaning,
             status: expr.status,
-            t: expr.t,
+            t: expr.type,
             notes: expr.notes,
             sentences,
-            tags: [...expr.tags.keys()],
+            tags: [...(expr.tags as Set<string>).keys()],
         };
 
     }
@@ -116,10 +116,10 @@ export class IndexedDB extends DbProvider {
                 expression: expr.expression,
                 meaning: expr.meaning,
                 status: expr.status,
-                t: expr.t,
+                t: expr.type,
                 notes: expr.notes,
                 sentences,
-                tags: [...expr.tags.keys()],
+                tags: [...(expr.tags as Set<string>).keys()],
             });
         }
         return res;
@@ -135,8 +135,8 @@ export class IndexedDB extends DbProvider {
                 expression: expr.expression,
                 status: expr.status,
                 meaning: expr.meaning,
-                t: expr.t,
-                tags: [...expr.tags.keys()],
+                t: expr.type,
+                tags: [...(expr.tags as Set<string>).keys()],
                 note_num: expr.notes.length,
                 sen_num: expr.sentences.size,
                 date: expr.date,
@@ -155,8 +155,8 @@ export class IndexedDB extends DbProvider {
         for (let sen of payload.sentences) {
             let searched = await this.idb.sentences.where("text").equals(sen.text).first();
             if (searched) {
-                await this.idb.sentences.update(searched.id, sen);
-                sentences.add(searched.id);
+                await this.idb.sentences.update(searched.id as number, sen);
+                sentences.add(searched.id as number);
             } else {
                 let id = await this.idb.sentences.add(sen);
                 sentences.add(id);
@@ -173,9 +173,11 @@ export class IndexedDB extends DbProvider {
             tags: new Set<string>(payload.tags),
             connections: new Map<string, string>(),
             date: moment().unix()
+
         };
+        console.log(stored)
         if (stored) {
-            await this.idb.expressions.update(stored.id, updatedWord);
+            await this.idb.expressions.update(stored.id as number, updatedWord);
         } else {
             await this.idb.expressions.add(updatedWord);
         }
@@ -186,7 +188,7 @@ export class IndexedDB extends DbProvider {
     async getTags(): Promise<string[]> {
         let allTags = new Set<string>();
         await this.idb.expressions.each(expr => {
-            for (let t of expr.tags.values()) {
+            for (let t of (expr.tags as Set<string>).values()) {
                 allTags.add(t);
             }
         });
@@ -225,7 +227,7 @@ export class IndexedDB extends DbProvider {
             "PHRASE": new Array(5).fill(0),
         };
         await this.idb.expressions.each(expr => {
-            counts[expr.t as "WORD" | "PHRASE"][expr.status]++;
+            counts[expr.type as WordType][expr.status]++;
         });
 
         return {
@@ -252,7 +254,7 @@ export class IndexedDB extends DbProvider {
             // 当日
             let today = new Array(5).fill(0);
             await this.idb.expressions.filter(expr => {
-                return expr.t == "WORD" &&
+                return expr.type == "WORD" &&
                     expr.date >= span.from &&
                     expr.date <= span.to;
             }).each(expr => {
@@ -261,7 +263,7 @@ export class IndexedDB extends DbProvider {
             // 累计
             let accumulated = new Array(5).fill(0);
             await this.idb.expressions.filter(expr => {
-                return expr.t == "WORD" &&
+                return expr.type == "WORD" &&
                     expr.date <= span.to;
             }).each(expr => {
                 accumulated[expr.status]++;

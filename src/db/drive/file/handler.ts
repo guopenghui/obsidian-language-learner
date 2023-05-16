@@ -3,19 +3,23 @@ import {
     CountInfo,
     ExpressionInfo,
     ExpressionInfoSimple,
+    Phrase,
     Sentence,
     Span,
+    Word,
     WordCount,
     WordType,
     WordsPhrase
 } from "@/db/interface";
 import Plugin from '@/plugin';
+import { createAutomaton, Automaton } from "ac-auto";
 import { ElectronStorage } from '@qiyangxy/tedb-electron-storage';
 import { moment, Notice } from 'obsidian';
 import path from 'path';
 import * as tedb from "tedb";
 import DbProvider from '../../base';
 import { ExpressionsTable, NotesTable, SentencesTable, Tables } from '../types';
+import exp from "constants";
 
 export default class FileDB extends DbProvider {
     plugin: Plugin;
@@ -51,20 +55,20 @@ export default class FileDB extends DbProvider {
     }
 
     async initIndex() {
-        this.tables.get(Tables.EXPRESSION).ensureIndex(
-            { fieldName: "expression", unique: true },
-        )
+        // this.tables.get(Tables.EXPRESSION).ensureIndex(
+        //     { fieldName: "expression", unique: true },
+        // )
 
-        this.tables.get(Tables.SENTENCE).ensureIndex(
-            { fieldName: "eid", unique: false },
-        )
-        this.tables.get(Tables.NOTES).ensureIndex(
-            { fieldName: "eid", unique: false },
-        )
+        // this.tables.get(Tables.SENTENCE).ensureIndex(
+        //     { fieldName: "eid", unique: false },
+        // )
+        // this.tables.get(Tables.NOTES).ensureIndex(
+        //     { fieldName: "eid", unique: false },
+        // )
 
-        this.tables.get(Tables.CONNECTIONS).ensureIndex(
-            { fieldName: "eid", unique: false },
-        )
+        // this.tables.get(Tables.CONNECTIONS).ensureIndex(
+        //     { fieldName: "eid", unique: false },
+        // )
     }
 
     close(): void {
@@ -128,19 +132,21 @@ export default class FileDB extends DbProvider {
     async getAllExpressionSimple(ignores?: boolean): Promise<ExpressionInfoSimple[]> {
         let expressions = await this.tables.get(Tables.EXPRESSION).find({ status: { gt: ignores ? -1 : 0 } }).exec() as ExpressionsTable[];
 
-        let res: ExpressionInfoSimple[]
-        await expressions.forEach(async expr => {
+        let res: ExpressionInfoSimple[] = [];
+        for (let i in expressions) {
+            let expr = expressions[i]
+            console.log(expr)
             res.push({
                 expression: expr.expression,
                 status: expr.status,
                 meaning: expr.meaning,
                 t: expr.type,
-                tags: [...expr.tags.keys()],
+                tags: JSON.parse(expr.tags as string),
                 note_num: await this.tables.get(Tables.NOTES).count({ eid: expr._id }).exec() as number,
-                sen_num: expr.sentences.length,
+                sen_num: expr.sentences.size,
                 date: expr.date,
             });
-        })
+        }
 
         return res;
     }
@@ -183,7 +189,7 @@ export default class FileDB extends DbProvider {
             t: expression.type,
             notes: notes.map(item => item.text),
             sentences: sentences,
-            tags: [...expression.tags.keys()],
+            tags: [...JSON.parse(expression.tags as string)],
         }
     }
 
@@ -198,9 +204,7 @@ export default class FileDB extends DbProvider {
         let res: ExpressionInfo[] = [];
         for (let expr of expressions) {
             let orWhere = [];
-            for (let i in expr.sentences) {
-                orWhere.push({ _id: expr.sentences[i]._id });
-            }
+            orWhere.push({ _id: expr.sentences.values() });
 
             let sentences = await this.tables.get(Tables.SENTENCE).find(orWhere).exec() as SentencesTable[];
             let notes = await this.tables.get(Tables.NOTES).find({ eid: expr._id }).exec() as NotesTable[];
@@ -212,7 +216,7 @@ export default class FileDB extends DbProvider {
                 t: expr.type,
                 notes: notes.map(item => item.text),
                 sentences,
-                tags: [...expr.tags.keys()],
+                tags: [...JSON.parse(expr.tags as string)],
             });
         }
         return res;
@@ -237,8 +241,8 @@ export default class FileDB extends DbProvider {
                 meaning: v.meaning,
                 status: v.status,
                 t: v.type,
-                tags: [...v.tags.keys()],
-                sen_num: v.sentences.length,
+                tags: [...JSON.parse(v.tags as string)],
+                sen_num: v.sentences.size,
                 note_num: await this.tables.get(Tables.NOTES).count({ eid: v._id }).exec() as number,
                 date: v.date
             });
@@ -247,19 +251,21 @@ export default class FileDB extends DbProvider {
         return res;
     }
 
-    getStoredWords(payload: ArticleWords): Promise<WordsPhrase> {
+    async getStoredWords(payload: ArticleWords): Promise<WordsPhrase> {
 
         let storedPhrases = new Map<string, number>();
-        await this.idb.expressions
-            .where("t").equals("PHRASE")
-            .each(expr => storedPhrases.set(expr.expression, expr.status));
+        (
+            await this.tables.get(Tables.EXPRESSION).find({
+                "type": WordType.PHRASE,
+            }).exec() as ExpressionsTable[]
+        ).forEach(expr => {
+            storedPhrases.set(expr.expression, expr.status);
+        });
 
-
-
-        let storedWords = (await this.idb.expressions
-            .where("expression").anyOf(payload.words)
-            .toArray()
-        ).map(expr => {
+        let storedWords = (await this.tables.get(Tables.EXPRESSION).find({
+            "type": WordType.WORD,
+            "expression": payload.words,
+        }).exec() as ExpressionsTable[]).map(expr => {
             return { text: expr.expression, status: expr.status } as Word;
         });
 
@@ -276,7 +282,7 @@ export default class FileDB extends DbProvider {
 
         let tags: string[] = [];
         expressions.forEach(item => {
-            tags.push(...item.tags);
+            tags.push(...JSON.parse(item.tags as string));
         })
 
 
@@ -298,12 +304,10 @@ export default class FileDB extends DbProvider {
             'expression': payload.expression
         }).limit(1).exec() as ExpressionsTable[];
 
-        console.log(hasExists, expression, 'info')
-
         // update sentences
-        let sentences = [];
+        let sentences = new Set<number>();
         for (let i in payload.sentences) {
-            sentences.push(await this.tables.get(Tables.SENTENCE).insert({
+            sentences.add(await this.tables.get(Tables.SENTENCE).insert({
                 source: payload.sentences[i].text,
                 trans: payload.sentences[i].trans,
                 origin: payload.sentences[i].origin,
@@ -317,23 +321,19 @@ export default class FileDB extends DbProvider {
                 meaning: payload.meaning,
                 status: payload.status,
                 type: payload.t,
-                tags: new Set<string>(payload.tags),
-                sentences: sentences,
-                date: moment().format('YYYY/MM/DD hh:mm'),
+                tags: JSON.stringify(payload.tags),
+                sentences: JSON.stringify(sentences),
+                date: moment().unix(),
             }) as ExpressionsTable;
         } else {
             expression = hasExists[0]
-            this.tables.get(Tables.EXPRESSION).update({ _id: expression._id, }, { $set: { date: moment().format('YYYY/MM/DD hh:mm') } })
+            this.tables.get(Tables.EXPRESSION).update({ _id: expression._id, }, { $set: { date: moment().unix() } })
 
             // remove the old Sentence
-            this.tables.get(Tables.CONNECTIONS).remove({ "nested.eid": expression._id }).then(item => {
-                return this.tables.get(Tables.CONNECTIONS).find({ "eid": expression._id });
-            })
+            this.tables.get(Tables.CONNECTIONS).remove({ "eid": expression._id });
 
             // remove the old notes
-            this.tables.get(Tables.NOTES).remove({ "nested.eid": expression._id }).then(item => {
-                return this.tables.get(Tables.NOTES).find({ "eid": expression._id });
-            })
+            this.tables.get(Tables.NOTES).remove({ "eid": expression._id });
         }
         console.log(expression, 'info')
 
@@ -360,9 +360,9 @@ export default class FileDB extends DbProvider {
                     meaning: "",
                     status: 0,
                     type: WordType.WORD,
-                    tags: new Set<string>(),
+                    tags: JSON.stringify([]),
                     sentences: [],
-                    date: moment().format('YYYY/MM/DD hh:mm'),
+                    date: moment().unix(),
                 },
             }, { exactObjectFind: true, upsert: true }));
 
