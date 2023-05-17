@@ -62,17 +62,17 @@ export class IndexedDB extends DbProvider {
         }
 
         let sentences = await this.idb.sentences
-            .where("id").anyOf([...expr.sentences.values()])
+            .where("id").anyOf(expr.sentences)
             .toArray();
 
         return {
             expression: expr.expression,
             meaning: expr.meaning,
             status: expr.status,
-            t: expr.type,
-            notes: expr.notes,
+            t: expr.t,
+            notes: expr.notes as string[],
             sentences,
-            tags: [...(expr.tags as Set<string>).keys()],
+            tags: expr.tags,
         };
 
     }
@@ -91,8 +91,8 @@ export class IndexedDB extends DbProvider {
                 meaning: v.meaning,
                 status: v.status,
                 t: v.t,
-                tags: [...v.tags.keys()],
-                sen_num: v.sentences.size,
+                tags: v.tags,
+                sen_num: v.sentences.length,
                 note_num: v.notes.length,
                 date: v.date
             };
@@ -102,24 +102,24 @@ export class IndexedDB extends DbProvider {
     async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
         let unixStamp = moment.utc(time).unix();
         let wordsAfter = await this.idb.expressions
-            .where("status").above(0)
+            .where("status").aboveOrEqual(0)
             .and(expr => expr.date > unixStamp)
             .toArray();
 
         let res: ExpressionInfo[] = [];
         for (let expr of wordsAfter) {
             let sentences = await this.idb.sentences
-                .where("id").anyOf([...expr.sentences.values()])
+                .where("id").anyOf(expr.sentences)
                 .toArray();
 
             res.push({
                 expression: expr.expression,
                 meaning: expr.meaning,
                 status: expr.status,
-                t: expr.type,
-                notes: expr.notes,
+                t: expr.t,
+                notes: expr.notes as string[],
                 sentences,
-                tags: [...(expr.tags as Set<string>).keys()],
+                tags: expr.tags,
             });
         }
         return res;
@@ -128,20 +128,21 @@ export class IndexedDB extends DbProvider {
         let exprs: ExpressionInfoSimple[];
         let bottomStatus = ignores ? -1 : 0;
         exprs = (await this.idb.expressions
-            .where("status").above(bottomStatus)
+            .where("status").aboveOrEqual(bottomStatus)
             .toArray()
         ).map((expr): ExpressionInfoSimple => {
             return {
                 expression: expr.expression,
                 status: expr.status,
                 meaning: expr.meaning,
-                t: expr.type,
-                tags: [...(expr.tags as Set<string>).keys()],
+                t: expr.t,
+                tags: expr.tags,
                 note_num: expr.notes.length,
-                sen_num: expr.sentences.size,
+                sen_num: expr.sentences.length,
                 date: expr.date,
             };
         });
+        console.log(exprs, 111)
 
         return exprs;
     }
@@ -155,8 +156,8 @@ export class IndexedDB extends DbProvider {
         for (let sen of payload.sentences) {
             let searched = await this.idb.sentences.where("text").equals(sen.text).first();
             if (searched) {
-                await this.idb.sentences.update(searched.id as number, sen);
-                sentences.add(searched.id as number);
+                await this.idb.sentences.update(searched._id as number, sen);
+                sentences.add(searched._id as number);
             } else {
                 let id = await this.idb.sentences.add(sen);
                 sentences.add(id);
@@ -169,15 +170,14 @@ export class IndexedDB extends DbProvider {
             status: payload.status,
             t: payload.t,
             notes: payload.notes,
-            sentences,
-            tags: new Set<string>(payload.tags),
-            connections: new Map<string, string>(),
-            date: moment().unix()
-
+            sentences: [...sentences.values()],
+            tags: [... (new Set<string>(payload.tags).values())],
+            connections: [] as string[],
+            date: moment().unix(),
         };
-        console.log(stored)
+
         if (stored) {
-            await this.idb.expressions.update(stored.id as number, updatedWord);
+            await this.idb.expressions.update(stored._id as number, updatedWord);
         } else {
             await this.idb.expressions.add(updatedWord);
         }
@@ -188,7 +188,7 @@ export class IndexedDB extends DbProvider {
     async getTags(): Promise<string[]> {
         let allTags = new Set<string>();
         await this.idb.expressions.each(expr => {
-            for (let t of (expr.tags as Set<string>).values()) {
+            for (let t of expr.tags) {
                 allTags.add(t);
             }
         });
@@ -204,11 +204,11 @@ export class IndexedDB extends DbProvider {
                     expression: expr,
                     meaning: "",
                     status: 0,
-                    t: "WORD",
+                    t: WordType.WORD,
                     notes: [],
-                    sentences: new Set(),
-                    tags: new Set(),
-                    connections: new Map<string, string>(),
+                    sentences: [],
+                    tags: [],
+                    connections: [],
                     date: moment().unix()
                 };
             })
@@ -227,7 +227,7 @@ export class IndexedDB extends DbProvider {
             "PHRASE": new Array(5).fill(0),
         };
         await this.idb.expressions.each(expr => {
-            counts[expr.type as WordType][expr.status]++;
+            counts[expr.t as WordType][expr.status]++;
         });
 
         return {
@@ -254,7 +254,7 @@ export class IndexedDB extends DbProvider {
             // 当日
             let today = new Array(5).fill(0);
             await this.idb.expressions.filter(expr => {
-                return expr.type == "WORD" &&
+                return expr.t == WordType.WORD &&
                     expr.date >= span.from &&
                     expr.date <= span.to;
             }).each(expr => {
@@ -263,7 +263,7 @@ export class IndexedDB extends DbProvider {
             // 累计
             let accumulated = new Array(5).fill(0);
             await this.idb.expressions.filter(expr => {
-                return expr.type == "WORD" &&
+                return expr.t == WordType.PHRASE &&
                     expr.date <= span.to;
             }).each(expr => {
                 accumulated[expr.status]++;

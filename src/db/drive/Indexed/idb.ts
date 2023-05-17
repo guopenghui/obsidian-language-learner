@@ -5,6 +5,7 @@ import { ExpressionsTable, SentencesTable } from "../types";
 export default class WordDB extends Dexie {
     expressions: Dexie.Table<ExpressionsTable, number>;
     sentences: Dexie.Table<SentencesTable, number>;
+
     plugin: Plugin;
     dbName: string;
     constructor(plugin: Plugin) {
@@ -12,8 +13,8 @@ export default class WordDB extends Dexie {
         this.plugin = plugin;
         this.dbName = plugin.settings.db_name;
         this.version(1).stores({
-            expressions: "++id, &expression, status, t, date, *tags",
-            sentences: "++id, &text"
+            expressions: "++_id, &expression, *status, t, date, *tags, nots, sentences, connections",
+            sentences: "++_id, &text",
         });
     }
 }

@@ -1,43 +1,29 @@
 interface ExpressionsTable {
-    id?: number | string | null
-    _id?: number | string 
+    _id?: number | string
     expression: string
     meaning: string
     status: number
-    type: string
+    t: string
     date: number
-    tags: string | Set<string>
-    sentences: Set<number>
+    tags: string[]
+    notes: string[]
+    sentences: number[] | string[]
+    connections: string[]
 }
-interface ConnectionsTable {
-    _id: string | number
-    id: string | number
-    eid_from: string
-    eid_to: string
-}
+
 interface SentencesTable {
-    id?: number | string | null
-    _id?: number | string | null
+    _id?: number | string
     text: string
     trans: string
     origin: string
 }
 
-interface NotesTable {
-    id: string | number
-    _id: string | number
-    eid: string | number
-    text: string
-}
-
 export enum Tables {
     EXPRESSION = "Expression",
     SENTENCE = "Sentence",
-    NOTES = 'Notes',
-    CONNECTIONS = 'Connections',
 }
 
 export type {
-    NotesTable, SentencesTable, ConnectionsTable, ExpressionsTable
+    SentencesTable, ExpressionsTable
 }
 

@@ -12,14 +12,14 @@ import {
     WordsPhrase
 } from "@/db/interface";
 import Plugin from '@/plugin';
-import { createAutomaton, Automaton } from "ac-auto";
 import { ElectronStorage } from '@qiyangxy/tedb-electron-storage';
-import { moment, Notice } from 'obsidian';
+import { createAutomaton } from "ac-auto";
+import { moment } from 'obsidian';
 import path from 'path';
 import * as tedb from "tedb";
 import DbProvider from '../../base';
-import { ExpressionsTable, NotesTable, SentencesTable, Tables } from '../types';
-import exp from "constants";
+import { ExpressionsTable, SentencesTable, Tables } from '../types';
+import { Sentence } from '@/db/interface';
 
 export default class FileDB extends DbProvider {
     plugin: Plugin;
@@ -35,7 +35,7 @@ export default class FileDB extends DbProvider {
     constructor(plugin: Plugin) {
         super();
         // todo 待优化不确定目前是否有更好的获取当前根目录方法
-        this.basePath = app.vault.adapter.getBasePath();
+        this.basePath = (app.vault.adapter as any).getBasePath();
 
         this.plugin = plugin;
         this.dbName = plugin.settings.db_name;
@@ -48,8 +48,6 @@ export default class FileDB extends DbProvider {
         this.tables
             .set(Tables.EXPRESSION, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.EXPRESSION, this.dbPath) }))
             .set(Tables.SENTENCE, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.SENTENCE, this.dbPath) }))
-            .set(Tables.CONNECTIONS, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.CONNECTIONS, this.dbPath) }))
-            .set(Tables.NOTES, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.NOTES, this.dbPath) }))
 
         this.initIndex();
     }
@@ -133,17 +131,15 @@ export default class FileDB extends DbProvider {
         let expressions = await this.tables.get(Tables.EXPRESSION).find({ status: { gt: ignores ? -1 : 0 } }).exec() as ExpressionsTable[];
 
         let res: ExpressionInfoSimple[] = [];
-        for (let i in expressions) {
-            let expr = expressions[i]
-            console.log(expr)
+        for (let expr of expressions) {
             res.push({
                 expression: expr.expression,
                 status: expr.status,
                 meaning: expr.meaning,
-                t: expr.type,
-                tags: JSON.parse(expr.tags as string),
-                note_num: await this.tables.get(Tables.NOTES).count({ eid: expr._id }).exec() as number,
-                sen_num: expr.sentences.size,
+                t: expr.t,
+                tags: expr.tags,
+                note_num: expr.notes.length,
+                sen_num: expr.sentences.length,
                 date: expr.date,
             });
         }
@@ -161,7 +157,7 @@ export default class FileDB extends DbProvider {
         }
     }
 
-    async getExpression(keyworkd: string): Promise<ExpressionInfo> {
+    async $(keyworkd: string): Promise<ExpressionInfo> {
 
         let hasExists = await this.tables.get(Tables.EXPRESSION).find({
             expression: keyworkd.toLocaleLowerCase()
@@ -172,24 +168,15 @@ export default class FileDB extends DbProvider {
         }
 
         let expression: ExpressionsTable = hasExists[0];
-        let notes = await this.tables.get(Tables.NOTES).find({ eid: expression._id }).exec() as NotesTable[];
-
-        let sentences: SentencesTable[] = [];
-        for (let i in expression.sentences) {
-            let sentence = await this.tables.get(Tables.SENTENCE).find({ _id: expression._id }).exec() as SentencesTable[];
-            if (sentence.length > 0) {
-                sentences = [...sentences, ...sentence];
-            }
-        }
 
         return {
             expression: expression.expression,
             meaning: expression.meaning,
             status: expression.status,
-            t: expression.type,
-            notes: notes.map(item => item.text),
-            sentences: sentences,
-            tags: [...JSON.parse(expression.tags as string)],
+            t: expression.t,
+            notes: expression.notes,
+            sentences: await this.tables.get(Tables.SENTENCE).find({ _id: expression._id }).exec() as SentencesTable[],
+            tags: expression.tags,
         }
     }
 
@@ -204,19 +191,20 @@ export default class FileDB extends DbProvider {
         let res: ExpressionInfo[] = [];
         for (let expr of expressions) {
             let orWhere = [];
-            orWhere.push({ _id: expr.sentences.values() });
+            for (let sentence of expr.sentences) {
+                orWhere.push({ _id: sentence });
+            }
 
             let sentences = await this.tables.get(Tables.SENTENCE).find(orWhere).exec() as SentencesTable[];
-            let notes = await this.tables.get(Tables.NOTES).find({ eid: expr._id }).exec() as NotesTable[];
 
             res.push({
                 expression: expr.expression,
                 meaning: expr.meaning,
                 status: expr.status,
-                t: expr.type,
-                notes: notes.map(item => item.text),
+                t: expr.t,
+                notes: expr.notes,
                 sentences,
-                tags: [...JSON.parse(expr.tags as string)],
+                tags: expr.tags,
             });
         }
         return res;
@@ -226,12 +214,12 @@ export default class FileDB extends DbProvider {
 
     async getExpressionsSimple(keywords: string[]): Promise<ExpressionInfoSimple[]> {
         let orWhere = keywords.map(e => {
-            return { '$or': e.toLowerCase() }
+            return { expression: e.toLowerCase() }
         });
 
         let expressions = await this.tables
             .get(Tables.EXPRESSION)
-            .find(orWhere)
+            .find({$or: orWhere})
             .exec() as ExpressionsTable[];
 
         let res: ExpressionInfoSimple[] = [];
@@ -240,10 +228,10 @@ export default class FileDB extends DbProvider {
                 expression: v.expression,
                 meaning: v.meaning,
                 status: v.status,
-                t: v.type,
-                tags: [...JSON.parse(v.tags as string)],
-                sen_num: v.sentences.size,
-                note_num: await this.tables.get(Tables.NOTES).count({ eid: v._id }).exec() as number,
+                t: v.t,
+                tags: v.tags,
+                sen_num: v.sentences.length,
+                note_num: v.notes.length,
                 date: v.date
             });
         });
@@ -282,11 +270,40 @@ export default class FileDB extends DbProvider {
 
         let tags: string[] = [];
         expressions.forEach(item => {
-            tags.push(...JSON.parse(item.tags as string));
+            tags.push(...item.tags);
         })
 
 
         return [...tags.unique().values()];
+    }
+
+    async getExpression(keyword: string): Promise<ExpressionInfo> {
+        keyword = keyword.toLowerCase();
+        let expressions = await this.tables.get(Tables.EXPRESSION)
+            .find({ expression: keyword }).exec() as ExpressionsTable[];
+
+        if (!expressions || expressions.length <= 0) {
+            return null;
+        }
+
+        let expr = expressions[0];
+        let orWhere = [];
+        for (let sen of expr.sentences) {
+            orWhere.push({ _id: sen });
+        }
+        let sentences = await this.tables.get(Tables.SENTENCE).find({
+            $or: orWhere
+        }).exec() as SentencesTable[];
+
+        return {
+            expression: expr.expression,
+            meaning: expr.meaning,
+            status: expr.status,
+            t: expr.t,
+            notes: expr.notes as string[],
+            sentences,
+            tags: expr.tags,
+        };
     }
 
     importDB(data: any): Promise<void> {
@@ -305,46 +322,46 @@ export default class FileDB extends DbProvider {
         }).limit(1).exec() as ExpressionsTable[];
 
         // update sentences
-        let sentences = new Set<number>();
-        for (let i in payload.sentences) {
-            sentences.add(await this.tables.get(Tables.SENTENCE).insert({
-                source: payload.sentences[i].text,
-                trans: payload.sentences[i].trans,
-                origin: payload.sentences[i].origin,
-            }))
+        let sentences = new Set<string>();
+        for (let sen of payload.sentences) {
+            let sens = await this.tables.get(Tables.SENTENCE).find({ text: sen.text }).exec() as SentencesTable[];
+            let sentence = null;
+            if (sens.length > 0) {
+                sentence = sens[0]
+            } else {
+                sentence = await this.tables.get(Tables.SENTENCE).insert(sen)
+            }
+
+            sentences.add(sentence._id)
+        }
+
+
+        let data = {
+            expression: payload.expression,
+            meaning: payload.meaning,
+            status: payload.status,
+            t: payload.t,
+            tags: [... (new Set<string>(payload.tags).values())],
+            connections: [] as string[],
+            notes: payload.notes,
+            sentences: [...sentences.values()],
+            date: moment().unix(),
         }
 
         // 如果之前不存在情况新增
         if (hasExists === null || hasExists.length === 0) {
-            expression = await this.tables.get(Tables.EXPRESSION).insert({
-                expression: payload.expression,
-                meaning: payload.meaning,
-                status: payload.status,
-                type: payload.t,
-                tags: JSON.stringify(payload.tags),
-                sentences: JSON.stringify(sentences),
-                date: moment().unix(),
-            }) as ExpressionsTable;
+            expression = await this.tables.get(Tables.EXPRESSION).insert(data) as ExpressionsTable;
         } else {
             expression = hasExists[0]
-            this.tables.get(Tables.EXPRESSION).update({ _id: expression._id, }, { $set: { date: moment().unix() } })
-
-            // remove the old Sentence
-            this.tables.get(Tables.CONNECTIONS).remove({ "eid": expression._id });
-
-            // remove the old notes
-            this.tables.get(Tables.NOTES).remove({ "eid": expression._id });
+            this.tables.get(Tables.EXPRESSION).update({ _id: expression._id, }, { $set: data })
         }
-        console.log(expression, 'info')
-
-        // update notes
-        for (let i in payload.notes) {
-            this.tables.get(Tables.NOTES).insert({
-                text: payload.notes[i],
-                eid: expression._id,
-            })
-        }
-
+        console.log(
+            await this.tables.get(Tables.EXPRESSION).find({
+                'expression': payload.expression
+            }).limit(1).exec() as ExpressionsTable[],
+            expression,
+            payload
+        )
 
         return 200;
     }
@@ -359,8 +376,10 @@ export default class FileDB extends DbProvider {
                     expression: doc,
                     meaning: "",
                     status: 0,
-                    type: WordType.WORD,
-                    tags: JSON.stringify([]),
+                    t: WordType.WORD,
+                    connections: [],
+                    tags: [],
+                    notes: [],
                     sentences: [],
                     date: moment().unix(),
                 },
