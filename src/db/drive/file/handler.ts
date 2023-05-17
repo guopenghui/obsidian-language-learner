@@ -19,7 +19,6 @@ import path from 'path';
 import * as tedb from "tedb";
 import DbProvider from '../../base';
 import { ExpressionsTable, SentencesTable, Tables } from '../types';
-import { Sentence } from '@/db/interface';
 
 export default class FileDB extends DbProvider {
     plugin: Plugin;
