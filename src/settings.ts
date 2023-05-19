@@ -251,7 +251,7 @@ export class SettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.db_type)
                 .onChange(async (value: DBDrive) => {
                     this.plugin.settings.db_type = value;
-                    this.plugin.db.drive(value);
+                    this.plugin.db.sync(this.plugin);
 
                     await this.plugin.saveSettings();
                     this.display();
@@ -268,7 +268,6 @@ export class SettingTab extends PluginSettingTab {
                     this.plugin.db.sync(this.plugin);
 
                     await this.plugin.saveSettings();
-                    console.log(1111)
                 }, 1000, true))
             )
             .addButton(button => button

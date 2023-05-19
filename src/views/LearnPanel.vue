@@ -306,7 +306,7 @@ async function submit() {
 // 查询词汇时自动填充新词表单
 useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 	let selection = evt.detail.selection as string;
-	let expr = await plugin.db.DB().DB().getExpression(selection);
+	let expr = await plugin.db.DB().getExpression(selection);
 
 	let exprType = "WORD";
 	if (selection.trim().contains(" ")) {
