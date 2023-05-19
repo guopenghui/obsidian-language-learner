@@ -90,7 +90,7 @@ export default class FileDB extends DbProvider {
             // 当日
             let today = new Array(5).fill(0);
             let expressions = await this.tables.get(Tables.EXPRESSION).find({
-                type: WordType.WORD,
+                t: WordType.WORD,
                 date: { $gte: span.from, $lte: span.to }
             }).exec() as ExpressionsTable[];
 
@@ -101,13 +101,14 @@ export default class FileDB extends DbProvider {
             // 累计
             let accumulated = new Array(5).fill(0);
             expressions = await this.tables.get(Tables.EXPRESSION).find({
-                type: WordType.WORD,
-                date: { $gte: span.to }
+                t: WordType.WORD,
+                date: { $lte: span.to }
             }).exec() as ExpressionsTable[];
 
             expressions.forEach(item => {
                 accumulated[item.status]++;
             })
+            console.log({ today, accumulated })
 
             res.push({ today, accumulated });
         }
@@ -147,8 +148,8 @@ export default class FileDB extends DbProvider {
     }
 
     async getCount(): Promise<CountInfo> {
-        let word_count = await this.tables.get(Tables.EXPRESSION).count({ type: WordType.WORD }).exec() as number;
-        let phrase_count = await this.tables.get(Tables.EXPRESSION).count({ type: WordType.PHRASE }).exec() as number;
+        let word_count = await this.tables.get(Tables.EXPRESSION).count({ t: WordType.WORD }).exec() as number;
+        let phrase_count = await this.tables.get(Tables.EXPRESSION).count({ t: WordType.PHRASE }).exec() as number;
 
         return {
             word_count: [word_count],
@@ -239,14 +240,14 @@ export default class FileDB extends DbProvider {
         let storedPhrases = new Map<string, number>();
         (
             await this.tables.get(Tables.EXPRESSION).find({
-                "type": WordType.PHRASE,
+                "t": WordType.PHRASE,
             }).exec() as ExpressionsTable[]
         ).forEach(expr => {
             storedPhrases.set(expr.expression, expr.status);
         });
 
         let storedWords = (await this.tables.get(Tables.EXPRESSION).find({
-            "type": WordType.WORD,
+            "t": WordType.WORD,
             "expression": payload.words,
         }).exec() as ExpressionsTable[]).map(expr => {
             return { text: expr.expression, status: expr.status } as Word;

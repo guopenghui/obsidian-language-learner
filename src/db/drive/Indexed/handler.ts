@@ -263,7 +263,7 @@ export class IndexedDB extends DbProvider {
             // 累计
             let accumulated = new Array(5).fill(0);
             await this.idb.expressions.filter(expr => {
-                return expr.t == WordType.PHRASE &&
+                return expr.t == WordType.WORD &&
                     expr.date <= span.to;
             }).each(expr => {
                 accumulated[expr.status]++;
