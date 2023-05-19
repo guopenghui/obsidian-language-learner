@@ -102,7 +102,7 @@ export class IndexedDB extends DbProvider {
     async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
         let unixStamp = moment.utc(time).unix();
         let wordsAfter = await this.idb.expressions
-            .where("status").aboveOrEqual(0)
+            .where("status").above(0)
             .and(expr => expr.date > unixStamp)
             .toArray();
 
@@ -128,7 +128,7 @@ export class IndexedDB extends DbProvider {
         let exprs: ExpressionInfoSimple[];
         let bottomStatus = ignores ? -1 : 0;
         exprs = (await this.idb.expressions
-            .where("status").aboveOrEqual(bottomStatus)
+            .where("status").above(bottomStatus)
             .toArray()
         ).map((expr): ExpressionInfoSimple => {
             return {

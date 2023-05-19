@@ -127,7 +127,7 @@ export default class FileDB extends DbProvider {
     }
 
     async getAllExpressionSimple(ignores?: boolean): Promise<ExpressionInfoSimple[]> {
-        let expressions = await this.tables.get(Tables.EXPRESSION).find({ status: { gt: ignores ? -1 : 0 } }).exec() as ExpressionsTable[];
+        let expressions = await this.tables.get(Tables.EXPRESSION).find({ status: { $gt: ignores ? -1 : 0 } }).exec() as ExpressionsTable[];
 
         let res: ExpressionInfoSimple[] = [];
         for (let expr of expressions) {
@@ -182,11 +182,9 @@ export default class FileDB extends DbProvider {
     async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
         let unixStamp = moment.utc(time).unix();
         let expressions = await this.tables.get(Tables.EXPRESSION).find({
-            status: 0,
+            status: {$gt: 0},
             date: { $gte: unixStamp }
         }).exec() as ExpressionsTable[];
-
-
         let res: ExpressionInfo[] = [];
         for (let expr of expressions) {
             let orWhere = [];
@@ -207,8 +205,6 @@ export default class FileDB extends DbProvider {
             });
         }
         return res;
-
-        return Promise.resolve([]);
     }
 
     async getExpressionsSimple(keywords: string[]): Promise<ExpressionInfoSimple[]> {
