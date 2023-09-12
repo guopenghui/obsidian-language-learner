@@ -8,11 +8,28 @@ import DbProvider from "./base";
 
 
 export class WebDb extends DbProvider {
+    host: string;
     port: number;
-    constructor(port: number) {
-        super();
-        this.port = port;
+    https: boolean;
+    apiKey: string;
+    
+    get baseHeaders(): Record<string, string> {
+        return {
+            "LR-API-Key": this.apiKey ? this.apiKey : undefined
+        }
     }
+    get proto(): string {
+        return this.https? "https" : "http"
+    }
+
+    constructor(host: string, port: number, https: boolean, apiKey: string) {
+        super();
+        this.host = host;
+        this.port = port;
+        this.https = https;
+        this.apiKey = apiKey;
+    }
+
     async open() { }
 
     close() { }
@@ -22,11 +39,13 @@ export class WebDb extends DbProvider {
         payload: ArticleWords
     ): Promise<WordsPhrase> {
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/word_phrase`,
+            url: `${this.proto}://${this.host}:${this.port}/word_phrase`,
             method: "POST",
             body: JSON.stringify(payload),
             contentType: "application/json",
+            headers: this.baseHeaders,
         };
+        
 
         try {
             let response = await requestUrl(request);
@@ -42,10 +61,11 @@ export class WebDb extends DbProvider {
         expression: string
     ): Promise<ExpressionInfo> {
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/word`,
+            url: `${this.proto}://${this.host}:${this.port}/word`,
             method: "POST",
             body: JSON.stringify(expression.toLowerCase()),
             contentType: "application/json",
+            headers: this.baseHeaders,
         };
 
         try {
@@ -59,10 +79,11 @@ export class WebDb extends DbProvider {
     async getExpressionsSimple(expressions: string[]): Promise<ExpressionInfoSimple[]> {
         expressions = expressions.map(v => v.toLowerCase());
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/words_simple`,
+            url: `${this.proto}://${this.host}:${this.port}/words_simple`,
             method: "POST",
             body: JSON.stringify(expressions),
             contentType: "application/json",
+            headers: this.baseHeaders,
         };
 
         try {
@@ -78,10 +99,11 @@ export class WebDb extends DbProvider {
     async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
         let unixStamp = moment.utc(time).unix();
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/words/after`,
+            url: `${this.proto}://${this.host}:${this.port}/words/after`,
             method: "POST",
             body: JSON.stringify(unixStamp),
             contentType: "application/json",
+            headers: this.baseHeaders,
         };
         try {
             let response = await requestUrl(request);
@@ -99,8 +121,9 @@ export class WebDb extends DbProvider {
         let mode = ignores ? "all" : "no_ignore";
 
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/words_simple/${mode}`,
+            url: `${this.proto}://${this.host}:${this.port}/words_simple/${mode}`,
             method: "GET",
+            headers: this.baseHeaders,
         };
 
         try {
@@ -115,10 +138,11 @@ export class WebDb extends DbProvider {
     // 添加或更新单词/词组的信息
     async postExpression(payload: ExpressionInfo): Promise<number> {
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/update`,
+            url: `${this.proto}://${this.host}:${this.port}/update`,
             method: "POST",
             body: JSON.stringify(payload),
             contentType: "application/json",
+            headers: this.baseHeaders,
         };
         try {
             let response = await requestUrl(request);
@@ -131,8 +155,9 @@ export class WebDb extends DbProvider {
     // 获取所有的tag
     async getTags(): Promise<string[]> {
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/tags`,
+            url: `${this.proto}://${this.host}:${this.port}/tags`,
             method: "GET",
+            headers: this.baseHeaders,
         };
 
         try {
@@ -146,10 +171,11 @@ export class WebDb extends DbProvider {
     // 发送所有忽略的新词
     async postIgnoreWords(payload: string[]) {
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/ignores`,
+            url: `${this.proto}://${this.host}:${this.port}/ignores`,
             method: "POST",
             body: JSON.stringify(payload),
             contentType: "application/json",
+            headers: this.baseHeaders,
         };
 
         try {
@@ -162,10 +188,11 @@ export class WebDb extends DbProvider {
     // 尝试查询已存在的例句
     async tryGetSen(text: string): Promise<Sentence> {
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/sentence`,
+            url: `${this.proto}://${this.host}:${this.port}/sentence`,
             method: "POST",
             body: JSON.stringify(text),
             contentType: "application/json",
+            headers: this.baseHeaders,
         };
 
         try {
@@ -180,8 +207,9 @@ export class WebDb extends DbProvider {
     // 获取各种类型的单词/词组类型
     async getCount(): Promise<CountInfo> {
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/count_all`,
+            url: `${this.proto}://${this.host}:${this.port}/count_all`,
             method: "GET",
+            headers: this.baseHeaders,
         };
         try {
             let response = await requestUrl(request);
@@ -207,10 +235,11 @@ export class WebDb extends DbProvider {
         });
 
         let request: RequestUrlParam = {
-            url: `http://localhost:${this.port}/count_time`,
+            url: `${this.proto}://${this.host}:${this.port}/count_time`,
             method: "POST",
             body: JSON.stringify(spans),
             contentType: "application/json",
+            headers: this.baseHeaders,
         };
 
         try {

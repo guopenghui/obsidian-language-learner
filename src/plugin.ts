@@ -61,7 +61,12 @@ export default class LanguageLearner extends Plugin {
 
         // 打开数据库
         this.db = this.settings.use_server
-            ? new WebDb(this.settings.port)
+            ? new WebDb(
+                this.settings.host,
+                this.settings.port,
+                this.settings.use_https,
+                this.settings.api_key
+                )
             : new LocalDb(this);
         await this.db.open();
 

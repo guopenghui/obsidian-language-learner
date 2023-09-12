@@ -69,6 +69,12 @@ export default {
     // settings
     "Use Server": "使用服务器",
     "Use a seperated backend server": "使用单独的后端服务器(目前只对作者有用)",
+    "Use https": "使用HTTPS",
+    "Be sure your server enabled https": "确认你的服务器开启了https",
+    "Api Key": "口令(api key)",
+    "Input your api-key for authentication": "输入你的 api-key 以验证身份",
+    "Server Host": "服务器主机名",
+    "Your server's host name (like 11.11.11.11 or baidu.com)": "主机名，类似 11.11.11.11 或 baidu.com",
     "Server Port": "服务器端口",
     'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
         '一个介于1024-65535之间的整数.这应该和服务器.env文件中的PORT字段一致',

@@ -11,7 +11,10 @@ import store from "./store";
 
 export interface MyPluginSettings {
     use_server: boolean;
+    host: string,
     port: number;
+    use_https: boolean;
+    api_key: string,
     self_server: boolean;
     self_port: number;
     // lang
@@ -45,6 +48,9 @@ export interface MyPluginSettings {
 export const DEFAULT_SETTINGS: MyPluginSettings = {
     use_server: false,
     port: 8086,
+    host: "127.0.0.1",
+    use_https: false,
+    api_key: "",
     self_server: false,
     self_port: 3002,
     // lang
@@ -116,7 +122,12 @@ export class SettingTab extends PluginSettingTab {
                     this.plugin.settings.use_server = use_server;
                     if (use_server) {
                         this.plugin.db.close();
-                        this.plugin.db = new WebDb(this.plugin.settings.port);
+                        this.plugin.db = new WebDb(
+                            this.plugin.settings.host,
+                            this.plugin.settings.port,
+                            this.plugin.settings.use_https,
+                            this.plugin.settings.api_key,
+                        );
                     } else {
                         this.plugin.db = new LocalDb(this.plugin);
                         await this.plugin.db.open();
@@ -127,13 +138,57 @@ export class SettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
+            .setName(t("Use https"))
+            .setDesc(t("Be sure your server enabled https"))
+            .addToggle(toggle => toggle
+                .setDisabled(this.plugin.settings.use_server)
+                .setValue(this.plugin.settings.use_https)
+                .onChange(async (use_https) => {
+                    this.plugin.settings.use_https = use_https;
+                    await this.plugin.saveSettings();
+                    this.display();
+                })
+            );
+
+        this.plugin.settings.use_https && new Setting(containerEl)
+            .setName(t("Api Key"))
+            .setDesc(
+                t("Input your api-key for authentication")
+            )
+            .addText((text) =>
+                text
+                    .setValue(this.plugin.settings.api_key)
+                    .setDisabled(this.plugin.settings.use_server)
+                    .onChange(debounce(async (api_key) => {
+                        this.plugin.settings.api_key = api_key;
+                        await this.plugin.saveSettings();
+                        this.display();
+                    }, 500, true))
+            );
+
+        new Setting(containerEl)
+            .setName(t("Server Host"))
+            .setDesc(
+                t("Your server's host name (like 11.11.11.11 or baidu.com)")
+            )
+            .addText((text) =>
+                text
+                    .setValue(this.plugin.settings.host)
+                    .setDisabled(this.plugin.settings.use_server)
+                    .onChange(debounce(async (host) => {
+                        this.plugin.settings.host = host;
+                        await this.plugin.saveSettings();
+                    }, 500, true))
+            );
+
+        new Setting(containerEl)
             .setName(t("Server Port"))
             .setDesc(
                 t('An integer between 1024-65535. It should be same as "PORT" variable in .env file of server')
             )
-            .setDisabled(!this.plugin.settings.use_server)
             .addText((text) =>
                 text
+                    .setDisabled(this.plugin.settings.use_server)
                     .setValue(String(this.plugin.settings.port))
                     .onChange(debounce(async (port) => {
                         let p = Number(port);
