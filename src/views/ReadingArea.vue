@@ -37,7 +37,7 @@
                 }" v-html="renderedText" />
             <!-- 底栏 -->
             <div class="pagination" style="
-                    padding-top: 10px;
+                    padding: 10px 0;
                     border-top: 2px solid gray;
                     display: flex;
                     flex-direction: column;
