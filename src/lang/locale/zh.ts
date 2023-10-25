@@ -19,6 +19,10 @@ export default {
     // SearchPanel.vue
     "Search": "搜索",
 
+    "Edit": "编辑",
+
+    "Remove": "移除",
+
     // ReadingView.ts
     "Finish Reading": "完成阅读",
     "Return to Markdown": "返回Markdown模式",

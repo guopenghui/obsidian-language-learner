@@ -6,7 +6,7 @@
                     style="display: inline-block; width: 70px; font-size: 1.2em; font-weight: bold; margin-right: 15px;">Search:</span>
                 <NInput size="small" v-model:value="searchText" />
             </div>
-            <NSpace style="margin: 10px 0;" align="center">
+            <NSpace style="margin: 10px 0; display: grid; grid-template-columns: auto auto 2fr;" align="center">
                 <span
                     style="display: inline-block; width: 70px; font-size: 1.2em; font-weight: bold; margin-right: 5px;">
                     Tags:
@@ -18,6 +18,9 @@
                 <NTag v-for="(tag, i) in tags" size="small" checkable v-model:checked="checkedTags[i]">
                     {{ "#" + tag }}
                 </NTag>
+                <NButton @click="expressions" style="justify-self: end;">
+                   {{t("Refresh Word Database")}}
+                </NButton>
             </NSpace>
             <NDataTable ref="table" size="small" :loading="loading" :data="data" :columns="collumns"
                 :row-key="makeRowKey" @update:checked-row-keys="handleCheck" :pagination="{ pageSize: 10 }" />
@@ -46,6 +49,7 @@ import {
     darkTheme,
     NSpace,
     NInput,
+    NButton
 } from "naive-ui";
 import { t } from "@/lang/helper";
 
@@ -63,6 +67,8 @@ const themeConfig: GlobalThemeOverrides = {
         tdPaddingSmall: "8px",
     },
 };
+
+const loading = ref(true);
 
 // 切换明亮/黑暗模式
 const theme = computed(() => {
@@ -89,8 +95,8 @@ const statusMap = [
 ];
 
 
-let loading = ref(true);
-watchEffect(async () => {
+const expressions =  async () => {
+    loading.value = true;
     let rawData = await plugin.db.DB().getAllExpressionSimple(false);
     data.value = rawData.map((entry, i): Row => {
         return {
@@ -106,7 +112,9 @@ watchEffect(async () => {
     tags.value = await plugin.db.DB().getTags();
     checkedTags.value = Array(tags.value.length).map((_) => false);
     loading.value = false;
-});
+}
+
+watchEffect(expressions);
 
 let data = ref<Row[]>([]);
 
@@ -216,6 +224,32 @@ let collumns = reactive<DataTableColumns<Row>>([
         key: "date",
         sorter(row1, row2) {
             return moment.utc(row1.date).unix() - moment.utc(row2.date).unix();
+        },
+    },
+    // 操作
+    {
+        title: "Operation",
+        key: "operation",
+        render(row) {
+            return[
+                h(
+                    NButton,
+                    {
+                        type: "default",
+                        size: "tiny",
+                    },
+                    { default: () => t("Edit") }
+                ),
+                h(
+                    NButton,
+                    {
+                        style: { marginRight: "6px" },
+                        type: "error",
+                        size: "tiny",
+                    },
+                    { default: () => t("Remove") }
+                ),
+            ];
         },
     },
 ]);

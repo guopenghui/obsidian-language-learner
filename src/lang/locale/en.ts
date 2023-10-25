@@ -20,6 +20,10 @@ export default {
     // SearchPanel.vue
     "Search": "Search",
 
+    "Edit": "edit",
+
+    "Remove": "remove",
+
     // ReadingView.ts
     "Finish Reading": "Finish Reading",
     "Return to Markdown": "Return Markdown View",

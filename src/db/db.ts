@@ -3,7 +3,6 @@ import { WebDb } from "./drive/api/handler";
 import Plugin from "@/plugin";
 import FileDB from "./drive/file/handler";
 import { IndexedDB } from "./drive/Indexed/handler";
-import path from "path";
 
 export class DbSingleton {
     private connects: Map<string, DbProvider> = new Map();
