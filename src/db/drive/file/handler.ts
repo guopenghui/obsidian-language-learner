@@ -387,6 +387,14 @@ export default class FileDB extends DbProvider {
 
         return stored[0];
     }
+
+    async removeExpression(expression: string): Promise<boolean> {
+        const state = await this.tables.get(Tables.EXPRESSION).remove({
+            expression: expression,
+        })
+        
+        return state > 0;
+    }
 }
 
 

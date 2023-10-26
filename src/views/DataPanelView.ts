@@ -4,8 +4,8 @@ import PluginType from "@/plugin";
 import { t } from "@/lang/helper";
 import DataPanel from "./DataPanel.vue";
 
-export const DATA_ICON: string = "database";
-export const DATA_PANEL_VIEW: string = "langr-data-panel";
+export const DATA_ICON = "database";
+export const DATA_PANEL_VIEW = "langr-data-panel";
 
 export class DataPanelView extends ItemView {
 	plugin: PluginType;

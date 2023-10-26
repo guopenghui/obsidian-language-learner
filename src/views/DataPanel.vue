@@ -1,12 +1,15 @@
 <template>
     <div id="langr-data">
         <NConfigProvider :theme="theme" :theme-overrides="themeConfig">
-            <div style="display:flex; align-items:center;">
+            <NSpace style="margin: 10px 0; display: grid; grid-template-columns: auto  2fr;" align="center">
                 <span
                     style="display: inline-block; width: 70px; font-size: 1.2em; font-weight: bold; margin-right: 15px;">Search:</span>
-                <NInput size="small" v-model:value="searchText" />
-            </div>
-            <NSpace style="margin: 10px 0; display: grid; grid-template-columns: auto auto 2fr;" align="center">
+                <NInput size="small" v-model:value="searchText"/>
+                <NButton @click="expressions" style="justify-self: end;">
+                    {{ t("Refresh Word Database") }}
+                </NButton>
+            </NSpace>
+            <NSpace style="margin: 10px 0;" align="center">
                 <span
                     style="display: inline-block; width: 70px; font-size: 1.2em; font-weight: bold; margin-right: 5px;">
                     Tags:
@@ -18,18 +21,15 @@
                 <NTag v-for="(tag, i) in tags" size="small" checkable v-model:checked="checkedTags[i]">
                     {{ "#" + tag }}
                 </NTag>
-                <NButton @click="expressions" style="justify-self: end;">
-                   {{t("Refresh Word Database")}}
-                </NButton>
             </NSpace>
             <NDataTable ref="table" size="small" :loading="loading" :data="data" :columns="collumns"
-                :row-key="makeRowKey" @update:checked-row-keys="handleCheck" :pagination="{ pageSize: 10 }" />
+                        :row-key="makeRowKey" @update:checked-row-keys="handleCheck" :pagination="{ pageSize: 10 }"/>
         </NConfigProvider>
     </div>
 </template>
 
 <script setup lang="ts">
-import { moment } from "obsidian";
+import {moment} from "obsidian";
 import {
     h,
     ref,
@@ -49,11 +49,11 @@ import {
     darkTheme,
     NSpace,
     NInput,
-    NButton
+    NButton,
 } from "naive-ui";
-import { t } from "@/lang/helper";
+import {t} from "@/lang/helper";
 
-import type { DataTableColumns, DataTableRowKey } from "naive-ui";
+import type {DataTableColumns, DataTableRowKey} from "naive-ui";
 import type PluginType from "@/plugin";
 
 const WordMore = defineAsyncComponent(() => import("@comp/WordMore.vue"));
@@ -75,7 +75,6 @@ const theme = computed(() => {
     return plugin.store.dark ? darkTheme : null;
 });
 
-
 interface Row {
     expr: string;
     status: string;
@@ -95,7 +94,7 @@ const statusMap = [
 ];
 
 
-const expressions =  async () => {
+const expressions = async () => {
     loading.value = true;
     let rawData = await plugin.db.DB().getAllExpressionSimple(false);
     data.value = rawData.map((entry, i): Row => {
@@ -142,6 +141,7 @@ watch(searchText, (text) => {
 // 选中行
 let rowKeysRef = ref<DataTableRowKey[]>([]);
 let makeRowKey = (row: Row) => row.expr;
+
 function handleCheck(rowKeys: DataTableRowKey[]) {
     rowKeysRef.value = rowKeys;
 }
@@ -155,7 +155,7 @@ let collumns = reactive<DataTableColumns<Row>>([
         expandable: (row: Row) => row.noteNum + row.senNum > 0,
         renderExpand: (row: Row) => {
             return h(Suspense, [
-                h(WordMore, { word: row.expr })
+                h(WordMore, {word: row.expr})
             ]);
         },
     },
@@ -177,11 +177,11 @@ let collumns = reactive<DataTableColumns<Row>>([
         width: "70",
         defaultFilterOptionValues: statusMap.slice(1),
         filterOptions: [
-            { label: t("Ignore"), value: t("Ignore") },
-            { label: t("Learning"), value: t("Learning") },
-            { label: t("Familiar"), value: t("Familiar") },
-            { label: t("Known"), value: t("Known") },
-            { label: t("Learned"), value: t("Learned") },
+            {label: t("Ignore"), value: t("Ignore")},
+            {label: t("Learning"), value: t("Learning")},
+            {label: t("Familiar"), value: t("Familiar")},
+            {label: t("Known"), value: t("Known")},
+            {label: t("Learned"), value: t("Learned")},
         ],
         filter(value, row) {
             return row.status === value;
@@ -201,11 +201,11 @@ let collumns = reactive<DataTableColumns<Row>>([
                 h(
                     NTag,
                     {
-                        style: { marginRight: "6px" },
+                        style: {marginRight: "6px"},
                         type: "info",
                         size: "tiny",
                     },
-                    { default: () => tag }
+                    {default: () => tag}
                 )
             );
         },
@@ -231,23 +231,29 @@ let collumns = reactive<DataTableColumns<Row>>([
         title: "Operation",
         key: "operation",
         render(row) {
-            return[
+            return [
                 h(
                     NButton,
                     {
                         type: "default",
                         size: "tiny",
+                        onClick: () => {
+
+                        }
                     },
-                    { default: () => t("Edit") }
+                    {default: () => t("Edit")}
                 ),
                 h(
                     NButton,
                     {
-                        style: { marginRight: "6px" },
+                        style: {marginLeft: "6px", },
                         type: "error",
                         size: "tiny",
+                        onClick: () => {
+                            let state = plugin.db.DB()?.removeExpression(row.expr)
+                           },
                     },
-                    { default: () => t("Remove") }
+                    {default: () => t("Remove")}
                 ),
             ];
         },

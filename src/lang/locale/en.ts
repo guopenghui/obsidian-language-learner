@@ -12,6 +12,11 @@ export default {
 
     // DataPanelView.ts
     "Data Panel": "Data Panel",
+    "Success": "success",
+    "Fail": "fail",
+    "Edit": "edit",
+    "Remove": "remove",
+    "Cancel": "cancel",
 
 
     // SearchPanelView.ts
@@ -19,10 +24,6 @@ export default {
 
     // SearchPanel.vue
     "Search": "Search",
-
-    "Edit": "edit",
-
-    "Remove": "remove",
 
     // ReadingView.ts
     "Finish Reading": "Finish Reading",

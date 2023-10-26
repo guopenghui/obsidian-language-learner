@@ -12,16 +12,18 @@ export default {
 
     // DataPanelView.ts
     "Data Panel": "单词列表",
+    "Edit": "编辑",
+
+    "Remove": "移除",
+    "Cancel": "取消",
+    "Success": "成功",
+    "Fail": "失败",
 
     // SearchPanelView.ts
     "Search Panel": "查词面板",
 
     // SearchPanel.vue
     "Search": "搜索",
-
-    "Edit": "编辑",
-
-    "Remove": "移除",
 
     // ReadingView.ts
     "Finish Reading": "完成阅读",

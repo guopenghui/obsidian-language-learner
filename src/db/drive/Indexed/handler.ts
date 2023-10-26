@@ -1,20 +1,32 @@
-import { moment } from "obsidian";
-import { createAutomaton, Automaton } from "ac-auto";
-import { exportDB, importInto } from "dexie-export-import";
+import {moment, Plugin} from "obsidian";
+import {createAutomaton} from "ac-auto";
+import {exportDB, importInto} from "dexie-export-import";
 import download from "downloadjs";
 
 import {
-    ArticleWords, Word, Phrase, WordsPhrase, Sentence,
-    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span, WordType
+    ArticleWords,
+    CountInfo,
+    ExpressionInfo,
+    ExpressionInfoSimple,
+    Phrase,
+    Sentence,
+    Span,
+    Word,
+    WordCount,
+    WordsPhrase,
+    WordType
 } from "../../interface";
 import DbProvider from "../../base";
 import WordDB from "./idb";
 import Plugin from "@/plugin";
-
+import Dexie from "dexie";
+import * as console from "console";
+import {Set} from "immutable";
 
 export class IndexedDB extends DbProvider {
     idb: WordDB;
     plugin: Plugin;
+
     constructor(plugin: Plugin) {
         super();
         this.plugin = plugin;
@@ -38,18 +50,18 @@ export class IndexedDB extends DbProvider {
             .each(expr => storedPhrases.set(expr.expression, expr.status));
 
         let storedWords = (await this.idb.expressions
-            .where("expression").anyOf(payload.words)
-            .toArray()
+                .where("expression").anyOf(payload.words)
+                .toArray()
         ).map(expr => {
-            return { text: expr.expression, status: expr.status } as Word;
+            return {text: expr.expression, status: expr.status} as Word;
         });
 
         let ac = await createAutomaton([...storedPhrases.keys()]);
         let searchedPhrases = (await ac.search(payload.article)).map(match => {
-            return { text: match[1], status: storedPhrases.get(match[1]), offset: match[0] } as Phrase;
+            return {text: match[1], status: storedPhrases.get(match[1]), offset: match[0]} as Phrase;
         });
 
-        return { words: storedWords, phrases: searchedPhrases };
+        return {words: storedWords, phrases: searchedPhrases};
     }
 
     async getExpression(expression: string): Promise<ExpressionInfo> {
@@ -124,12 +136,13 @@ export class IndexedDB extends DbProvider {
         }
         return res;
     }
+
     async getAllExpressionSimple(ignores?: boolean): Promise<ExpressionInfoSimple[]> {
         let exprs: ExpressionInfoSimple[];
         let bottomStatus = ignores ? -1 : 0;
         exprs = (await this.idb.expressions
-            .where("status").above(bottomStatus)
-            .toArray()
+                .where("status").above(bottomStatus)
+                .toArray()
         ).map((expr): ExpressionInfoSimple => {
             return {
                 expression: expr.expression,
@@ -171,7 +184,7 @@ export class IndexedDB extends DbProvider {
             t: payload.t,
             notes: payload.notes,
             sentences: [...sentences.values()],
-            tags: [... (new Set<string>(payload.tags).values())],
+            tags: [...(new Set<string>(payload.tags).values())],
             connections: [] as string[],
             date: moment().unix(),
         };
@@ -269,7 +282,7 @@ export class IndexedDB extends DbProvider {
                 accumulated[expr.status]++;
             });
 
-            res.push({ today, accumulated });
+            res.push({today, accumulated});
         }
 
         return res;
@@ -294,6 +307,13 @@ export class IndexedDB extends DbProvider {
 
     async destroyAll() {
         return this.idb.delete();
+    }
+
+    async removeExpression(expression: string): Promise<boolean> {
+        const state = await this.idb.expressions
+            .where("expression").equals(expression).delete();
+
+        return state > 0
     }
 }
 

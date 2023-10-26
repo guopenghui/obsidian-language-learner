@@ -1,21 +1,32 @@
-import { requestUrl, RequestUrlParam, moment } from "obsidian";
+import {moment, requestUrl, RequestUrlParam} from "obsidian";
 import {
-    ArticleWords, Word, Phrase, WordsPhrase, Sentence,
-    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
-} from "../../interface";
+    ArticleWords,
+    CountInfo,
+    ExpressionInfo,
+    ExpressionInfoSimple,
+    Sentence,
+    Span,
+    WordCount,
+    WordsPhrase
+} from "@/db/interface";
 
 import DbProvider from "../../base";
+import * as console from "console";
 
 
 export class WebDb extends DbProvider {
     port: number;
+
     constructor(port: number) {
         super();
         this.port = port;
     }
-    async open() { }
 
-    close() { }
+    async open() {
+    }
+
+    close() {
+    }
 
     // 寻找页面中已经记录过的单词和词组
     async getStoredWords(
@@ -216,15 +227,22 @@ export class WebDb extends DbProvider {
         try {
             let res = await requestUrl(request);
             return res.json;
-        } catch (e) { }
+        } catch (e) {
+        }
     }
 
-    async importDB() { }
+    async importDB() {
+    }
 
-    async exportDB() { }
+    async exportDB() {
+    }
 
     async destroyAll() {
         // 什么也没有发生
+    }
+
+    removeExpression(id: string | number): Promise<boolean> {
+        return Promise.resolve(false);
     }
 
 }

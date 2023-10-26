@@ -19,6 +19,8 @@ abstract class DbProvider {
     abstract getAllExpressionSimple(ignores?: boolean): Promise<ExpressionInfoSimple[]>;
     // 发送单词信息到数据库保存
     abstract postExpression(payload: ExpressionInfo): Promise<number>;
+    // 移除单词
+    abstract removeExpression(expression: string): Promise<boolean>;
     // 获取所有tag
     abstract getTags(): Promise<string[]>;
     // 批量发送单词，全部标记为ignore
