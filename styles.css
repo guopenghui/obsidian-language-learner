@@ -575,6 +575,31 @@
   border-bottom-left-radius: 34px !important;
   border-bottom-right-radius: 34px !important;
 }
+#langr-learn-panel {
+  overflow: scroll;
+}
+#langr-learn-panel .n-input {
+  margin: 1px 0;
+}
+#langr-learn-panel .n-dynamic-input .n-button-group {
+  flex-direction: column;
+}
+#langr-learn-panel .n-dynamic-input .n-button-group button {
+  height: 26px;
+  width: 26px;
+}
+#langr-learn-panel .n-dynamic-input .n-button-group button:nth-child(1) {
+  border-top-left-radius: 34px !important;
+  border-top-right-radius: 34px !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+#langr-learn-panel .n-dynamic-input .n-button-group button:nth-child(2) {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: 34px !important;
+  border-bottom-right-radius: 34px !important;
+}
 .word-more h2 {
   margin: 0.5em 0;
 }

@@ -1,13 +1,18 @@
 <template>
     <div id="langr-data">
         <NConfigProvider :theme="theme" :theme-overrides="themeConfig">
+            <NSpace justify="end">
+                <NButton @click="onAddWord" strong secondary type="info">
+                    {{ t("Learning New Words") }}
+                </NButton>
+                <NButton @click="expressions" strong secondary type="info">
+                    {{ t("Refresh Word Database") }}
+                </NButton>
+            </NSpace>
             <NSpace style="margin: 10px 0; display: grid; grid-template-columns: auto  2fr;" align="center">
                 <span
                     style="display: inline-block; width: 70px; font-size: 1.2em; font-weight: bold; margin-right: 15px;">Search:</span>
                 <NInput size="small" v-model:value="searchText"/>
-                <NButton @click="expressions" style="justify-self: end;">
-                    {{ t("Refresh Word Database") }}
-                </NButton>
             </NSpace>
             <NSpace style="margin: 10px 0;" align="center">
                 <span
@@ -25,11 +30,12 @@
             <NDataTable ref="table" size="small" :loading="loading" :data="data" :columns="collumns"
                         :row-key="makeRowKey" @update:checked-row-keys="handleCheck" :pagination="{ pageSize: 10 }"/>
         </NConfigProvider>
+        <LearnPanelModal @onChangeWord="onChangeWord" @on-change-show="onChangeShow" v-model:show="showWordModal" v-model:word="word"/>
     </div>
 </template>
 
 <script setup lang="ts">
-import {moment} from "obsidian";
+import {moment, Notice} from "obsidian";
 import {
     h,
     ref,
@@ -55,6 +61,7 @@ import {t} from "@/lang/helper";
 
 import type {DataTableColumns, DataTableRowKey} from "naive-ui";
 import type PluginType from "@/plugin";
+import LearnPanelModal from "@/views/LearnPanelModal.vue";
 
 const WordMore = defineAsyncComponent(() => import("@comp/WordMore.vue"));
 
@@ -85,6 +92,9 @@ interface Row {
     noteNum: number;
 }
 
+const showWordModal = ref(false);
+const word = ref({})
+
 const statusMap = [
     t("Ignore"),
     t("Learning"),
@@ -93,6 +103,18 @@ const statusMap = [
     t("Learned"),
 ];
 
+// 改变显示新增显示状态
+const onChangeShow = (state: boolean) => {
+    showWordModal.value = state
+}
+
+const onChangeWord = () => {
+    expressions()
+}
+
+const onAddWord = () => {
+    showWordModal.value = true;
+}
 
 const expressions = async () => {
     loading.value = true;
@@ -163,34 +185,20 @@ let collumns = reactive<DataTableColumns<Row>>([
     {
         title: "Expr",
         key: "expr",
-        sorter: "default",
+        // sorter: "default",
+        minWidth: "80",
         filter(_, row) {
             if (!searchText.value) return true;
 
             return row.expr.contains(searchText.value);
         }
     },
-    // 学习状态
-    {
-        title: "Status",
-        key: "status",
-        width: "70",
-        defaultFilterOptionValues: statusMap.slice(1),
-        filterOptions: [
-            {label: t("Ignore"), value: t("Ignore")},
-            {label: t("Learning"), value: t("Learning")},
-            {label: t("Familiar"), value: t("Familiar")},
-            {label: t("Known"), value: t("Known")},
-            {label: t("Learned"), value: t("Learned")},
-        ],
-        filter(value, row) {
-            return row.status === value;
-        },
-    },
     // 含义
     {
         title: "Meaning",
         key: "meaning",
+        align: "left",
+        minWidth: 140,
     },
     // 标签
     {
@@ -203,7 +211,7 @@ let collumns = reactive<DataTableColumns<Row>>([
                     {
                         style: {marginRight: "6px"},
                         type: "info",
-                        size: "tiny",
+                        size: "small",
                     },
                     {default: () => tag}
                 )
@@ -218,43 +226,58 @@ let collumns = reactive<DataTableColumns<Row>>([
                 : selectedTags.value.some((tag) => row.tags.contains(tag));
         },
     },
+    // 学习状态
+    {
+        title: "Status",
+        key: "status",
+        maxWidth: 100,
+        minWidth: 90,
+        defaultFilterOptionValues: statusMap.slice(1),
+        filterOptions: [
+            {label: t("Ignore"), value: t("Ignore")},
+            {label: t("Learning"), value: t("Learning")},
+            {label: t("Familiar"), value: t("Familiar")},
+            {label: t("Known"), value: t("Known")},
+            {label: t("Learned"), value: t("Learned")},
+        ],
+        filter(value, row) {
+            return row.status === value;
+        },
+    },
     // 修改日期
     {
         title: "Date",
         key: "date",
+        maxWidth: 100,
+        align: "center",
         sorter(row1, row2) {
             return moment.utc(row1.date).unix() - moment.utc(row2.date).unix();
         },
     },
     // 操作
     {
-        title: "Operation",
-        key: "operation",
+        title: "Action",
+        key: "action",
+        maxWidth: 100,
+        align: "center",
         render(row) {
             return [
                 h(
                     NButton,
                     {
-                        type: "default",
-                        size: "tiny",
-                        onClick: () => {
-
+                        type: "info",
+                        size: "small",
+                        strong: true,
+                        secondary: true,
+                        onClick: async () => {
+                            word.value = await plugin.db.DB()?.getExpression(row.expr)
+                            console.log(word.value, row.expr)
+                            showWordModal.value = true;
                         }
                     },
                     {default: () => t("Edit")}
                 ),
-                h(
-                    NButton,
-                    {
-                        style: {marginLeft: "6px", },
-                        type: "error",
-                        size: "tiny",
-                        onClick: () => {
-                            let state = plugin.db.DB()?.removeExpression(row.expr)
-                           },
-                    },
-                    {default: () => t("Remove")}
-                ),
+
             ];
         },
     },

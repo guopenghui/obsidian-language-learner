@@ -8,17 +8,17 @@ import {
     Span,
     Word,
     WordCount,
-    WordType,
-    WordsPhrase
+    WordsPhrase,
+    WordType
 } from "@/db/interface";
 import Plugin from '@/plugin';
-import { ElectronStorage } from '@qiyangxy/tedb-electron-storage';
-import { createAutomaton } from "ac-auto";
-import { moment } from 'obsidian';
+import {ElectronStorage} from '@qiyangxy/tedb-electron-storage';
+import {createAutomaton} from "ac-auto";
+import {moment} from 'obsidian';
 import path from 'path';
 import * as tedb from "tedb";
 import DbProvider from '../../base';
-import { ExpressionsTable, SentencesTable, Tables } from '../types';
+import {ExpressionsTable, SentencesTable, Tables} from '../types';
 
 export default class FileDB extends DbProvider {
     plugin: Plugin;
@@ -45,15 +45,15 @@ export default class FileDB extends DbProvider {
 
     init() {
         this.tables
-            .set(Tables.EXPRESSION, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.EXPRESSION, this.dbPath) }))
-            .set(Tables.SENTENCE, new tedb.Datastore({ storage: new ElectronStorage(this.dbName, Tables.SENTENCE, this.dbPath) }))
+            .set(Tables.EXPRESSION, new tedb.Datastore({storage: new ElectronStorage(this.dbName, Tables.EXPRESSION, this.dbPath)}))
+            .set(Tables.SENTENCE, new tedb.Datastore({storage: new ElectronStorage(this.dbName, Tables.SENTENCE, this.dbPath)}))
 
-        this.initIndex();
+        // this.initIndex();
     }
 
     async initIndex() {
         this.tables.get(Tables.EXPRESSION).ensureIndex(
-        { fieldName: "expression", unique: true },
+            {fieldName: "expression", unique: true},
         )
     }
 
@@ -80,7 +80,7 @@ export default class FileDB extends DbProvider {
             const today = new Array(5).fill(0);
             let expressions = await this.tables.get(Tables.EXPRESSION).find({
                 t: WordType.WORD,
-                date: { $gte: span.from, $lte: span.to }
+                date: {$gte: span.from, $lte: span.to}
             }).exec() as ExpressionsTable[];
 
             expressions.forEach(item => {
@@ -91,15 +91,15 @@ export default class FileDB extends DbProvider {
             const accumulated = new Array(5).fill(0);
             expressions = await this.tables.get(Tables.EXPRESSION).find({
                 t: WordType.WORD,
-                date: { $lte: span.to }
+                date: {$lte: span.to}
             }).exec() as ExpressionsTable[];
 
             expressions.forEach(item => {
                 accumulated[item.status]++;
             })
-            console.log({ today, accumulated })
+            // console.log({ today, accumulated })
 
-            res.push({ today, accumulated });
+            res.push({today, accumulated});
         }
 
         return res;
@@ -117,8 +117,12 @@ export default class FileDB extends DbProvider {
     }
 
     async getAllExpressionSimple(ignores?: boolean): Promise<ExpressionInfoSimple[]> {
-        const expressions = await this.tables.get(Tables.EXPRESSION).find({ status: { $gt: ignores ? -1 : 0 } }).exec() as ExpressionsTable[];
-        console.log(expressions, '1111')
+        const expressions = await this.tables
+            .get(Tables.EXPRESSION)
+            .find({status: {$gt: ignores ? -1 : 0}})
+            .sort({$created_at: -1})
+            .exec() as ExpressionsTable[];
+        // console.log(expressions, '1111')
 
         const res: ExpressionInfoSimple[] = [];
         for (const expr of expressions) {
@@ -138,8 +142,8 @@ export default class FileDB extends DbProvider {
     }
 
     async getCount(): Promise<CountInfo> {
-        const word_count = await this.tables.get(Tables.EXPRESSION).count({ t: WordType.WORD }).exec() as number;
-        const phrase_count = await this.tables.get(Tables.EXPRESSION).count({ t: WordType.PHRASE }).exec() as number;
+        const word_count = await this.tables.get(Tables.EXPRESSION).count({t: WordType.WORD}).exec() as number;
+        const phrase_count = await this.tables.get(Tables.EXPRESSION).count({t: WordType.PHRASE}).exec() as number;
 
         return {
             word_count: [word_count],
@@ -149,9 +153,12 @@ export default class FileDB extends DbProvider {
 
     async $(keyworkd: string): Promise<ExpressionInfo> {
 
-        const hasExists = await this.tables.get(Tables.EXPRESSION).find({
-            expression: keyworkd.toLocaleLowerCase()
-        }).limit(1).exec() as ExpressionsTable[];
+        const hasExists = await this.tables.get(Tables.EXPRESSION)
+            .find({
+                expression: keyworkd.toLocaleLowerCase()
+            })
+            .sort({$created_at: -1})
+            .limit(1).exec() as ExpressionsTable[];
 
         if (hasExists === null || hasExists.length === 0) {
             return null;
@@ -165,25 +172,38 @@ export default class FileDB extends DbProvider {
             status: expression.status,
             t: expression.t,
             notes: expression.notes,
-            sentences: await this.tables.get(Tables.SENTENCE).find({ _id: expression._id }).exec() as SentencesTable[],
+            sentences: await this.tables.get(Tables.SENTENCE)
+                .find({_id: expression._id})
+                .sort({$created_at: 1})
+                .exec() as SentencesTable[],
             tags: expression.tags,
         }
     }
 
     async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
         const unixStamp = moment.utc(time).unix();
-        const expressions = await this.tables.get(Tables.EXPRESSION).find({
-            status: {$gt: 0},
-            date: { $gte: unixStamp }
-        }).exec() as ExpressionsTable[];
+        const expressions = await this.tables.get(Tables.EXPRESSION)
+            .find({
+                status: {$gt: 0},
+                date: {$gte: unixStamp}
+            })
+            .sort({$created_at: -1})
+            .exec() as ExpressionsTable[];
         const res: ExpressionInfo[] = [];
         for (const expr of expressions) {
             const orWhere = [];
+            console.log(expr.sentences)
             for (const sentence of expr.sentences) {
-                orWhere.push({ _id: sentence });
+                orWhere.push({_id: sentence});
             }
 
-            const sentences = await this.tables.get(Tables.SENTENCE).find(orWhere).exec() as SentencesTable[];
+            let sentences: SentencesTable[] = []
+            if (orWhere.length > 0) {
+                 sentences         = await this.tables.get(Tables.SENTENCE)
+                .find(orWhere)
+                .sort({$created_at: 1})
+                .exec() as SentencesTable[];
+            }
 
             res.push({
                 expression: expr.expression,
@@ -200,12 +220,13 @@ export default class FileDB extends DbProvider {
 
     async getExpressionsSimple(keywords: string[]): Promise<ExpressionInfoSimple[]> {
         const orWhere = keywords.map(e => {
-            return { expression: e.toLowerCase() }
+            return {expression: e.toLowerCase()}
         });
 
         const expressions = await this.tables
             .get(Tables.EXPRESSION)
             .find({$or: orWhere})
+            .sort({$created_at: -1})
             .exec() as ExpressionsTable[];
 
         const res: ExpressionInfoSimple[] = [];
@@ -229,30 +250,39 @@ export default class FileDB extends DbProvider {
 
         const storedPhrases = new Map<string, number>();
         (
-            await this.tables.get(Tables.EXPRESSION).find({
-                "t": WordType.PHRASE,
-            }).exec() as ExpressionsTable[]
+            await this.tables.get(Tables.EXPRESSION)
+                .find({
+                    "t": WordType.PHRASE,
+                })
+                .sort({$created_at: -1})
+                .exec() as ExpressionsTable[]
         ).forEach(expr => {
             storedPhrases.set(expr.expression, expr.status);
         });
 
-        const storedWords = (await this.tables.get(Tables.EXPRESSION).find({
-            "t": WordType.WORD,
-            "expression": payload.words,
-        }).exec() as ExpressionsTable[]).map(expr => {
-            return { text: expr.expression, status: expr.status } as Word;
+        const storedWords = (await this.tables.get(Tables.EXPRESSION)
+            .find({
+                "t": WordType.WORD,
+                "expression": payload.words,
+            })
+            .sort({$created_at: -1})
+            .exec() as ExpressionsTable[]).map(expr => {
+            return {text: expr.expression, status: expr.status} as Word;
         });
 
         const ac = await createAutomaton([...storedPhrases.keys()]);
         const searchedPhrases = (await ac.search(payload.article)).map(match => {
-            return { text: match[1], status: storedPhrases.get(match[1]), offset: match[0] } as Phrase;
+            return {text: match[1], status: storedPhrases.get(match[1]), offset: match[0]} as Phrase;
         });
 
-        return { words: storedWords, phrases: searchedPhrases };
+        return {words: storedWords, phrases: searchedPhrases};
     }
 
     async getTags(): Promise<string[]> {
-        const expressions = await this.tables.get(Tables.EXPRESSION).find({}).exec() as ExpressionsTable[];
+        const expressions = await this.tables.get(Tables.EXPRESSION)
+            .find({})
+            .sort({$created_at: -1})
+            .exec() as ExpressionsTable[];
 
         const tags: string[] = [];
         expressions.forEach(item => {
@@ -266,20 +296,25 @@ export default class FileDB extends DbProvider {
     async getExpression(keyword: string): Promise<ExpressionInfo> {
         keyword = keyword.toLowerCase();
         const expressions = await this.tables.get(Tables.EXPRESSION)
-            .find({ expression: keyword }).exec() as ExpressionsTable[];
+            .find({expression: keyword})
+            .sort({$created_at: -1})
+            .exec() as ExpressionsTable[];
 
         if (!expressions || expressions.length <= 0) {
             return null;
         }
 
+
         const expr = expressions[0];
         const orWhere = [];
         for (const sen of expr.sentences) {
-            orWhere.push({ _id: sen });
+            orWhere.push({_id: sen});
         }
         const sentences = await this.tables.get(Tables.SENTENCE).find({
             $or: orWhere
-        }).exec() as SentencesTable[];
+        })
+            .sort({$created_at: -1})
+            .exec() as SentencesTable[];
 
         return {
             expression: expr.expression,
@@ -303,14 +338,21 @@ export default class FileDB extends DbProvider {
 
     async postExpression(payload: ExpressionInfo): Promise<number> {
         let expression: ExpressionsTable | null = null;
-        const hasExists = await this.tables.get(Tables.EXPRESSION).find({
+        const hasExists = await this.tables.get(Tables.EXPRESSION)
+            .find({
             'expression': payload.expression
-        }).limit(1).exec() as ExpressionsTable[];
+        })
+            .sort({$created_at: -1})
+            .limit(1).exec() as ExpressionsTable[];
 
         // update sentences
         const sentences = new Set<string>();
         for (const sen of payload.sentences) {
-            const sens = await this.tables.get(Tables.SENTENCE).find({ text: sen.text }).exec() as SentencesTable[];
+            const sens = await this.tables.get(Tables.SENTENCE)
+                .find({text: sen.text})
+
+                .sort({$created_at: 1})
+                .exec() as SentencesTable[];
             let sentence = null;
             if (sens.length > 0) {
                 sentence = sens[0]
@@ -327,7 +369,7 @@ export default class FileDB extends DbProvider {
             meaning: payload.meaning,
             status: payload.status,
             t: payload.t,
-            tags: [... (new Set<string>(payload.tags).values())],
+            tags: [...(new Set<string>(payload.tags).values())],
             connections: [] as string[],
             notes: payload.notes,
             sentences: [...sentences.values()],
@@ -339,15 +381,8 @@ export default class FileDB extends DbProvider {
             expression = await this.tables.get(Tables.EXPRESSION).insert(data) as ExpressionsTable;
         } else {
             expression = hasExists[0]
-            this.tables.get(Tables.EXPRESSION).update({ _id: expression._id, }, { $set: data })
+            this.tables.get(Tables.EXPRESSION).update({_id: expression._id,}, {$set: data})
         }
-        console.log(
-            await this.tables.get(Tables.EXPRESSION).find({
-                'expression': payload.expression
-            }).limit(1).exec() as ExpressionsTable[],
-            expression,
-            payload
-        )
 
         return 200;
     }
@@ -369,7 +404,7 @@ export default class FileDB extends DbProvider {
                     sentences: [],
                     date: moment().unix(),
                 },
-            }, { exactObjectFind: true, upsert: true }));
+            }, {exactObjectFind: true, upsert: true}));
 
 
         });
@@ -380,7 +415,10 @@ export default class FileDB extends DbProvider {
     }
 
     async tryGetSen(text: string): Promise<Sentence> {
-        const stored = await this.tables.get(Tables.SENTENCE).find({ "text": text }).exec() as Sentence[];
+        const stored = await this.tables.get(Tables.SENTENCE)
+            .find({"text": text})
+            .sort({$created_at: 1})
+            .exec() as Sentence[];
         if (stored.length > 0) {
             return null;
         }
@@ -392,7 +430,8 @@ export default class FileDB extends DbProvider {
         const state = await this.tables.get(Tables.EXPRESSION).remove({
             expression: expression,
         })
-        
+        console.log(state, expression)
+
         return state > 0;
     }
 }

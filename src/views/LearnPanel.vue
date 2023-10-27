@@ -95,12 +95,12 @@
 <script setup lang="ts">
 import { Notice } from "obsidian";
 import {
-	ref,
-	onMounted,
-	onUnmounted,
-	getCurrentInstance,
-	computed,
-	CSSProperties,
+    ref,
+    onMounted,
+    onUnmounted,
+    getCurrentInstance,
+    computed,
+    CSSProperties, PropType, watch,
 } from "vue";
 import {
 	NForm,

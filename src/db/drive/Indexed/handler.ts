@@ -1,4 +1,4 @@
-import {moment, Plugin} from "obsidian";
+import {moment} from "obsidian";
 import {createAutomaton} from "ac-auto";
 import {exportDB, importInto} from "dexie-export-import";
 import download from "downloadjs";
@@ -15,13 +15,12 @@ import {
     WordCount,
     WordsPhrase,
     WordType
-} from "../../interface";
+} from "@/db/interface";
 import DbProvider from "../../base";
 import WordDB from "./idb";
 import Plugin from "@/plugin";
 import Dexie from "dexie";
 import * as console from "console";
-import {Set} from "immutable";
 
 export class IndexedDB extends DbProvider {
     idb: WordDB;
