@@ -182,9 +182,7 @@ watch(
     () => props.word,
     (newValue) => {
         // 防止重复
-        if (model.value.expression === null) {
-            model.value = JSON.parse(JSON.stringify(newValue))
-        }
+        model.value = JSON.parse(JSON.stringify(newValue))
     }
 )
 

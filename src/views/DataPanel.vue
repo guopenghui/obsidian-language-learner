@@ -30,7 +30,7 @@
             <NDataTable ref="table" size="small" :loading="loading" :data="data" :columns="collumns"
                         :row-key="makeRowKey" @update:checked-row-keys="handleCheck" :pagination="{ pageSize: 10 }"/>
         </NConfigProvider>
-        <LearnPanelModal @onChangeWord="onChangeWord" @on-change-show="onChangeShow" v-model:show="showWordModal" v-model:word="word"/>
+        <LearnPanelModal @onChangeWord="onChangeWord" @on-change-show="onChangeShow" :show="showWordModal" :word="word"/>
     </div>
 </template>
 
@@ -113,6 +113,15 @@ const onChangeWord = () => {
 }
 
 const onAddWord = () => {
+    word.value = {
+        expression: null,
+        meaning: null,
+        status: 0,
+        t: "WORD",
+        tags: [],
+        notes: [],
+        sentences: [],
+    };
     showWordModal.value = true;
 }
 
@@ -271,7 +280,6 @@ let collumns = reactive<DataTableColumns<Row>>([
                         secondary: true,
                         onClick: async () => {
                             word.value = await plugin.db.DB()?.getExpression(row.expr)
-                            console.log(word.value, row.expr)
                             showWordModal.value = true;
                         }
                     },
