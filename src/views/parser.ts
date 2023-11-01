@@ -133,13 +133,13 @@ export class TextParser {
         let p: number;
         while (
             (p = children.findIndex(
-                (child) =>
+                (child: any) =>
                     child.position.start.offset ===
                     this.phrases[this.pIdx].offset
             )) !== -1
         ) {
             let q = children.findIndex(
-                (child) =>
+                (child: any) =>
                     child.position.end.offset ===
                     this.phrases[this.pIdx].offset +
                     this.phrases[this.pIdx].text.length
