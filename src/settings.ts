@@ -6,7 +6,7 @@ import {t} from "./lang/helper";
 import {WarningModal, OpenFileModal} from "./modals"
 import {dicts} from "@dict/list";
 import store from "./store";
-import {DBDrive} from "./db/db";
+import {DBDrive} from "@/db/db";
 
 export interface MyPluginSettings {
     use_server: boolean;
@@ -55,6 +55,7 @@ export interface MyPluginSettings {
 export const DEFAULT_SETTINGS: MyPluginSettings = {
     port: 8086,
     host: "127.0.0.1",
+    use_server: false,
     use_https: false,
     api_key: "",
     self_server: false,
