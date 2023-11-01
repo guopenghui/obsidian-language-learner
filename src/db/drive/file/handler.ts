@@ -3,7 +3,7 @@ import {
     CountInfo,
     ExpressionInfo,
     ExpressionInfoSimple,
-    Phrase,
+    Phrase, ReviewWord,
     Sentence,
     Span,
     Word,
@@ -180,7 +180,7 @@ export default class FileDB extends DbProvider {
         }
     }
 
-    async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
+    async getExpressionAfter(time: string): Promise<ReviewWord[]> {
         const unixStamp = moment.utc(time).unix();
         const expressions = await this.tables.get(Tables.EXPRESSION)
             .find({
@@ -189,23 +189,39 @@ export default class FileDB extends DbProvider {
             })
             .sort({$created_at: -1})
             .exec() as ExpressionsTable[];
-        const res: ExpressionInfo[] = [];
+
+        const res: ReviewWord[] = [];
         for (const expr of expressions) {
             const orWhere = [];
-            console.log(expr.sentences)
+
             for (const sentence of expr.sentences) {
                 orWhere.push({_id: sentence});
             }
 
             let sentences: SentencesTable[] = []
             if (orWhere.length > 0) {
-                 sentences         = await this.tables.get(Tables.SENTENCE)
-                .find(orWhere)
-                .sort({$created_at: 1})
-                .exec() as SentencesTable[];
+                sentences = await this.tables.get(Tables.SENTENCE)
+                    .find({$or: orWhere})
+                    .sort({$created_at: 1})
+                    .exec() as SentencesTable[];
+            }
+
+            for (let item of sentences) {
+                res.push({
+                    title: expr.expression,
+                    expression: item.text.replace(expr.expression, `==${expr.expression}==`),
+                    meaning: item.trans,
+                    status: expr.status,
+                    t: WordType.PHRASE,
+                    notes: [],
+                    sentences: [],
+                    tags: expr.tags,
+                });
+                console.log(res)
             }
 
             res.push({
+                title: expr.expression,
                 expression: expr.expression,
                 meaning: expr.meaning,
                 status: expr.status,
@@ -340,8 +356,8 @@ export default class FileDB extends DbProvider {
         let expression: ExpressionsTable | null = null;
         const hasExists = await this.tables.get(Tables.EXPRESSION)
             .find({
-            'expression': payload.expression
-        })
+                'expression': payload.expression
+            })
             .sort({$created_at: -1})
             .limit(1).exec() as ExpressionsTable[];
 

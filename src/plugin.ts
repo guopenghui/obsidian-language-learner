@@ -1,40 +1,39 @@
 import {
-    Notice,
-    Plugin,
-    Menu,
-    WorkspaceLeaf,
-    ViewState,
-    MarkdownView,
     Editor,
-    TFile,
+    MarkdownView,
+    Menu,
     normalizePath,
+    Notice,
     Platform,
+    Plugin,
+    TFile,
+    ViewState,
+    WorkspaceLeaf,
 } from "obsidian";
-import { around } from "monkey-around";
-import { createApp, App as VueApp } from "vue";
+import {around} from "monkey-around";
+import {App as VueApp, createApp} from "vue";
 
-import { SearchPanelView, SEARCH_ICON, SEARCH_PANEL_VIEW } from "./views/SearchPanelView";
-import { READING_VIEW_TYPE, READING_ICON, ReadingView } from "./views/ReadingView";
-import { LearnPanelView, LEARN_ICON, LEARN_PANEL_VIEW } from "./views/LearnPanelView";
-import { StatView, STAT_ICON, STAT_VIEW_TYPE } from "./views/StatView";
-import { DataPanelView, DATA_ICON, DATA_PANEL_VIEW } from "./views/DataPanelView";
-import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
+import {SEARCH_ICON, SEARCH_PANEL_VIEW, SearchPanelView} from "./views/SearchPanelView";
+import {READING_ICON, READING_VIEW_TYPE, ReadingView} from "./views/ReadingView";
+import {LEARN_ICON, LEARN_PANEL_VIEW, LearnPanelView} from "./views/LearnPanelView";
+import {STAT_ICON, STAT_VIEW_TYPE, StatView} from "./views/StatView";
+import {DATA_ICON, DATA_PANEL_VIEW, DataPanelView} from "./views/DataPanelView";
+import {PDF_FILE_EXTENSION, PDFView, VIEW_TYPE_PDF} from "./views/PDFView";
 
-import { t } from "./lang/helper";
-import DbProvider from "./db/base";
-import { TextParser } from "./views/parser";
-import { FrontMatterManager } from "./utils/frontmatter";
+import {t} from "./lang/helper";
+import {TextParser} from "./views/parser";
+import {FrontMatterManager} from "./utils/frontmatter";
 import Server from "./api/server";
 
-import { DEFAULT_SETTINGS, MyPluginSettings, SettingTab } from "./settings";
+import {DEFAULT_SETTINGS, MyPluginSettings, SettingTab} from "./settings";
 import store from "./store";
-import { playAudio } from "./utils/helpers";
-import type { Position } from "./constant";
-import { InputModal } from "./modals"
+import {playAudio} from "./utils/helpers";
+import type {Position} from "./constant";
+import {InputModal} from "./modals"
 
 import Global from "./views/Global.vue";
-import { DbSingleton } from "./db/db";
-
+import {DbSingleton} from "./db/db";
+import {WordType} from "@/db/interface";
 
 
 export const FRONT_MATTER_KEY: string = "langr";
@@ -102,7 +101,7 @@ export default class LanguageLearner extends Plugin {
         );
 
         // 创建全局app用于各种浮动元素
-        this.appEl = document.body.createDiv({ cls: "langr-app" });
+        this.appEl = document.body.createDiv({cls: "langr-app"});
         this.vueApp = createApp(Global);
         this.vueApp.config.globalProperties.plugin = this;
         this.vueApp.mount(this.appEl);
@@ -251,7 +250,7 @@ export default class LanguageLearner extends Plugin {
                 state: leaf.view.getState(),
                 //popstate: true,
             } as ViewState,
-            { focus }
+            {focus}
         );
     }
 
@@ -369,13 +368,19 @@ export default class LanguageLearner extends Plugin {
                         (sen.trans ? sen.trans.trim() + "\n" : "") +
                         (sen.origin ? sen.origin.trim() : "")
                     );
-                }).join("\n").trim() + "\n";
+                }).join("\n").trim() + "\n\n";
+
+            let title = `## ${word.title} \n\n`;
+            if (word.t === WordType.PHRASE) {
+               title =  `## ${word.title}\n\n`;
+            }
 
             return (
                 `#word\n` +
-                `#### ${word.expression}\n` +
-                `${this.settings.review_delimiter}\n` +
-                `${word.meaning}\n` +
+                title+
+                `${word.expression}\n` +
+                `${this.settings.review_delimiter.repeat(2)}\n` +
+                `${word.meaning}\n\n` +
                 `${notes}` +
                 `${sentences}` +
                 (oldRecord[word.expression] ? oldRecord[word.expression] + "\n" : "")
@@ -410,7 +415,9 @@ export default class LanguageLearner extends Plugin {
                         m.addItem((item) => {
                             item.setTitle(t("Open as Reading View"))
                                 .setIcon(READING_ICON)
-                                .onClick(() => { pluginSelf.setReadingView(this.leaf); });
+                                .onClick(() => {
+                                    pluginSelf.setReadingView(this.leaf);
+                                });
                         });
 
                         next.call(this, m);
@@ -469,7 +476,7 @@ export default class LanguageLearner extends Plugin {
         }
 
         dispatchEvent(new CustomEvent('obsidian-langr-search', {
-            detail: { selection: word, target, evtPosition }
+            detail: {selection: word, target, evtPosition}
         }));
 
         if (this.settings.auto_pron) {
@@ -535,7 +542,7 @@ export default class LanguageLearner extends Plugin {
                 if (!selection) return;
 
                 evt.stopImmediatePropagation();
-                this.queryWord(selection, null, { x: evt.pageX, y: evt.pageY });
+                this.queryWord(selection, null, {x: evt.pageX, y: evt.pageY});
                 return;
             }
         });

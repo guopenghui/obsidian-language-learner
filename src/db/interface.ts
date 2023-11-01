@@ -62,12 +62,25 @@ interface WordCount {
     accumulated: number[];
 }
 
+interface ReviewWord {
+    title: string;
+    expression: string;
+    meaning: string;
+    status: number;
+    t: string;
+    tags: string[];
+    notes: string[];
+    sentences: Sentence[];
+}
+
 export enum WordType {
     WORD = 'WORD',
     PHRASE = 'PHRASE'
 }
 
+
 export type {
     ArticleWords, Word, Phrase, WordsPhrase, Sentence,
     ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span,
+    ReviewWord
 };

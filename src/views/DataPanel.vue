@@ -127,7 +127,7 @@ const onAddWord = () => {
 
 const expressions = async () => {
     loading.value = true;
-    let rawData = await plugin.db.DB().getAllExpressionSimple(false);
+    let rawData = await plugin.db.DB().getAllExpressionSimple(true);
     data.value = rawData.map((entry, i): Row => {
         return {
             expr: entry.expression,
