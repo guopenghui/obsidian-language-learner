@@ -1,20 +1,31 @@
-import { moment } from "obsidian";
-import { createAutomaton, Automaton } from "ac-auto";
-import { exportDB, importInto } from "dexie-export-import";
+import {moment} from "obsidian";
+import {createAutomaton} from "ac-auto";
+import {exportDB, importInto} from "dexie-export-import";
 import download from "downloadjs";
 
 import {
-    ArticleWords, Word, Phrase, WordsPhrase, Sentence,
-    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
-} from "./interface";
-import DbProvider from "./base";
+    ArticleWords,
+    CountInfo,
+    ExpressionInfo,
+    ExpressionInfoSimple,
+    Phrase, ReviewWord,
+    Sentence,
+    Span,
+    Word,
+    WordCount,
+    WordsPhrase,
+    WordType
+} from "@/db/interface";
+import DbProvider from "../../base";
 import WordDB from "./idb";
 import Plugin from "@/plugin";
+import Dexie from "dexie";
+import * as console from "console";
 
-
-export class LocalDb extends DbProvider {
+export class IndexedDB extends DbProvider {
     idb: WordDB;
     plugin: Plugin;
+
     constructor(plugin: Plugin) {
         super();
         this.plugin = plugin;
@@ -38,18 +49,18 @@ export class LocalDb extends DbProvider {
             .each(expr => storedPhrases.set(expr.expression, expr.status));
 
         let storedWords = (await this.idb.expressions
-            .where("expression").anyOf(payload.words)
-            .toArray()
+                .where("expression").anyOf(payload.words)
+                .toArray()
         ).map(expr => {
-            return { text: expr.expression, status: expr.status } as Word;
+            return {text: expr.expression, status: expr.status} as Word;
         });
 
         let ac = await createAutomaton([...storedPhrases.keys()]);
         let searchedPhrases = (await ac.search(payload.article)).map(match => {
-            return { text: match[1], status: storedPhrases.get(match[1]), offset: match[0] } as Phrase;
+            return {text: match[1], status: storedPhrases.get(match[1]), offset: match[0]} as Phrase;
         });
 
-        return { words: storedWords, phrases: searchedPhrases };
+        return {words: storedWords, phrases: searchedPhrases};
     }
 
     async getExpression(expression: string): Promise<ExpressionInfo> {
@@ -62,7 +73,7 @@ export class LocalDb extends DbProvider {
         }
 
         let sentences = await this.idb.sentences
-            .where("id").anyOf([...expr.sentences.values()])
+            .where("id").anyOf(expr.sentences)
             .toArray();
 
         return {
@@ -70,9 +81,9 @@ export class LocalDb extends DbProvider {
             meaning: expr.meaning,
             status: expr.status,
             t: expr.t,
-            notes: expr.notes,
+            notes: expr.notes as string[],
             sentences,
-            tags: [...expr.tags.keys()],
+            tags: expr.tags,
         };
 
     }
@@ -91,57 +102,73 @@ export class LocalDb extends DbProvider {
                 meaning: v.meaning,
                 status: v.status,
                 t: v.t,
-                tags: [...v.tags.keys()],
-                sen_num: v.sentences.size,
+                tags: v.tags,
+                sen_num: v.sentences.length,
                 note_num: v.notes.length,
                 date: v.date
             };
         });
     }
 
-    async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
+    async getExpressionAfter(time: string): Promise<ReviewWord[]> {
         let unixStamp = moment.utc(time).unix();
         let wordsAfter = await this.idb.expressions
             .where("status").above(0)
             .and(expr => expr.date > unixStamp)
             .toArray();
 
-        let res: ExpressionInfo[] = [];
+        let res: ReviewWord[] = [];
         for (let expr of wordsAfter) {
             let sentences = await this.idb.sentences
-                .where("id").anyOf([...expr.sentences.values()])
+                .where("id").anyOf(expr.sentences)
                 .toArray();
 
+            for (let item of sentences) {
+                res.push({
+                    title: expr.expression,
+                    expression: item.text.replace(expr.expression, `==${expr.expression}==`),
+                    meaning: item.trans,
+                    status: expr.status,
+                    t: WordType.PHRASE,
+                    notes: [],
+                    sentences: [],
+                    tags: expr.tags,
+                });
+            }
+
             res.push({
+                title: expr.expression,
                 expression: expr.expression,
                 meaning: expr.meaning,
                 status: expr.status,
                 t: expr.t,
-                notes: expr.notes,
+                notes: expr.notes as string[],
                 sentences,
-                tags: [...expr.tags.keys()],
+                tags: expr.tags,
             });
         }
         return res;
     }
+
     async getAllExpressionSimple(ignores?: boolean): Promise<ExpressionInfoSimple[]> {
         let exprs: ExpressionInfoSimple[];
         let bottomStatus = ignores ? -1 : 0;
         exprs = (await this.idb.expressions
-            .where("status").above(bottomStatus)
-            .toArray()
+                .where("status").above(bottomStatus)
+                .toArray()
         ).map((expr): ExpressionInfoSimple => {
             return {
                 expression: expr.expression,
                 status: expr.status,
                 meaning: expr.meaning,
                 t: expr.t,
-                tags: [...expr.tags.keys()],
+                tags: expr.tags,
                 note_num: expr.notes.length,
-                sen_num: expr.sentences.size,
+                sen_num: expr.sentences.length,
                 date: expr.date,
             };
         });
+        console.log(exprs, 111)
 
         return exprs;
     }
@@ -155,8 +182,8 @@ export class LocalDb extends DbProvider {
         for (let sen of payload.sentences) {
             let searched = await this.idb.sentences.where("text").equals(sen.text).first();
             if (searched) {
-                await this.idb.sentences.update(searched.id, sen);
-                sentences.add(searched.id);
+                await this.idb.sentences.update(searched._id as number, sen);
+                sentences.add(searched._id as number);
             } else {
                 let id = await this.idb.sentences.add(sen);
                 sentences.add(id);
@@ -169,13 +196,14 @@ export class LocalDb extends DbProvider {
             status: payload.status,
             t: payload.t,
             notes: payload.notes,
-            sentences,
-            tags: new Set<string>(payload.tags),
-            connections: new Map<string, string>(),
-            date: moment().unix()
+            sentences: [...sentences.values()],
+            tags: [...(new Set<string>(payload.tags).values())],
+            connections: [] as string[],
+            date: moment().unix(),
         };
+
         if (stored) {
-            await this.idb.expressions.update(stored.id, updatedWord);
+            await this.idb.expressions.update(stored._id as number, updatedWord);
         } else {
             await this.idb.expressions.add(updatedWord);
         }
@@ -186,7 +214,7 @@ export class LocalDb extends DbProvider {
     async getTags(): Promise<string[]> {
         let allTags = new Set<string>();
         await this.idb.expressions.each(expr => {
-            for (let t of expr.tags.values()) {
+            for (let t of expr.tags) {
                 allTags.add(t);
             }
         });
@@ -202,11 +230,11 @@ export class LocalDb extends DbProvider {
                     expression: expr,
                     meaning: "",
                     status: 0,
-                    t: "WORD",
+                    t: WordType.WORD,
                     notes: [],
-                    sentences: new Set(),
-                    tags: new Set(),
-                    connections: new Map<string, string>(),
+                    sentences: [],
+                    tags: [],
+                    connections: [],
                     date: moment().unix()
                 };
             })
@@ -225,7 +253,7 @@ export class LocalDb extends DbProvider {
             "PHRASE": new Array(5).fill(0),
         };
         await this.idb.expressions.each(expr => {
-            counts[expr.t as "WORD" | "PHRASE"][expr.status]++;
+            counts[expr.t as WordType][expr.status]++;
         });
 
         return {
@@ -252,7 +280,7 @@ export class LocalDb extends DbProvider {
             // 当日
             let today = new Array(5).fill(0);
             await this.idb.expressions.filter(expr => {
-                return expr.t == "WORD" &&
+                return expr.t == WordType.WORD &&
                     expr.date >= span.from &&
                     expr.date <= span.to;
             }).each(expr => {
@@ -261,13 +289,13 @@ export class LocalDb extends DbProvider {
             // 累计
             let accumulated = new Array(5).fill(0);
             await this.idb.expressions.filter(expr => {
-                return expr.t == "WORD" &&
+                return expr.t == WordType.WORD &&
                     expr.date <= span.to;
             }).each(expr => {
                 accumulated[expr.status]++;
             });
 
-            res.push({ today, accumulated });
+            res.push({today, accumulated});
         }
 
         return res;
@@ -292,6 +320,13 @@ export class LocalDb extends DbProvider {
 
     async destroyAll() {
         return this.idb.delete();
+    }
+
+    async removeExpression(expression: string): Promise<boolean> {
+        const state = await this.idb.expressions
+            .where("expression").equals(expression).delete();
+
+        return state > 0
     }
 }
 

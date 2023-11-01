@@ -117,7 +117,9 @@ export default {
 
 
     "IndexDB Database": "IndexDB 資料庫",
+    "Database Type": "資料庫类型",
     "Database Name": "資料庫名稱",
+    "Database Dir": "Database Dir",
     "Reopen": "重啟",
     // "Change": "Change",
     "Reopen DB after changing database name": "切換資料庫後點擊按鈕重啟資料庫",

@@ -41,7 +41,7 @@ export class TextParser {
             if (/[0-9\u4e00-\u9fa5]/.test(text)) return;
             wordSet.add(text);
         });
-        let stored = await this.plugin.db.getStoredWords({
+        let stored = await this.plugin.db.DB().getStoredWords({
             article: "",
             words: [...wordSet],
         });
@@ -60,7 +60,7 @@ export class TextParser {
 
         // 查找文本中的已知词组，用于构造ast中的PhraseNode
         this.phrases = (
-            await this.plugin.db.getStoredWords({
+            await this.plugin.db.DB().getStoredWords({
                 article: text.toLowerCase(),
                 words: [],
             })
@@ -75,7 +75,7 @@ export class TextParser {
         });
 
         // 查询这些单词的status
-        let stored = await this.plugin.db.getStoredWords({
+        let stored = await this.plugin.db.DB().getStoredWords({
             article: "",
             words: [...wordSet],
         });
@@ -92,7 +92,7 @@ export class TextParser {
         visit(ast, "WordNode", (word) => {
             words.add(toString(word).toLowerCase());
         });
-        let wordsPhrases = await this.plugin.db.getStoredWords({
+        let wordsPhrases = await this.plugin.db.DB().getStoredWords({
             article: text.toLowerCase(),
             words: [...words],
         });
@@ -105,7 +105,7 @@ export class TextParser {
             if (word.status > 0) payload.push(word.text);
         });
 
-        let res = await this.plugin.db.getExpressionsSimple(payload);
+        let res = await this.plugin.db.DB().getExpressionsSimple(payload);
         return res;
     }
 
@@ -134,13 +134,13 @@ export class TextParser {
         let p: number;
         while (
             (p = children.findIndex(
-                (child) =>
+                (child: any) =>
                     child.position.start.offset ===
                     this.phrases[this.pIdx].offset
             )) !== -1
         ) {
             let q = children.findIndex(
-                (child) =>
+                (child: any) =>
                     child.position.end.offset ===
                     this.phrases[this.pIdx].offset +
                     this.phrases[this.pIdx].text.length

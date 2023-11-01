@@ -12,6 +12,11 @@ export default {
 
     // DataPanelView.ts
     "Data Panel": "Data Panel",
+    "Success": "success",
+    "Fail": "fail",
+    "Edit": "edit",
+    "Remove": "remove",
+    "Cancel": "cancel",
 
 
     // SearchPanelView.ts
@@ -130,7 +135,9 @@ export default {
 
 
     "IndexDB Database": "IndexDB Database",
+    "Database Type": "Database Type",
     "Database Name": "Database Name",
+    "Database Dir": "Database Dir",
     "Reopen": "Reopen",
     // "Change": "Change",
     "Reopen DB after changing database name": "Reopen app after switch database(when change database name)",

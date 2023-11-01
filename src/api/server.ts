@@ -88,7 +88,7 @@ export default class Server {
             }
             case "LOAD": {
                 let data = await this.parseData(req, res);
-                let expr = await this.plugin.db.getExpression(data);
+                let expr = await this.plugin.db.DB().getExpression(data);
                 res.setHeader('Content-type', mimeType[".json"]);
                 res.statusCode = 200;
                 res.end(JSON.stringify(expr));
@@ -96,7 +96,7 @@ export default class Server {
             }
             case "STORE": {
                 let data = await this.parseData(req, res);
-                await this.plugin.db.postExpression(data);
+                await this.plugin.db.DB().postExpression(data);
                 res.statusCode = 200;
                 res.end();
                 if (this.plugin.settings.auto_refresh_db) {
@@ -105,7 +105,7 @@ export default class Server {
                 break;
             }
             case "TAG": {
-                let tags = await this.plugin.db.getTags();
+                let tags = await this.plugin.db.DB().getTags();
                 res.setHeader('Content-type', mimeType[".json"]);
                 res.statusCode = 200;
                 res.end(JSON.stringify(tags));

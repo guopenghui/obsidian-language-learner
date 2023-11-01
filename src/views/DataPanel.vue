@@ -1,11 +1,19 @@
 <template>
     <div id="langr-data">
         <NConfigProvider :theme="theme" :theme-overrides="themeConfig">
-            <div style="display:flex; align-items:center;">
+            <NSpace justify="end">
+                <NButton @click="onAddWord" strong secondary type="info">
+                    {{ t("Learning New Words") }}
+                </NButton>
+                <NButton @click="expressions" strong secondary type="info">
+                    {{ t("Refresh Word Database") }}
+                </NButton>
+            </NSpace>
+            <NSpace style="margin: 10px 0; display: grid; grid-template-columns: auto  2fr;" align="center">
                 <span
                     style="display: inline-block; width: 70px; font-size: 1.2em; font-weight: bold; margin-right: 15px;">Search:</span>
-                <NInput size="small" v-model:value="searchText" />
-            </div>
+                <NInput size="small" v-model:value="searchText"/>
+            </NSpace>
             <NSpace style="margin: 10px 0;" align="center">
                 <span
                     style="display: inline-block; width: 70px; font-size: 1.2em; font-weight: bold; margin-right: 5px;">
@@ -20,13 +28,14 @@
                 </NTag>
             </NSpace>
             <NDataTable ref="table" size="small" :loading="loading" :data="data" :columns="collumns"
-                :row-key="makeRowKey" @update:checked-row-keys="handleCheck" :pagination="{ pageSize: 10 }" />
+                        :row-key="makeRowKey" @update:checked-row-keys="handleCheck" :pagination="{ pageSize: 10 }"/>
         </NConfigProvider>
+        <LearnPanelModal @onChangeWord="onChangeWord" @on-change-show="onChangeShow" :show="showWordModal" :word="word"/>
     </div>
 </template>
 
 <script setup lang="ts">
-import { moment } from "obsidian";
+import {moment, Notice} from "obsidian";
 import {
     h,
     ref,
@@ -46,11 +55,13 @@ import {
     darkTheme,
     NSpace,
     NInput,
+    NButton,
 } from "naive-ui";
-import { t } from "@/lang/helper";
+import {t} from "@/lang/helper";
 
-import type { DataTableColumns, DataTableRowKey } from "naive-ui";
+import type {DataTableColumns, DataTableRowKey} from "naive-ui";
 import type PluginType from "@/plugin";
+import LearnPanelModal from "@/views/LearnPanelModal.vue";
 
 const WordMore = defineAsyncComponent(() => import("@comp/WordMore.vue"));
 
@@ -64,11 +75,12 @@ const themeConfig: GlobalThemeOverrides = {
     },
 };
 
+const loading = ref(true);
+
 // 切换明亮/黑暗模式
 const theme = computed(() => {
     return plugin.store.dark ? darkTheme : null;
 });
-
 
 interface Row {
     expr: string;
@@ -80,6 +92,9 @@ interface Row {
     noteNum: number;
 }
 
+const showWordModal = ref(false);
+const word = ref({})
+
 const statusMap = [
     t("Ignore"),
     t("Learning"),
@@ -88,10 +103,31 @@ const statusMap = [
     t("Learned"),
 ];
 
+// 改变显示新增显示状态
+const onChangeShow = (state: boolean) => {
+    showWordModal.value = state
+}
 
-let loading = ref(true);
-watchEffect(async () => {
-    let rawData = await plugin.db.getAllExpressionSimple(false);
+const onChangeWord = () => {
+    expressions()
+}
+
+const onAddWord = () => {
+    word.value = {
+        expression: null,
+        meaning: null,
+        status: 0,
+        t: "WORD",
+        tags: [],
+        notes: [],
+        sentences: [],
+    };
+    showWordModal.value = true;
+}
+
+const expressions = async () => {
+    loading.value = true;
+    let rawData = await plugin.db.DB().getAllExpressionSimple(true);
     data.value = rawData.map((entry, i): Row => {
         return {
             expr: entry.expression,
@@ -103,10 +139,12 @@ watchEffect(async () => {
             date: moment.unix(entry.date).format("YYYY-MM-DD"),
         };
     });
-    tags.value = await plugin.db.getTags();
+    tags.value = await plugin.db.DB().getTags();
     checkedTags.value = Array(tags.value.length).map((_) => false);
     loading.value = false;
-});
+}
+
+watchEffect(expressions);
 
 let data = ref<Row[]>([]);
 
@@ -134,6 +172,7 @@ watch(searchText, (text) => {
 // 选中行
 let rowKeysRef = ref<DataTableRowKey[]>([]);
 let makeRowKey = (row: Row) => row.expr;
+
 function handleCheck(rowKeys: DataTableRowKey[]) {
     rowKeysRef.value = rowKeys;
 }
@@ -147,7 +186,7 @@ let collumns = reactive<DataTableColumns<Row>>([
         expandable: (row: Row) => row.noteNum + row.senNum > 0,
         renderExpand: (row: Row) => {
             return h(Suspense, [
-                h(WordMore, { word: row.expr })
+                h(WordMore, {word: row.expr})
             ]);
         },
     },
@@ -155,34 +194,20 @@ let collumns = reactive<DataTableColumns<Row>>([
     {
         title: "Expr",
         key: "expr",
-        sorter: "default",
+        // sorter: "default",
+        minWidth: "80",
         filter(_, row) {
             if (!searchText.value) return true;
 
             return row.expr.contains(searchText.value);
         }
     },
-    // 学习状态
-    {
-        title: "Status",
-        key: "status",
-        width: "70",
-        defaultFilterOptionValues: statusMap.slice(1),
-        filterOptions: [
-            { label: t("Ignore"), value: t("Ignore") },
-            { label: t("Learning"), value: t("Learning") },
-            { label: t("Familiar"), value: t("Familiar") },
-            { label: t("Known"), value: t("Known") },
-            { label: t("Learned"), value: t("Learned") },
-        ],
-        filter(value, row) {
-            return row.status === value;
-        },
-    },
     // 含义
     {
         title: "Meaning",
         key: "meaning",
+        align: "left",
+        minWidth: 140,
     },
     // 标签
     {
@@ -193,11 +218,11 @@ let collumns = reactive<DataTableColumns<Row>>([
                 h(
                     NTag,
                     {
-                        style: { marginRight: "6px" },
+                        style: {marginRight: "6px"},
                         type: "info",
-                        size: "tiny",
+                        size: "small",
                     },
-                    { default: () => tag }
+                    {default: () => tag}
                 )
             );
         },
@@ -210,12 +235,58 @@ let collumns = reactive<DataTableColumns<Row>>([
                 : selectedTags.value.some((tag) => row.tags.contains(tag));
         },
     },
+    // 学习状态
+    {
+        title: "Status",
+        key: "status",
+        maxWidth: 100,
+        minWidth: 90,
+        defaultFilterOptionValues: statusMap.slice(1),
+        filterOptions: [
+            {label: t("Ignore"), value: t("Ignore")},
+            {label: t("Learning"), value: t("Learning")},
+            {label: t("Familiar"), value: t("Familiar")},
+            {label: t("Known"), value: t("Known")},
+            {label: t("Learned"), value: t("Learned")},
+        ],
+        filter(value, row) {
+            return row.status === value;
+        },
+    },
     // 修改日期
     {
         title: "Date",
         key: "date",
+        maxWidth: 100,
+        align: "center",
         sorter(row1, row2) {
             return moment.utc(row1.date).unix() - moment.utc(row2.date).unix();
+        },
+    },
+    // 操作
+    {
+        title: "Action",
+        key: "action",
+        maxWidth: 100,
+        align: "center",
+        render(row) {
+            return [
+                h(
+                    NButton,
+                    {
+                        type: "info",
+                        size: "small",
+                        strong: true,
+                        secondary: true,
+                        onClick: async () => {
+                            word.value = await plugin.db.DB()?.getExpression(row.expr)
+                            showWordModal.value = true;
+                        }
+                    },
+                    {default: () => t("Edit")}
+                ),
+
+            ];
         },
     },
 ]);

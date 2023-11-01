@@ -12,6 +12,12 @@ export default {
 
     // DataPanelView.ts
     "Data Panel": "单词列表",
+    "Edit": "编辑",
+
+    "Remove": "移除",
+    "Cancel": "取消",
+    "Success": "成功",
+    "Fail": "失败",
 
     // SearchPanelView.ts
     "Search Panel": "查词面板",
@@ -129,7 +135,9 @@ export default {
 
 
     "IndexDB Database": "IndexDB 数据库",
+    "Database Type": "数据库类型",
     "Database Name": "数据库名称",
+    "Database Dir": "数据库目录",
     "Reopen": "重启",
     // "Change": "Change",
     "Reopen DB after changing database name": "切换数据库后点击按钮重启数据库",
