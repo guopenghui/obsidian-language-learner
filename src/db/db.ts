@@ -1,8 +1,8 @@
 import DbProvider from "./base";
-import { WebDb } from "./drive/api/handler";
+import {WebDb} from "./drive/api/handler";
 import Plugin from "@/plugin";
 import FileDB from "./drive/file/handler";
-import { IndexedDB } from "./drive/Indexed/handler";
+import {IndexedDB} from "./drive/Indexed/handler";
 
 export class DbSingleton {
     private connects: Map<string, DbProvider> = new Map();
@@ -67,7 +67,12 @@ export class DbSingleton {
     private register(drive: string): DbProvider {
         switch (drive) {
             case DBDrive.API:
-                return new WebDb(this.plugin.settings.port);
+                return new WebDb(
+                    this.plugin.settings.host,
+                    this.plugin.settings.port,
+                    this.plugin.settings.use_https,
+                    this.plugin.settings.api_key
+                );
             case DBDrive.FILE:
                 return new FileDB(this.plugin);
             case DBDrive.INDEXED:

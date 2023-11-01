@@ -75,6 +75,12 @@ export default {
     // settings
     "Use Server": "Use Server",
     "Use a seperated backend server": "Use a seperated backend server(Only for developer now)",
+    "Use https": "Use https",
+    "Be sure your server enabled https": "Be sure your server enabled https",
+    "Api Key": "Api Key",
+    "Input your api-key for authentication": "Input your api-key for authentication",
+    "Server Host": "Server Host",
+    "Your server's host name (like 11.11.11.11 or baidu.com)": "Your server's host name (like 11.11.11.11 or baidu.com)",
     "Server Port": "Server Port",
     'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
         'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server',

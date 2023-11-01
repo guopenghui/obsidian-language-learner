@@ -67,6 +67,7 @@ export class TextParser {
         ).phrases;
 
         const ast = this.processor.parse(text);
+
         // 获得文章中去重后的单词
         let wordSet: Set<string> = new Set();
         visit(ast, "WordNode", (word) => {
