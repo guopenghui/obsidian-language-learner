@@ -8,7 +8,7 @@ import {
     CountInfo,
     ExpressionInfo,
     ExpressionInfoSimple,
-    Phrase,
+    Phrase, ReviewWord,
     Sentence,
     Span,
     Word,
@@ -110,20 +110,34 @@ export class IndexedDB extends DbProvider {
         });
     }
 
-    async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
+    async getExpressionAfter(time: string): Promise<ReviewWord[]> {
         let unixStamp = moment.utc(time).unix();
         let wordsAfter = await this.idb.expressions
             .where("status").above(0)
             .and(expr => expr.date > unixStamp)
             .toArray();
 
-        let res: ExpressionInfo[] = [];
+        let res: ReviewWord[] = [];
         for (let expr of wordsAfter) {
             let sentences = await this.idb.sentences
                 .where("id").anyOf(expr.sentences)
                 .toArray();
 
+            for (let item of sentences) {
+                res.push({
+                    title: expr.expression,
+                    expression: item.text.replace(expr.expression, `==${expr.expression}==`),
+                    meaning: item.trans,
+                    status: expr.status,
+                    t: WordType.PHRASE,
+                    notes: [],
+                    sentences: [],
+                    tags: expr.tags,
+                });
+            }
+
             res.push({
+                title: expr.expression,
                 expression: expr.expression,
                 meaning: expr.meaning,
                 status: expr.status,

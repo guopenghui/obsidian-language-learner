@@ -217,7 +217,6 @@ export default class FileDB extends DbProvider {
                     sentences: [],
                     tags: expr.tags,
                 });
-                console.log(res)
             }
 
             res.push({

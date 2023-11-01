@@ -3,7 +3,7 @@ import {
     ArticleWords,
     CountInfo,
     ExpressionInfo,
-    ExpressionInfoSimple,
+    ExpressionInfoSimple, ReviewWord,
     Sentence,
     Span,
     WordCount,
@@ -86,7 +86,7 @@ export class WebDb extends DbProvider {
 
 
     // 获取某一时间之后的所有单词的详细信息
-    async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
+    async getExpressionAfter(time: string): Promise<ReviewWord[]> {
         let unixStamp = moment.utc(time).unix();
         let request: RequestUrlParam = {
             url: `http://localhost:${this.port}/words/after`,
