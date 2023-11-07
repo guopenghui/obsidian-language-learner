@@ -79,7 +79,7 @@ import {
     NInput,
     GlobalThemeOverrides,
 } from "naive-ui";
-import { MarkdownRenderer, Platform } from "obsidian";
+import { MarkdownRenderer, Platform, TFile } from "obsidian";
 import PluginType from "@/plugin";
 import { t } from "@/lang/helper";
 import { useEvent } from "@/utils/use";
@@ -107,10 +107,11 @@ const themeConfig: GlobalThemeOverrides = {
 
 let frontMatter = plugin.app.metadataCache.getFileCache(view.file).frontmatter;
 let audioSource = (frontMatter["langr-audio"] || "") as string;
-if (audioSource && audioSource.startsWith("~/")) {
-    const prefix = Platform.isDesktopApp ? "app://local/" : "http://localhost/_capacitor_file_";
-    audioSource =
-        prefix + plugin.constants.basePath + audioSource.slice(1);
+let file = plugin.app.vault.getAbstractFileByPath(audioSource);
+if (file instanceof TFile) {
+    audioSource = plugin.app.vault.getResourcePath(file);
+} else {
+    console.error('The file does not exist at the given path:', audioSource);
 }
 
 // 记笔记
