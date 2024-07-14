@@ -20,7 +20,17 @@
 
 ### 功能图片
 
+
+
+设置选项
+
+
+
 ![设置选项](https://image.asa-world.cn/pic/image-20240713195337707.png)
+
+
+
+MD渲染
 
 
 
@@ -28,13 +38,23 @@
 
 
 
+添加单词变形
+
+
+
 ![添加单词变形](https://image.asa-world.cn/pic/image-20240714205300740.png)
+
+
+
+单词文件
 
 
 
 ![单词文件](https://image.asa-world.cn/pic/image-20240714205427907.png)
 
 
+
+关系图谱
 
 
 
