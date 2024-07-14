@@ -9,9 +9,11 @@ import {
     TFile,
     normalizePath,
     Platform,
+    moment,
+    MetadataCache,
 } from "obsidian";
 import { around } from "monkey-around";
-import { createApp, App as VueApp } from "vue";
+import { createApp, App as VueApp,getCurrentInstance } from "vue";
 
 import { SearchPanelView, SEARCH_ICON, SEARCH_PANEL_VIEW } from "./views/SearchPanelView";
 import { READING_VIEW_TYPE, READING_ICON, ReadingView } from "./views/ReadingView";
@@ -24,7 +26,8 @@ import { t } from "./lang/helper";
 import DbProvider from "./db/base";
 import { WebDb } from "./db/web_db";
 import { LocalDb } from "./db/local_db";
-import { TextParser } from "./views/parser";
+import { FileDb } from "./db/file_db";
+import { TextParser,state } from "./views/parser";
 import { FrontMatterManager } from "./utils/frontmatter";
 import Server from "./api/server";
 
@@ -36,9 +39,24 @@ import { InputModal } from "./modals"
 
 import Global from "./views/Global.vue";
 
-
+import {
+    ArticleWords, Word, Phrase, WordsPhrase, Sentence,
+    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
+} from "./db/interface";
+import { ignorableWatch } from "@vueuse/core";
 
 export const FRONT_MATTER_KEY: string = "langr";
+
+export var imgnum: string = localStorage.getItem('imgnum') || '';
+
+
+const statusMap = [
+    t("Ignore"),
+    t("Learning"),
+    t("Familiar"),
+    t("Known"),
+    t("Learned"),
+];
 
 export default class LanguageLearner extends Plugin {
     constants: { basePath: string; platform: "mobile" | "desktop"; };
@@ -51,8 +69,7 @@ export default class LanguageLearner extends Plugin {
     markdownButtons: Record<string, HTMLElement> = {};
     frontManager: FrontMatterManager;
     store: typeof store = store;
-
-    async onload() {
+     async onload() {
         // 读取设置
         await this.loadSettings();
         this.addSettingTab(new SettingTab(this.app, this));
@@ -60,9 +77,10 @@ export default class LanguageLearner extends Plugin {
         this.registerConstants();
 
         // 打开数据库
-        this.db = this.settings.use_server
-            ? new WebDb(this.settings.port)
-            : new LocalDb(this);
+        this.db = await this.openDB();
+        // this.settings.use_server
+        //     ? new WebDb(this.settings.port)
+        //     : new LocalDb(this);
         await this.db.open();
 
         // 设置解析器
@@ -104,6 +122,16 @@ export default class LanguageLearner extends Plugin {
         this.vueApp = createApp(Global);
         this.vueApp.config.globalProperties.plugin = this;
         this.vueApp.mount(this.appEl);
+    }
+
+    async openDB(){
+        if(this.settings.use_server){
+            return new WebDb(this.settings.port)
+        }else if(this.settings.only_fileDB){
+            return new FileDb(this);
+        }else{
+            return new LocalDb(this);
+        }
     }
 
     async onunload() {
@@ -242,6 +270,9 @@ export default class LanguageLearner extends Plugin {
         });
     }
 
+
+
+
     async setMarkdownView(leaf: WorkspaceLeaf, focus: boolean = true) {
         await leaf.setViewState(
             {
@@ -259,6 +290,7 @@ export default class LanguageLearner extends Plugin {
             state: leaf.view.getState(),
             //popstate: true,
         } as ViewState);
+        
     }
 
     async refreshTextDB() {
@@ -291,13 +323,6 @@ export default class LanguageLearner extends Plugin {
             classified[word.status].push(i);
         });
 
-        const statusMap = [
-            t("Ignore"),
-            t("Learning"),
-            t("Familiar"),
-            t("Known"),
-            t("Learned"),
-        ];
 
         let del = this.settings.col_delimiter;
 
@@ -408,7 +433,13 @@ export default class LanguageLearner extends Plugin {
                         m.addItem((item) => {
                             item.setTitle(t("Open as Reading View"))
                                 .setIcon(READING_ICON)
-                                .onClick(() => { pluginSelf.setReadingView(this.leaf); });
+                                .onClick(async () => { 
+                                    processContent();
+                                    await pluginSelf.setReadingView(this.leaf);
+                                    await fetchData();                                   
+                                    processContent();
+                                });
+                                    
                         });
 
                         next.call(this, m);
@@ -432,8 +463,11 @@ export default class LanguageLearner extends Plugin {
                                             (this.view as MarkdownView).addAction(
                                                 "view",
                                                 t("Open as Reading View"),
-                                                () => {
-                                                    pluginSelf.setReadingView(this);
+                                                async ()  => {
+                                                    processContent();
+                                                    await pluginSelf.setReadingView(this);
+                                                    await fetchData();                                   
+                                                    processContent();
                                                 }
                                             );
                                         pluginSelf.markdownButtons["reading"].addClass("change-to-reading");
@@ -610,4 +644,285 @@ export default class LanguageLearner extends Plugin {
             this.app.workspace.getLeavesOfType(VIEW_TYPE)[0]
         );
     }
+
+
+    async checkPath(){
+        if(this.settings.word_folder&&this.settings.use_fileDB){
+        try{
+            await app.vault.createFolder(this.settings.word_folder);
+        }catch(err){};}
+    }
+
+    async createWordfiles(words:string[]){
+        await this.checkPath();
+        var path = this.settings.word_folder;
+        let info = await this.db.getExprall(words); //单词所有信息
+        //this.createMd(exprs,this.plugin.settings.word_folder,cont); 
+        for (const str of words) {
+            if (path[path.length - 1] === '/') {
+                var filePath = path+ `${str}.md`;
+            } else {
+                var filePath = path+ '/'+`${str}.md`;
+            }
+            var ExpressionInfo = info.find(info => info.expression === str);
+            var fm = await this.createFM(ExpressionInfo);
+            try{
+                await app.vault.create(filePath,fm);
+            }catch(err){
+                if (err.message.includes('File already exists')){
+                    this.app.vault.adapter.write(normalizePath(filePath),fm);
+                }
+    }}}
+
+    //直接生成frontmatter文本
+    async createFM(cont:ExpressionInfo){
+
+        const status = statusMap[cont.status];
+        const aliasesString = cont.aliases.length ? `aliases: \n${cont.aliases.map(line => `- ${line}`).join('\n')}` : '';
+        const tagsString = cont.tags.length ? `tags: \n${cont.tags.map(line => `- ${line}`).join('\n')}` : '';
+        const notesString = cont.notes.length ? `notes: \n${cont.notes.map(line => `- '${line}'`).join('\n')}` : '';
+        //const sentencesString = cont.sentences.length ? `sentences: \n${cont.sentences.map(sentence => `- ${sentence.text}-${sentence.trans}-${sentence.origin}`).join('\n')}` : 'sentences: \n';
+        let sentenceCounter = 1;
+        const sentencesString = cont.sentences.length ? `${cont.sentences.map(sentence => {
+            const result = `sentence${sentenceCounter}: '${sentence.text}'\ntrans${sentenceCounter}: '${sentence.trans}'\norigin${sentenceCounter}: '${sentence.origin}'`;
+            sentenceCounter++;
+            return result;
+        }).join('\n')}` : '';
+        // 格式化日期
+        const formattedDate = moment.unix(cont.date).format('YYYY-MM-DD HH:mm:ss');
+        var fm = `---
+expression: ${cont.expression}
+meaning: '${cont.meaning}'
+${aliasesString}
+date: ${formattedDate}
+status: ${status}
+type: ${cont.t}
+${tagsString}
+${notesString}
+${sentencesString}
+---
+`;
+
+        return fm;
+    }
+
+    async updateWordfiles(){
+        let wordsinfo = await this.db.getAllExpressionSimple(false);
+        let words: string[] = wordsinfo.map(item => item.expression);
+        await this.createWordfiles(words);
+    }
+
+    async updateIndexDB(){
+        let folderpath = this.settings.word_folder;
+        await this.checkPath();
+        var words = (await this.app.vault.adapter.list(normalizePath(folderpath))).files; 
+        var ignorwords = (await this.db.getAllExpressionSimple(true))
+            .filter(item => item.status === 0)
+            .flatMap(item => [item.expression, ...item.aliases]);
+        await this.db.destroyAll();
+        await this.db.open();
+        for(var wordpath of words){
+            
+            var expressioninfo = await this.parserFM(wordpath);
+            ignorwords = ignorwords.filter(item => ![...expressioninfo.aliases,expressioninfo.expression].includes(item));
+            let data = JSON.parse(JSON.stringify(expressioninfo));
+	        (data as any).expression = (data as any).expression.trim().toLowerCase();
+	        await this.db.postExpression(data);
+        }
+        this.db.postIgnoreWords(ignorwords.filter(item => item !== ""));
+    }
+
+    //解析某个单词文件的fm信息
+    async parserFM(file_path:string){
+        var fm = this.app.metadataCache.getCache(file_path).frontmatter;
+        const {
+            expression = '',
+            meaning = '',
+            status = '',
+            type = '',
+            tags = [],
+            notes = [],
+            aliases = [],
+            date = ''
+        } = fm;
+        var sentences:Sentence[] = [];
+        for(var i=1;i<Object.keys(fm).length;i++){
+            var key = `sentence${i}`;
+            
+            if (key in fm) {
+                let newSentence: Sentence = {
+                    text: fm[key],
+                    trans: fm[`trans${i}`],
+                    origin: fm[`origin${i}`]
+                };
+                sentences.push(newSentence);
+            }else{break;}     
+        }
+        var expressioninfo:ExpressionInfo = {
+            expression : expression,
+            meaning : meaning,
+            status : statusMap.indexOf(status),
+            t : type,
+            tags : tags,
+            notes : notes,
+            aliases : aliases,
+            date : moment.utc(date).unix(),
+            sentences: sentences,
+        }
+        return expressioninfo;
+    }
+
+    //解析所有单词文件的fm信息
+    async parserAllFM(){
+        this.checkPath();
+        var filesPath = (await this.app.vault.adapter.list(normalizePath(this.settings.word_folder))).files; 
+        var wordsinfo:ExpressionInfo[] = [];
+        for(var filepath of filesPath){
+            var expressioninfo = await this.parserFM(filepath);
+            wordsinfo.push(expressioninfo);
+        }
+        return wordsinfo;
+    }
+
+
+
+}
+
+
+
+export function processContent(){
+    // 获取包含特定class的元素
+    let textArea = document.querySelector('.text-area');
+    
+    if (textArea) {
+        let htmlContent = textArea.innerHTML;
+        //使用正则表达式匹配同时包含特定符号的 <p> 标签元素，并去除所有标签保留文本
+        htmlContent = htmlContent.replace(/<p>(?=.*!)(?=.*\[)(?=.*\])(?=.*\()(?=.*\)).*<\/p>/g, function(match) {
+            var pattern = /!\[(.*?)\]\((.*?)\)/;
+            var str = match.replace(/<[^>]+>/g, '');
+            var tq = pattern.exec(str);
+            var img = document.createElement('img');
+            var imgContainer = document.createElement('div');
+            imgContainer.style.textAlign = 'center';  // 设置文本居中对齐
+            var imgWrapper = document.createElement('div');
+            imgWrapper.style.textAlign = 'center';  // 设置为内联块元素，使其水平居中
+
+            if (tq) {
+                var altText = tq[1];
+                var srcUrl = tq[2];
+                
+                if (/^https?:\/\//.test(srcUrl)) {
+                    img.alt = altText;
+                    img.src = srcUrl;
+                    imgWrapper.appendChild(img);
+                    imgContainer.appendChild(imgWrapper);
+                    return imgContainer.innerHTML; 
+                }
+                else{
+                    img.alt = altText;
+                    img.src =  mergeStrings(imgnum,srcUrl);
+                    imgWrapper.appendChild(img);
+                    imgContainer.appendChild(imgWrapper);
+                    return imgContainer.innerHTML; 
+                }
+            }
+            
+        });
+        // 替换 # 开头的文本为 h1
+        htmlContent = htmlContent.replace(/(<span class="stns"># (.*?)<\/span>)(?=\s*<\/p>)/g, '<h1>$2</h1>');
+        
+        // 替换 ## 开头的文本为 h2
+        htmlContent = htmlContent.replace(/(<span class="stns">## (.*?)<\/span>)(?=\s*<\/p>)/g, '<h2>$2</h2>');
+        
+        // 替换 ### 开头的文本为 h3
+        htmlContent = htmlContent.replace(/(<span class="stns">### (.*?)<\/span>)(?=\s*<\/p>)/g, '<h3>$2</h3>');
+        
+        // 替换 #### 开头的文本为 h4
+        htmlContent = htmlContent.replace(/(<span class="stns">#### (.*?)<\/span>)(?=\s*<\/p>)/g, '<h4>$2</h4>');
+        
+        // 替换 ##### 开头的文本为 h5
+        htmlContent = htmlContent.replace(/(<span class="stns">##### (.*?)<\/span>)(?=\s*<\/p>)/g, '<h5>$2</h5>');
+        //渲染粗体
+        htmlContent = htmlContent.replace(/\*\*((?:.|\n)*?)\*\*/g, function(match, group1) {
+            return ` <b>${group1}</b> `;
+        });
+        htmlContent = htmlContent.replace(/\_\_((?:.|\n)*?)\_\_/g, function(match, group1) {
+            return ` <b>${group1}</b> `;
+        });
+
+        //渲染斜体
+        htmlContent = htmlContent.replace(/ \*((?:.|\n)*?)\* /g, function(match, group1) {
+            return ` <i>${group1}</i> `;
+        });
+        htmlContent = htmlContent.replace(/ \_((?:.|\n)*?)\_ /g, function(match, group1) {
+            return ` <i>${group1}</i> `;
+        });
+
+
+        htmlContent = htmlContent.replace(/\~\~((?:.|\n)*?)\~\~/g, function(match, group1) {
+            return ` <del>${group1}</del> `;
+        });
+        
+
+        // 移除 "<span class="stns">!</span>" 标签
+        //htmlContent = htmlContent.replace(/<span class="stns">!<\/span>/g, '');
+        // 将修改后的HTML内容重新设置回元素
+        textArea.innerHTML = htmlContent;
+    } else {
+        // 查找页面中的 img 元素并提取 imgnum 并存储到 localStorage 中
+        var imgElements = document.getElementsByTagName('img');
+        for (var i = 0; i < imgElements.length; i++) {
+            if (imgElements[i].getAttribute('src')) {
+                imgnum = imgElements[i].getAttribute('src');
+                
+                if (!imgnum.includes('http')) {
+                    localStorage.setItem('imgnum', imgnum); // 存储到本地存储中
+                    break; // 如果找到了，可以选择跳出循环
+                }
+            }
+        }
+    }
+}
+
+function mergeStrings(str1:string, str2:string) {
+    // 获取 str2 的前 3 个字符
+    let prefix = str2.substring(0, 3);
+    // 在 str1 中查找 prefix 的位置
+    let index = str1.indexOf(prefix);
+
+    // 如果找到匹配的前缀
+    if (index !== -1&& index !== 0 && str1.charAt(index - 1) === '/') {
+        // 截断 str1 并与 str2 相连
+        let firstPart = str1.substring(0, index);
+        return firstPart + str2;
+    } else {
+        // 如果没有找到匹配的前缀，则返回 str1 和 str2 原样相连
+        return str1 + str2;
+    }
+}
+
+async function fetchData() {
+    let previousContent = ''; // 上一次抓取到的内容
+    return new Promise((resolve, reject) => {
+        let intervalId = setInterval(() => {
+            let textArea = document.querySelector('.text-area');
+
+            if (textArea) {
+                let currentContent = textArea.innerHTML.trim();
+                
+                // 检查 textArea 中是否包含 class 为 'article' 的元素
+                let hasArticleClass = textArea.querySelector('.article') !== null;
+
+                if (hasArticleClass) {
+                    clearInterval(intervalId); // 内容无变化时清除定时器
+                    resolve(currentContent); // 解析 Promise，传递最终内容
+                } else {
+                    previousContent = currentContent; // 更新上一次抓取的内容
+                }
+            } else {
+                clearInterval(intervalId); // 内容无变化时清除定时器
+                console.warn('.text-area element not found');
+            }
+        }, 100);
+    });
 }

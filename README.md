@@ -1,6 +1,52 @@
 ## 用Obsidian来学习语言！
 
-公告：已经开放discussion区，一般的问题可以先在这里进行讨论。
+
+
+原仓库：https://github.com/guopenghui/obsidian-language-learner
+
+
+
+### 更新功能
+
+
+
+- 阅读模式文本支持 md 渲染（如多级标题、粗斜体、本地图片或网络图片等的渲染）
+- 支持单词变形形式的识别（在最新的单词提交面板中增加“变形”栏，用 “,” 分割各单词变形形式即可）
+- 新增单词文件库功能，可自动生成各单词的md文件，单词信息在frontmatter中
+- 单词文件库和 IndexDB 数据库可相互更新，为多端的同步提供了更方便的方法
+- 可以“仅使用单词文件库”，删除 IndexDB 数据库的非无视单词的信息，释放储存空间
+
+
+
+### 功能图片
+
+![设置选项](https://image.asa-world.cn/pic/image-20240713195337707.png)
+
+
+
+### 关系图谱配色
+
+
+
+["status":新学]：\#ff9800
+
+["status":眼熟]：\#ffeb3c
+
+["status":了解]：\#9eda58
+
+["status":掌握]：\#4cb051
+
+path:经济学人 ：#9c9c9c
+
+
+
+---
+
+
+
+以下是原仓库README
+
+
 
 ### 早期阶段
 当前插件还处在早期开发阶段，因此有以下事情需要注意：
@@ -78,12 +124,3 @@ npm run build
 可能有时作者暂时比较忙，或是对于提出的功能需求暂时没想到好的实现方法而没有一一回复。
 
 但是只要提了issue都会看的，所以大家有想法或反馈直接发到issue就行。
-
-
-## 新鼠标
-在鼠标寿命到头，左键时灵时不灵的艰难的环境下完成了0.0.1版的发布。😭
-
-觉得这款插件好用的朋友，或是想鼓励一下作者，可以赞助孩子买个新鼠标!!🖱
-
-![微信](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/wechat.jpg)
-![支付宝](https://github.com/guopenghui/obsidian-language-learner/blob/master/public/alipay.jpg)

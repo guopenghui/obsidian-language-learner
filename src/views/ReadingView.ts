@@ -1,11 +1,28 @@
-import { Menu, TextFileView, WorkspaceLeaf, Notice } from 'obsidian';
+import { 
+    Notice,
+    Plugin,
+    Menu,
+    WorkspaceLeaf,
+    ViewState,
+    MarkdownView,
+    Editor,
+    TFile,
+    MetadataCache,
+    DataAdapter,
+    normalizePath,
+    Platform,
+    TextFileView,} from 'obsidian';
 import { App as VueApp, createApp } from 'vue';
-
+import {state } from "./parser";
 import LanguageLearner from '@/plugin';
 import ReadingArea from 'ReadingArea.vue';
 import { t } from "@/lang/helper";
-
-
+import DbProvider from "../db/base";
+import {WordDB,Expression} from "../db/idb";
+import {
+    ArticleWords, Word, Phrase, WordsPhrase, Sentence,
+    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
+} from "../db/interface";
 export const READING_VIEW_TYPE: string = 'langr-reading';
 export const READING_ICON: string = 'highlight-glyph';
 
@@ -16,7 +33,7 @@ export class ReadingView extends TextFileView {
     vueapp: VueApp;
     firstInit: boolean;
     lastPos: number;
-
+    //MetadataCache=new MetadataCache;
     constructor(leaf: WorkspaceLeaf, plugin: LanguageLearner) {
         super(leaf);
         this.plugin = plugin;
@@ -30,7 +47,9 @@ export class ReadingView extends TextFileView {
     getViewData(): string {
         return this.data;
     }
-
+    
+//这段代码的主要作用是在 setViewData 方法被调用时，设置视图数据，
+//如果是第一次初始化 (firstInit 为 true)，则会异步获取特定的元数据 (langr-pos)，并创建一个 Vue 应用实例 (vueapp) 并挂载到指定的 DOM 元素上。
     async setViewData(data: string, clear?: boolean) {
         this.text = data;
 
@@ -67,23 +86,46 @@ export class ReadingView extends TextFileView {
         super.onPaneMenu(menu, "");
     }
 
-    backToMarkdown(): void {
+    async backToMarkdown(){
         this.plugin.setMarkdownView(this.leaf);
+        if ((await this.readContent("words")) === null) {
+            return;
+        }
+        let file = this.app.vault.getAbstractFileByPath("try.md") as TFile;
+        
+        if(this.plugin.settings.use_fileDB){
+            this.plugin.createWordfiles(await this.getLearnWords());
+        }
+        
     }
 
+    async getLearnWords(){
+        var data = await this.readContent("article");
+        var words = (await this.plugin.parser.getWordsPhrases(data))
+        .map(w =>`${w.expression}`); //单词列表
+        return words
+    }
+
+    //将获取到的单词和短语列表格式化为 Markdown 格式，并写入名为 "words" 的内容中
     async saveWords() {
         if ((await this.readContent("words")) === null) {
             return;
         }
-
         let data = await this.readContent("article");
-        let exprs = (await this.plugin.parser.getWordsPhrases(data))
-            .map(w => `+ **${w.expression}** : ${w.meaning}`)
-            .join("\n") + "\n\n";
+        if(this.plugin.settings.use_fileDB){
+            var exprs = (await this.plugin.parser.getWordsPhrases(data))
+                .map(w => `+ **[[${w.expression}]]** : ${w.meaning}`)
+                .join("\n") + "\n\n";
+        }else{
+            var exprs = (await this.plugin.parser.getWordsPhrases(data))
+                .map(w => `+ **${w.expression}** : ${w.meaning}`)
+                .join("\n") + "\n\n";
 
+        }
         await this.writeContent("words", exprs);
     }
 
+    //将md拆分为三部分
     divide(lines: string[]) {
         let positions = [] as [string, number][];
         positions.push(["article", lines.indexOf("^^^article")],
@@ -100,6 +142,7 @@ export class ReadingView extends TextFileView {
         return segments;
     }
 
+    //小函数，用于读type内容
     async readContent(type: string, create: boolean = false): Promise<string> {
         let oldText = await this.plugin.app.vault.read(this.file);
         let lines = oldText.split("\n");
@@ -114,6 +157,7 @@ export class ReadingView extends TextFileView {
         return lines.slice(seg[type].start, seg[type].end).join("\n");
     }
 
+    //小函数，用于写type内容
     async writeContent(type: string, content: string): Promise<void> {
         let oldText = await this.plugin.app.vault.read(this.file);
         let lines = oldText.split("\n");
@@ -136,16 +180,31 @@ export class ReadingView extends TextFileView {
         let expression: string = evt.detail.expression.toLowerCase();
         let type: string = evt.detail.type;
         let status: number = evt.detail.status;
+        let meaning: string = evt.detail.meaning;
+        let aliases: string[] = evt.detail.aliases
         const statusMap = ["ignore", "learning", "familiar", "known", "learned"];
-
         if (type === "WORD") {
-            let wordEls = this.contentEl.querySelectorAll(".word");
+            let wordEls = this.contentEl.querySelectorAll(".word"); //全文中的word元素
             if (wordEls.length === 0) {
                 return;
             }
             wordEls.forEach((el) => {
                 if (el.textContent.toLowerCase() === expression) {
                     el.className = `word ${statusMap[status]}`;
+                }
+            });
+            // // 1. 解析括号中的单词
+            // const wordsInParentheses = meaning.match(/\((.*?)\)/)?.[1]; // 使用正则表达式匹配括号中的内容
+            // if (!wordsInParentheses) {
+            //     return; // 如果没有匹配到括号中的内容，则直接返回
+            // }
+            // const words = wordsInParentheses.split(',').map(word => word.trim()); // 将括号中的内容按逗号分割成单词数组
+
+            // 3. 匹配与更新状态
+            wordEls.forEach((el) => {
+                const textContent = el.textContent?.trim().toLowerCase(); // 获取元素的文本内容并转换为小写
+                if (textContent && aliases.includes(textContent)) { // 检查是否匹配到括号中的单词
+                    el.className = `word ${statusMap[status]}`; // 更新元素的类名以反映新的状态
                 }
             });
         } else if (type === "PHRASE") {
@@ -211,6 +270,7 @@ export class ReadingView extends TextFileView {
         }
     };
 
+    //元素包裹在一个新的 <span> 元素中，并设置其类名为 select。
     wrapSelect(elStart: HTMLElement, elEnd: HTMLElement) {
         this.removeSelect();
         if (!elStart.matchParent(".stns") ||
@@ -252,6 +312,7 @@ export class ReadingView extends TextFileView {
         });
     }
 
+    //添加一个自定义事件 "obsidian-langr-refresh" 的监听器，并将其绑定到 this.refresh 方法。当该事件被触发时，会执行 this.refresh 方法
     async onOpen() {
         addEventListener("obsidian-langr-refresh", this.refresh);
         this.initHeaderButtons();
@@ -269,4 +330,3 @@ export class ReadingView extends TextFileView {
     }
 
 }
-

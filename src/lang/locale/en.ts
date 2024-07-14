@@ -33,6 +33,8 @@ export default {
     // LearnPanel.vue
     "Expression": "Expression",
     "A word or a phrase": "A word or a phrase",
+    "aliases": "aliases",
+    'The inflections with , spacing': 'The inflections with "," spacing',
     "Meaning": "Meaning",
     "A short definition": "A short definition",
     "Please input a word/phrase": "Please input a word/phrase",
@@ -102,11 +104,12 @@ export default {
     "Cambridge": "Cambridge",
     "Jukuu": "Jukuu",
     "Hujiang": "Hujiang",
-
+    
     "Word Database Path": "Word Database Path",
     "Choose a md file as word database for auto-completion": "Choose a md file as word database for auto-completion",
     "Review Database Path": "Review Database Path",
     "Choose a md file as review database for spaced-repetition": "Choose a md file as review database for spaced-repetition",
+    
     "Last review sync": "Last review sync",
     "Last time the review database was updated": "Last time the review database was updated",
     "Destroy Database": "Destroy Database",
@@ -127,6 +130,20 @@ export default {
     "Database Name": "Database Name",
     "Reopen": "Reopen",
     // "Change": "Change",
+    
+    "Word Files Database":"Word Files Database",
+    "Use Word Files Database. Automatically write  non-ignored word information from the article into the corresponding word file after exiting reading mode":"Use Word Files Database. Automatically write  non-ignored word information from the article into the corresponding word file after exiting reading mode",
+    "Word Files Database Path" : "Word Files Database Path",
+    "Choose a folder as word files for saving": "Choose a folder as word files for saving",
+    "Word File template Path":"Word File template Path",
+    "Choose a md file as review database for spaced-repetition (optional)":"Choose a md file as review database for spaced-repetition (optional)",
+    "update Word Files Database":"update Word Files Database",
+    "Import all non-ignored word information from the indexDB database into the corresponding word file":"Import all non-ignored word information from the indexDB database into the corresponding word file",
+    "Update IndexDB Database":"Update IndexDB Database",
+    "Update the indexDB database based on the frontmatter information of each word file (the ignored words will not be affected). Please operate with caution.":"Update the indexDB database based on the frontmatter information of each word file (the ignored words will not be affected). Please operate with caution. ",
+    "Update":"Update",
+    "ONLY Use Word Files Database":"ONLY Use Word Files Database",
+    "System reads and writes non-ignored word information directly from the word file database, instead of the index database. Please operate with caution. (After activation, non-ignored word information in the index database will be deleted. After deactivation, non-ignored word information in the word file will be written to the index database.)":"System reads and writes non-ignored word information directly from the word file database, instead of the index database. Please operate with caution. (After activation, non-ignored word information in the index database will be deleted. After deactivation, non-ignored word information in the word file will be written to the index database.)",
     "Reopen DB after changing database name": "Reopen app after switch database(when change database name)",
     "Import & Export": "Import & Export",
     "Warning: Import will override current database": "Warning: Import will override current database",

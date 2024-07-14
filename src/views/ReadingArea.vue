@@ -86,9 +86,9 @@ import { useEvent } from "@/utils/use";
 import store from "@/store";
 import { ReadingView } from "./ReadingView";
 import CountBar from "./CountBar.vue";
-
+import{processContent} from "../plugin";
 let vueThis = getCurrentInstance();
-let view = vueThis.appContext.config.globalProperties.view as ReadingView;
+var view = vueThis.appContext.config.globalProperties.view as ReadingView;
 let plugin = view.plugin as PluginType;
 let contentEl = view.contentEl as HTMLElement;
 
@@ -219,6 +219,7 @@ watch([pageSize], async ([ps], [prev_ps]) => {
     }
 });
 
+//监视 page、psChange 和 refreshHandle 的变化，并在变化时执行分页计算、解析文章片段、更新渲染的文本以及更新前置元数据。
 watch(
     [page, psChange, refreshHandle],
     async ([p, pc], [prev_p, prev_pc]) => {
@@ -239,6 +240,7 @@ watch(
                 `${(p - 1) * pageSize.value + 1}`
             );
         }
+        processContent();
     },
     { immediate: true }
 );
@@ -264,10 +266,108 @@ async function addIgnores() {
     }
 
     refreshCount();
+    processContent();
+}
+
+async function processContent(){
+    // 获取包含特定class的元素
+    await fetchData();
+    let textArea = document.querySelector('.text-area');
+    let htmlContent = textArea.innerHTML;
+    //使用正则表达式匹配同时包含特定符号的 <p> 标签元素，并去除所有标签保留文本
+    htmlContent = htmlContent.replace(/<p>(?=.*!)(?=.*\[)(?=.*\])(?=.*\()(?=.*\)).*<\/p>/g, function(match) {
+        var pattern = /!\[(.*?)\]\((.*?)\)/;
+        var str = match.replace(/<[^>]+>/g, '');
+        var tq = pattern.exec(str);
+        var img = document.createElement('img');
+        var imgContainer = document.createElement('div');
+        imgContainer.style.textAlign = 'center';  // 设置文本居中对齐
+        var imgWrapper = document.createElement('div');
+        imgWrapper.style.textAlign = 'center';  // 设置为内联块元素，使其水平居中
+
+        if (tq) {
+            var altText = tq[1];
+            var srcUrl = tq[2];
+            
+            if (/^https?:\/\//.test(srcUrl)) {
+                img.alt = altText;
+                img.src = srcUrl;
+                imgWrapper.appendChild(img);
+                imgContainer.appendChild(imgWrapper);
+                return imgContainer.innerHTML; 
+            }
+            else{
+                imgnum = localStorage.getItem('imgnum') || ''
+                img.alt = altText;
+                img.src =  mergeStrings(imgnum,srcUrl);
+                imgWrapper.appendChild(img);
+                imgContainer.appendChild(imgWrapper);
+                return imgContainer.innerHTML; 
+            }
+        }
+        
+    });
+    // 替换 # 开头的文本为 h1
+    htmlContent = htmlContent.replace(/(<span class="stns"># (.*?)<\/span>)(?=\s*<\/p>)/g, '<h1>$2</h1>');
+    
+    // 替换 ## 开头的文本为 h2
+    htmlContent = htmlContent.replace(/(<span class="stns">## (.*?)<\/span>)(?=\s*<\/p>)/g, '<h2>$2</h2>');
+    
+    // 替换 ### 开头的文本为 h3
+    htmlContent = htmlContent.replace(/(<span class="stns">### (.*?)<\/span>)(?=\s*<\/p>)/g, '<h3>$2</h3>');
+    
+    // 替换 #### 开头的文本为 h4
+    htmlContent = htmlContent.replace(/(<span class="stns">#### (.*?)<\/span>)(?=\s*<\/p>)/g, '<h4>$2</h4>');
+    
+    // 替换 ##### 开头的文本为 h5
+    htmlContent = htmlContent.replace(/(<span class="stns">##### (.*?)<\/span>)(?=\s*<\/p>)/g, '<h5>$2</h5>');
+    //渲染粗体
+    htmlContent = htmlContent.replace(/\*\*((?:.|\n)*?)\*\*/g, function(match, group1) {
+        return ` <b>${group1}</b> `;
+    });
+    htmlContent = htmlContent.replace(/\_\_((?:.|\n)*?)\_\_/g, function(match, group1) {
+        return ` <b>${group1}</b> `;
+    });
+
+    //渲染斜体
+    htmlContent = htmlContent.replace(/ \*((?:.|\n)*?)\* /g, function(match, group1) {
+        return ` <i>${group1}</i> `;
+    });
+    htmlContent = htmlContent.replace(/ \_((?:.|\n)*?)\_ /g, function(match, group1) {
+        return ` <i>${group1}</i> `;
+    });
+
+
+    htmlContent = htmlContent.replace(/\~\~((?:.|\n)*?)\~\~/g, function(match, group1) {
+        return ` <del>${group1}</del> `;
+    });
+    
+    // 移除 "<span class="stns">!</span>" 标签
+    //htmlContent = htmlContent.replace(/<span class="stns">!<\/span>/g, '');
+    // 将修改后的HTML内容重新设置回元素
+    textArea.innerHTML = htmlContent;
+}
+
+function mergeStrings(str1:string, str2:string) {
+    // 获取 str2 的前 3 个字符
+    let prefix = str2.substring(0, 3);
+    // 在 str1 中查找 prefix 的位置
+    let index = str1.indexOf(prefix);
+
+    // 如果找到匹配的前缀
+    if (index !== -1&& index !== 0 && str1.charAt(index - 1) === '/') {
+        // 截断 str1 并与 str2 相连
+        let firstPart = str1.substring(0, index);
+        return firstPart + str2;
+    } else {
+        // 如果没有找到匹配的前缀，则返回 str1 和 str2 原样相连
+        return str1 + str2;
+    }
 }
 
 let reading = ref(null);
 let prevEl: HTMLElement = null;
+//用户选择单词的事件
 if (plugin.constants.platform === "mobile") {
     useEvent(reading, "click", (e) => {
         let target = e.target as HTMLElement;
@@ -319,6 +419,27 @@ if (plugin.constants.platform === "mobile") {
         } else {
             view.removeSelect();
         }
+    });
+}
+async function fetchData() {
+    let previousContent = ''; // 上一次抓取到的内容
+    return new Promise((resolve, reject) => {
+        let intervalId = setInterval(() => {
+            let textArea = document.querySelector('.text-area');
+
+            if (textArea) {
+                let currentContent = textArea.innerHTML.trim();
+                
+                if (previousContent !== ''&&previousContent !==currentContent) {
+                    clearInterval(intervalId); // 内容变化时清除定时器
+                    resolve(currentContent); // 解析 Promise，传递最终内容
+                } else {
+                    previousContent = currentContent; // 更新上一次抓取的内容
+                }
+            } else {
+                clearInterval(intervalId); 
+            }
+        }, 100);
     });
 }
 

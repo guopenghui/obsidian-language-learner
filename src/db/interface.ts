@@ -33,6 +33,8 @@ interface ExpressionInfo {
     tags: string[];
     notes: string[];
     sentences: Sentence[];
+    aliases:string[];
+    date: number;
 }
 
 interface ExpressionInfoSimple {
@@ -44,6 +46,7 @@ interface ExpressionInfoSimple {
     note_num: number;
     sen_num: number;
     date: number;
+    aliases:string[];
 }
 
 interface CountInfo {
@@ -60,6 +63,10 @@ interface Span {
 interface WordCount {
     today: number[];
     accumulated: number[];
+}
+
+interface link {
+    link: {[key:string]: string[]};
 }
 
 

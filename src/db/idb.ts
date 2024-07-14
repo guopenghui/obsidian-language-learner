@@ -1,7 +1,7 @@
 import Dexie from "dexie";
 import Plugin from "@/plugin";
 
-export default class WordDB extends Dexie {
+export class WordDB extends Dexie {
     expressions: Dexie.Table<Expression, number>;
     sentences: Dexie.Table<Sentence, number>;
     plugin: Plugin;
@@ -17,7 +17,7 @@ export default class WordDB extends Dexie {
     }
 }
 
-interface Expression {
+export interface Expression {
     id?: number,
     expression: string,
     meaning: string,
@@ -27,7 +27,7 @@ interface Expression {
     notes: string[],
     tags: Set<string>,
     sentences: Set<number>,
-    connections: Map<string, string>,
+    aliases: string[],
 }
 interface Sentence {
     id?: number;
