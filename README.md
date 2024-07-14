@@ -24,7 +24,25 @@
 
 
 
-### 关系图谱配色
+![MD渲染](https://image.asa-world.cn/pic/image-20240714205132229.png)
+
+
+
+![添加单词变形](https://image.asa-world.cn/pic/image-20240714205300740.png)
+
+
+
+![单词文件](https://image.asa-world.cn/pic/image-20240714205427907.png)
+
+
+
+
+
+![关系图谱](https://image.asa-world.cn/pic/image-20240714205610094.png)
+
+
+
+### 关系图谱配色推荐
 
 
 
@@ -36,7 +54,7 @@
 
 ["status":掌握]：\#4cb051
 
-path:经济学人 ：#9c9c9c
+path:文章路径 ：#9c9c9c
 
 
 
