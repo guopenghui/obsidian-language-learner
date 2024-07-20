@@ -270,7 +270,7 @@ async function addIgnores() {
 }
 
 async function processContent(){
-
+    console.log("进入了r");
     // 获取包含特定class的元素
     await fetchData();
     let textArea = document.querySelector('.text-area');
@@ -308,25 +308,43 @@ async function processContent(){
         }
         
     });
-    // 渲染多级标题
-    htmlContent = htmlContent.replace(/(<span class="stns">)# (.*?)(<\/span>)(?=\s*<\/p>)/g, '<h1>$1$2$3</h1>');
-    htmlContent = htmlContent.replace(/(<span class="stns">)## (.*?)(<\/span>)(?=\s*<\/p>)/g, '<h2>$1$2$3</h2>');
-    htmlContent = htmlContent.replace(/(<span class="stns">)### (.*?)(<\/span>)(?=\s*<\/p>)/g, '<h3>$1$2$3</h3>');
-    htmlContent = htmlContent.replace(/(<span class="stns">)#### (.*?)(<\/span>)(?=\s*<\/p>)/g, '<h4>$1$2$3</h4>');
-    htmlContent = htmlContent.replace(/(<span class="stns">)##### (.*?)(<\/span>)(?=\s*<\/p>)/g, '<h5>$1$2$3</h5>');
-    htmlContent = htmlContent.replace(/(<span class="stns">)###### (.*?)(<\/span>)(?=\s*<\/p>)/g, '<h6>$1$2$3</h6>');
+    // 替换 # 开头的文本为 h1
+    htmlContent = htmlContent.replace(/(<span class="stns"># (.*?)<\/span>)(?=\s*<\/p>)/g, '<span class="stns"><h1>$2</h1></span>');
     
+    // 替换 ## 开头的文本为 h2
+    htmlContent = htmlContent.replace(/(<span class="stns">)## (.*?)(<\/span>)(?=\s*<\/p>)/g, '$1<h2>$2</h2>$3');
+    
+    // 替换 ### 开头的文本为 h3
+    htmlContent = htmlContent.replace(/(<span class="stns">### (.*?)<\/span>)(?=\s*<\/p>)/g, '<span class="stns"><h3>$2</h3></span>');
+    
+    // 替换 #### 开头的文本为 h4
+    htmlContent = htmlContent.replace(/(<span class="stns">#### (.*?)<\/span>)(?=\s*<\/p>)/g, '<h4>$2</h4>');
+    
+    // 替换 ##### 开头的文本为 h5
+    htmlContent = htmlContent.replace(/(<span class="stns">##### (.*?)<\/span>)(?=\s*<\/p>)/g, '<h5>$2</h5>');
     //渲染粗体
-    htmlContent = htmlContent.replace(/(?<!\\)\*(?<!\\)\*(<span.*?>.*?<\/span>)(?<!\\)\*(?<!\\)\*/g, '<b>$1</b>');
-    htmlContent = htmlContent.replace(/(?<!\\)\_(?<!\\)\_(<span.*?>.*?<\/span>)(?<!\\)\_(?<!\\)\_/g, '<b>$1</b>');
+    htmlContent = htmlContent.replace(/\*\*((?:.|\n)*?)\*\*/g, function(match, group1) {
+        return ` <b>${group1}</b> `;
+    });
+    htmlContent = htmlContent.replace(/\_\_((?:.|\n)*?)\_\_/g, function(match, group1) {
+        return ` <b>${group1}</b> `;
+    });
 
     //渲染斜体
-    htmlContent = htmlContent.replace(/(?<!\\)\*(<span.*?>.*?<\/span>)(?<!\\)\*/g, '<i>$1</i>');
-    htmlContent = htmlContent.replace(/(?<!\\)\_(<span.*?>.*?<\/span>)(?<!\\)\_/g, '<i>$1</i>');
+    htmlContent = htmlContent.replace(/ \*((?:.|\n)*?)\* /g, function(match, group1) {
+        return ` <i>${group1}</i> `;
+    });
+    htmlContent = htmlContent.replace(/ \_((?:.|\n)*?)\_ /g, function(match, group1) {
+        return ` <i>${group1}</i> `;
+    });
 
 
-    htmlContent = htmlContent.replace(/(?<!\\)\~(?<!\\)\~(<span.*?>.*?<\/span>)(?<!\\)\~(?<!\\)\~/g, '<del>$1</del>');
-
+    htmlContent = htmlContent.replace(/\~\~((?:.|\n)*?)\~\~/g, function(match, group1) {
+        return ` <del>${group1}</del> `;
+    });
+    
+    // 移除 "<span class="stns">!</span>" 标签
+    //htmlContent = htmlContent.replace(/<span class="stns">!<\/span>/g, '');
     // 将修改后的HTML内容重新设置回元素
     textArea.innerHTML = htmlContent;
 }
@@ -384,12 +402,17 @@ if (plugin.constants.platform === "mobile") {
         }
     });
     useEvent(reading, "pointerup", (e) => {
+        console.log("进入了事件");
         let target = e.target as HTMLElement;
         if (target.hasClass("word") || target.hasClass("phrase") || target.hasClass("select")) {
+            console.log("进入了判断");
+            console.log(target);
             e.preventDefault();
             e.stopPropagation();
             if (prevEl) {
+                console.log(prevEl);
                 let selectSpan = view.wrapSelect(prevEl, target);
+                console.log(selectSpan);
                 if (selectSpan) {
                     plugin.queryWord(
                         selectSpan.textContent,

@@ -338,6 +338,7 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 	if (selection.trim().contains(" ")) {
 		exprType = "PHRASE";
 	}
+	console.log('进入了自动填充新词表单');
 	let target = evt.detail.target as HTMLElement;
 
 	let sentenceText = "";

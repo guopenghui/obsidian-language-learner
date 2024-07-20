@@ -829,6 +829,7 @@ export function processContent(){
             }
             
         });
+        console.log("进入了p");
         // 渲染多级标题
         htmlContent = htmlContent.replace(/(<span class="stns">)# (.*?)(<\/span>)(?=\s*<\/p>)/g, '<h1>$1$2$3</h1>');
         htmlContent = htmlContent.replace(/(<span class="stns">)## (.*?)(<\/span>)(?=\s*<\/p>)/g, '<h2>$1$2$3</h2>');
@@ -838,16 +839,26 @@ export function processContent(){
         htmlContent = htmlContent.replace(/(<span class="stns">)###### (.*?)(<\/span>)(?=\s*<\/p>)/g, '<h6>$1$2$3</h6>');
         
         //渲染粗体
-        htmlContent = htmlContent.replace(/(?<!\\)\*(?<!\\)\*(<span.*?>.*?<\/span>)(?<!\\)\*(?<!\\)\*/g, '<b>$1</b>');
-        htmlContent = htmlContent.replace(/(?<!\\)\_(?<!\\)\_(<span.*?>.*?<\/span>)(?<!\\)\_(?<!\\)\_/g, '<b>$1</b>');
+        htmlContent = htmlContent.replace(/\*\*((?:.|\n)*?)\*\*/g, function(match, group1) {
+            return ` <b>${group1}</b> `;
+        });
+        htmlContent = htmlContent.replace(/\_\_((?:.|\n)*?)\_\_/g, function(match, group1) {
+            return ` <b>${group1}</b> `;
+        });
 
         //渲染斜体
-        htmlContent = htmlContent.replace(/(?<!\\)\*(<span.*?>.*?<\/span>)(?<!\\)\*/g, '<i>$1</i>');
-        htmlContent = htmlContent.replace(/(?<!\\)\_(<span.*?>.*?<\/span>)(?<!\\)\_/g, '<i>$1</i>');
+        htmlContent = htmlContent.replace(/(?<!\\)\*(<span.*?>.*?<\/span>)\*/g, '<i>$1</i>');
+        htmlContent = htmlContent.replace(/\_(<span.*?>.*?<\/span>)\_/g, '<i>$1</i>');
 
 
-        htmlContent = htmlContent.replace(/(?<!\\)\~(?<!\\)\~(<span.*?>.*?<\/span>)(?<!\\)\~(?<!\\)\~/g, '<del>$1</del>');
+        htmlContent = htmlContent.replace(/\~\~((?:.|\n)*?)\~\~/g, function(match, group1) {
+            return ` <del>${group1}</del> `;
+        });
+        
 
+        // 移除 "<span class="stns">!</span>" 标签
+        //htmlContent = htmlContent.replace(/<span class="stns">!<\/span>/g, '');
+        // 将修改后的HTML内容重新设置回元素
         textArea.innerHTML = htmlContent;
     } else {
         // 查找页面中的 img 元素并提取 imgnum 并存储到 localStorage 中

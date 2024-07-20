@@ -332,12 +332,14 @@ function clearPanel(){
 // 查询词汇时自动填充新词表单
 useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 	let selection = evt.detail.selection as string;
+	console.log(selection);
 	let expr = await plugin.db.getExpression(selection);
 
 	let exprType = "WORD";
 	if (selection.trim().contains(" ")) {
 		exprType = "PHRASE";
 	}
+	console.log('进入了自动填充新词表单');
 	let target = evt.detail.target as HTMLElement;
 
 	let sentenceText = "";
