@@ -142,7 +142,7 @@ export class ReadingView extends TextFileView {
         return segments;
     }
 
-    //小函数，用于读type内容
+    //用于读type内容
     async readContent(type: string, create: boolean = false): Promise<string> {
         let oldText = await this.plugin.app.vault.read(this.file);
         let lines = oldText.split("\n");
@@ -157,7 +157,7 @@ export class ReadingView extends TextFileView {
         return lines.slice(seg[type].start, seg[type].end).join("\n");
     }
 
-    //小函数，用于写type内容
+    //用于写type内容
     async writeContent(type: string, content: string): Promise<void> {
         let oldText = await this.plugin.app.vault.read(this.file);
         let lines = oldText.split("\n");
@@ -193,14 +193,6 @@ export class ReadingView extends TextFileView {
                     el.className = `word ${statusMap[status]}`;
                 }
             });
-            // // 1. 解析括号中的单词
-            // const wordsInParentheses = meaning.match(/\((.*?)\)/)?.[1]; // 使用正则表达式匹配括号中的内容
-            // if (!wordsInParentheses) {
-            //     return; // 如果没有匹配到括号中的内容，则直接返回
-            // }
-            // const words = wordsInParentheses.split(',').map(word => word.trim()); // 将括号中的内容按逗号分割成单词数组
-
-            // 3. 匹配与更新状态
             wordEls.forEach((el) => {
                 const textContent = el.textContent?.trim().toLowerCase(); // 获取元素的文本内容并转换为小写
                 if (textContent && aliases.includes(textContent)) { // 检查是否匹配到括号中的单词
@@ -212,7 +204,7 @@ export class ReadingView extends TextFileView {
             let isExist = false;
             if (phraseEls.length > 0) {
                 phraseEls.forEach((el) => {
-                    if (el.textContent.toLowerCase() === expression) {
+                    if (el.textContent.toLowerCase() === expression||aliases.includes(el.textContent.toLowerCase())) {
                         isExist = true;
                         el.className = `phrase ${statusMap[status]}`;
                     }
@@ -231,21 +223,61 @@ export class ReadingView extends TextFileView {
                     words.push(w, " ");
                 }
             });
-            words.pop();
-
+            words.pop();//移除最后一个空格
+            words.push(",");
+            for(let aliase of aliases){
+                aliase.split(" ").forEach((w) => {
+                    if (w !== "") {
+                        words.push(w, " ");
+                    }
+                });
+                words.pop();//移除最后一个空格
+                words.push(",");
+            }
 
             let isMatch = (startEl: Element, words: string[]) => {
-                let el = startEl as any;
-                let container: Element[] = [];
-                for (let word of words) {
-                    if (!el || el.textContent.toLowerCase() !== word) {
-                        return null;
+                let phrases: string[][] = [];
+                let currentPhrase: string[] = [];
+                
+                // 将 words 数组拆分成短语
+                words.forEach(word => {
+                    if (word === ",") {
+                        if (currentPhrase.length > 0) {
+                            phrases.push(currentPhrase);
+                            currentPhrase = [];
+                        }
+                    } else {
+                        currentPhrase.push(word);
                     }
-                    container.push(el);
-                    el = el.nextSibling;
+                });
+                // 将最后一个短语添加到 phrases 中
+                if (currentPhrase.length > 0) {
+                    phrases.push(currentPhrase);
                 }
-
-                return container;
+            
+                // 尝试匹配每个短语
+                for (let phrase of phrases) {
+                    let el = startEl as any;
+                    let container: Element[] = [];
+                    let matched = true;
+            
+                    for (let word of phrase) {
+                        if (!el || el.textContent.toLowerCase() !== word) {
+                            matched = false;
+                            break;
+                        }
+                        container.push(el);
+                        el = el.nextSibling;
+                    }
+            
+                    // 如果成功匹配到某个短语，返回匹配的元素
+                    if (matched) {
+                        return container;
+                    }
+                }
+            
+                // 如果没有匹配到任何短语，返回 null
+                return null;
             };
 
             // 在匹配词组的单词元素外面包一个span.phrase

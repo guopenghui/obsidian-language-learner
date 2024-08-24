@@ -2,11 +2,21 @@
 
 
 
+视频教程：https://www.bilibili.com/video/BV1rkWSefEYQ/?share_source=copy_web&vd_source=9be45cda2ce3f5c9a05bf519a7555757
+
+
+
+文字教程：https://asa-world.cn/c040f849/
+
+
+
 原仓库：https://github.com/guopenghui/obsidian-language-learner
 
 
 
-新版教程：https://asa-world.cn/c040f849/
+有问题在 issues 中附上设置项和控制台（ctrl+shift+i 快捷键）的截图
+
+
 
 ### 更新功能
 

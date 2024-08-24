@@ -398,6 +398,8 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 		model.value = expr;
 		if(expr.aliases){
 			model.value.aliases = expr.aliases.join(',');
+		}else{
+			model.value.aliases = "";
 		}
 		return;
 	} else {

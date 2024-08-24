@@ -38,7 +38,14 @@ export class LocalDb extends DbProvider {
         let storedPhrases = new Map<string, number>();
         await this.idb.expressions
             .where("t").equals("PHRASE")
-            .each(expr => storedPhrases.set(expr.expression, expr.status));
+            .each(expr => {
+                storedPhrases.set(expr.expression, expr.status)
+                if(expr.aliases){
+                    for(let item of expr.aliases){
+                        storedPhrases.set(item, expr.status)
+                    }
+                }
+            });
 
         //查询存储的单词
         // let storedWords = (await this.idb.expressions
@@ -58,7 +65,7 @@ export class LocalDb extends DbProvider {
             .then(expressions => {
                 return expressions
                     .filter(expr => {
-                        if(expr.aliases.length > 0){
+                        if(expr.aliases&&expr.aliases.length > 0){
                             return expr.aliases.some(word => payload.words.includes(word));
                         }else{
                             return;
@@ -80,19 +87,6 @@ export class LocalDb extends DbProvider {
         text: expr.expression,
         status: expr.status
         }) as Word);
-        // // 解析 "meaning" 字段中的英文单词
-        // function extractEnglishWords(meaningString: string): string[] {
-        // let words: string[] = [];
-        // let matches = meaningString.match(/\((.*?)\)/);
-        // if (matches) {
-        //     words = matches[1].split(',').map(w => w.trim());
-        // }
-        // return words;
-        // }
-
-        // function ty(con:string) {
-        //     console.log(con);
-        //   }
 
 
         //对文章进行搜索，找到匹配的表达式，并将结果映射为 { text, status, offset } 形式的 Phrase 对象数组，其中 offset 是匹配的起始位置。
@@ -110,8 +104,7 @@ export class LocalDb extends DbProvider {
             .where("expression").equals(expression).first();
 
         if (!expr) {
-            expr = await this.idb.expressions
-            .filter(item => item.aliases.includes(expression)).first();
+            expr = await this.idb.expressions.filter(item => item.aliases?.includes(expression)).first();
             if(!expr){return null;}
         }
 

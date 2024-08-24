@@ -43,12 +43,26 @@ export class FileDb extends DbProvider {
         let storedPhrases = new Map<string, number>();
         await this.idb.expressions
             .where("t").equals("PHRASE")
-            .each(expr => storedPhrases.set(expr.expression, expr.status));
+            .each(expr => {
+                storedPhrases.set(expr.expression, expr.status)
+                if(expr.aliases){
+                    for(let item of expr.aliases){
+                        storedPhrases.set(item, expr.status)
+                    }
+                }
+            });
 
         var wordsinfo = await this.plugin.parserAllFM();
         wordsinfo
             .filter(word => word.t === "PHRASE")
-            .forEach(word => storedPhrases.set(word.expression, word.status));
+            .forEach(word => {
+                storedPhrases.set(word.expression, word.status);
+                if(word.aliases){
+                    for(let item of word.aliases){
+                        storedPhrases.set(item, word.status)
+                    }
+                }
+            });
         //对文章进行搜索，找到匹配的表达式，并将结果映射为 { text, status, offset } 形式的 Phrase 对象数组，其中 offset 是文章匹配的起始位置。
         let ac = await createAutomaton([...storedPhrases.keys()]);
         let searchedPhrases = (await ac.search(payload.article)).map(match => {
@@ -71,7 +85,7 @@ export class FileDb extends DbProvider {
             .then(expressions => {
                 return expressions
                     .filter(expr => {
-                        if(expr.aliases.length > 0){
+                        if(expr.aliases&&expr.aliases.length > 0){
                             return expr.aliases.some(word => payload.words.includes(word));
                         }else{
                             return;
@@ -86,7 +100,7 @@ export class FileDb extends DbProvider {
             }) as Word[];
 
         let storedWords3 = wordsinfo.filter(expr => {
-                if(expr.aliases.length > 0){
+                if(expr.aliases&&expr.aliases.length > 0){
                     return expr.aliases.some(word => payload.words.includes(word));
                 }else{
                     return;
@@ -119,7 +133,7 @@ export class FileDb extends DbProvider {
 
         if (!expr) {
             expr = await this.idb.expressions
-            .filter(item => item.aliases.includes(expression)).first();
+            .filter(item => item.aliases?.includes(expression)).first();
             if(!expr){
                 var wordsinfo = await this.plugin.parserAllFM();
                 return  wordsinfo.find(word => word.expression === expression|| word.aliases.some(alias => expression === alias)) || null;
