@@ -9,6 +9,8 @@ type Position = {
     y: number;
 };
 
+//继承 GlobalEventHandlersEventMap：EventMap 继承了 GlobalEventHandlersEventMap，
+//这意味着 EventMap 将包含 GlobalEventHandlersEventMap 中的所有事件，同时添加自定义事件。
 interface EventMap extends GlobalEventHandlersEventMap {
     "obsidian-langr-search": CustomEvent<{
         selection: string,
@@ -19,6 +21,8 @@ interface EventMap extends GlobalEventHandlersEventMap {
         expression: string,
         type: string,
         status: number,
+        meaning: string,
+        aliases: string[],
     }>;
     "obsidian-langr-refresh-stat": CustomEvent<{}>;
 }

@@ -10,6 +10,7 @@ import Plugin from "@/plugin";
 
 const STATUS_MAP = ["ignore", "learning", "familiar", "known", "learned"];
 type AnyNode = Root | Content | Content[];
+export var state = {loading_flag: false,};
 
 export class TextParser {
     // 记录短语位置
@@ -19,7 +20,6 @@ export class TextParser {
     pIdx: number = 0;
     plugin: Plugin;
     processor: Processor;
-
     constructor(plugin: Plugin) {
         this.plugin = plugin;
         this.processor = unified()
@@ -41,6 +41,7 @@ export class TextParser {
             if (/[0-9\u4e00-\u9fa5]/.test(text)) return;
             wordSet.add(text);
         });
+        await this.plugin.checkPath();
         let stored = await this.plugin.db.getStoredWords({
             article: "",
             words: [...wordSet],
@@ -57,22 +58,21 @@ export class TextParser {
     async text2HTML(text: string) {
         this.pIdx = 0;
         this.words.clear();
-
-        // 查找文本中的已知词组，用于构造ast中的PhraseNode
+        await this.plugin.checkPath();
+        // 查找已知短语，用于构造ast中的PhraseNode
         this.phrases = (
             await this.plugin.db.getStoredWords({
-                article: text.toLowerCase(),
+                article: text.toLowerCase(), //文章
                 words: [],
             })
         ).phrases;
 
-        const ast = this.processor.parse(text);
+        const ast = this.processor.parse(text); //将文本 text 解析为抽象语法树（AST）
         // 获得文章中去重后的单词
         let wordSet: Set<string> = new Set();
         visit(ast, "WordNode", (word) => {
             wordSet.add(toString(word).toLowerCase());
         });
-
         // 查询这些单词的status
         let stored = await this.plugin.db.getStoredWords({
             article: "",
@@ -80,7 +80,6 @@ export class TextParser {
         });
 
         stored.words.forEach((w) => this.words.set(w.text, w));
-
         let HTML = this.processor.stringify(ast) as any as string;
         return HTML;
     }
@@ -103,7 +102,7 @@ export class TextParser {
         wordsPhrases.words.forEach((word) => {
             if (word.status > 0) payload.push(word.text);
         });
-
+        await this.plugin.checkPath();
         let res = await this.plugin.db.getExpressionsSimple(payload);
         return res;
     }
@@ -172,6 +171,7 @@ export class TextParser {
     // Compiler部分: 在AST转换为string时包裹上相应标签
     stringfy2HTML() {
         let selfThis = this;
+        
         return function () {
             Object.assign(this, {
                 Compiler: selfThis.compileHTML.bind(selfThis),
@@ -232,4 +232,9 @@ export class TextParser {
             return nodes.map((n) => this.toHTMLString(n)).join("");
         }
     }
+
+    
+
+
 }
+

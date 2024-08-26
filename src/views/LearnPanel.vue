@@ -13,6 +13,11 @@
 					<NInput size="small" v-model:value="model.meaning" :placeholder="t('A short definition')"
 						type="textarea" autosize />
 				</NFormItem>
+				<!-- 变形 -->
+				<NFormItem :label="t('aliases')" :label-style="labelStyle" path="aliases">
+					<NInput size="small" v-model:value="model.aliases" :placeholder="t('The inflections with , spacing')"
+						type="textarea" autosize />
+				</NFormItem>
 				<!-- 类别，可以是Word或Phrase -->
 				<NFormItem :label="t('Type')" :label-style="labelStyle" path="t">
 					<NRadioGroup v-model:value="model.t">
@@ -171,6 +176,7 @@ let model = ref<ExpressionInfo>({
 	tags: [],
 	notes: [],
 	sentences: [],
+	aliases:null,
 });
 
 // 表单检查规则
@@ -270,11 +276,14 @@ async function submit() {
 		new Notice(t("It looks more like a PHRASE than a WORD"));
 		return;
 	}
-
 	submitLoading.value = true;
+	if(model.value.aliases.length !== 0){
+		model.value.aliases = model.value.aliases.toLowerCase().split(/[,，]/).map((s:string) => s.trim());
+	}
 	let data = JSON.parse(JSON.stringify(model.value));
 	(data as any).expression = (data as any).expression.trim().toLowerCase();
 	// 超过1条例句时，sentences中的对象会变成Proxy，尚不知原因，因此用JSON转换一下
+	
 	let statusCode = await plugin.db.postExpression(data);
 	submitLoading.value = false;
 
@@ -290,6 +299,8 @@ async function submit() {
 				expression: model.value.expression,
 				type: model.value.t,
 				status: model.value.status,
+				meaning: model.value.meaning,
+				aliases: model.value.aliases,
 			},
 		})
 	);
@@ -301,7 +312,22 @@ async function submit() {
 		plugin.refreshTextDB();
 		// }, 0);
 	}
-}
+	clearPanel();
+};
+
+//清空词表单
+function clearPanel(){
+	model.value = {
+		expression: null,
+		meaning: null,
+		status: 1,
+		t: "WORD",
+		tags: [],
+		notes: [],
+		sentences: [],
+		aliases:null,
+	};
+};
 
 // 查询词汇时自动填充新词表单
 useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
@@ -312,7 +338,6 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 	if (selection.trim().contains(" ")) {
 		exprType = "PHRASE";
 	}
-
 	let target = evt.detail.target as HTMLElement;
 
 	let sentenceText = "";
@@ -352,6 +377,7 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 		}
 	}
 
+	//能查到单词记录
 	if (expr) {
 		if (sentenceText) {
 			if (!storedSen) {
@@ -370,6 +396,11 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 			}
 		}
 		model.value = expr;
+		if(expr.aliases){
+			model.value.aliases = expr.aliases.join(',');
+		}else{
+			model.value.aliases = "";
+		}
 		return;
 	} else {
 		if (!target) {
@@ -381,6 +412,7 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 				tags: [],
 				notes: [],
 				sentences: [],
+				aliases:'',
 			};
 			return;
 		}
@@ -392,6 +424,7 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 			t: exprType,
 			tags: [],
 			notes: [],
+			aliases:'',
 			sentences: storedSen
 				? [storedSen]
 				: [

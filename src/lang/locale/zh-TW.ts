@@ -32,6 +32,8 @@ export default {
     // LearnPanel.vue
     "Expression": "表達",
     "A word or a phrase": "輸入一個單字或片語",
+    "aliases": "变形",
+    'The inflections with , spacing': '用","分隔各变形形式',
     "Meaning": "含義",
     "A short definition": "給一個簡短的定義",
     "Please input a word/phrase": "輸入一個單字或片語",
@@ -96,7 +98,7 @@ export default {
     "Jukuu": "句酷",
     "Hujiang": "滬江小D",
 
-    "Word Database Path": "單字資料庫路徑",
+
     "Choose a md file as word database for auto-completion": "選擇一個md文件作為單字資料庫以自動補全",
     "Review Database Path": "復習資料庫路徑",
     "Choose a md file as review database for spaced-repetition": "選擇一個md文件作為復習資料庫以間隔復習",
@@ -118,6 +120,18 @@ export default {
 
     "IndexDB Database": "IndexDB 資料庫",
     "Database Name": "資料庫名稱",
+
+    "Word Files Database":"單詞文件庫",
+    "Use Word Files Database. Automatically write  non-ignored word information from the article into the corresponding word file after exiting reading mode":"啟用單詞文件庫。退出閱讀模式後自動將非無視的文章單詞信息冩入相應單詞文件。",
+    "Word Files Database Path" : "單詞文件庫路徑",
+    "Choose a folder as word files for saving": "選擇一個文件夾用於存放單詞文件。",
+    "update Word Files Database":"更新單詞文件庫",
+    "Import all non-ignored word information from the indexDB database into the corresponding word file":"根據 IndexDB 數據庫將每個非無視單詞信息冩入相應單詞文件。",
+    "Update IndexDB Database":"更新 IndexDB 數據庫",
+    "Update the indexDB database based on the frontmatter information of each word file (the ignored words will not be affected). Please operate with caution.":"根據所有單詞文件的 frontmatter 信息更新 IndexDB 數據庫（保留無視單詞）。請謹慎操作。",
+    "Update":"更新",
+    "System reads and writes non-ignored word information directly from the word file database, instead of the index database. Please operate with caution. (After activation, non-ignored word information in the index database will be deleted. After deactivation, non-ignored word information in the word file will be written to the index database.)":"系統直接從單詞文件數據庫讀取和寫入非無視單詞信息，而不是index數據庫。請謹慎操作。（開啟後將刪除index數據庫中的非無視單詞信息，關閉後將根據單詞文件的非無視單詞信息寫入index數據庫）",
+    "ONLY Use Word Files Database":"僅使用單詞文件庫",
     "Reopen": "重啟",
     // "Change": "Change",
     "Reopen DB after changing database name": "切換資料庫後點擊按鈕重啟資料庫",

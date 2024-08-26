@@ -2,6 +2,7 @@ import { App, Notice, PluginSettingTab, Setting, Modal, moment, debounce } from 
 
 import { WebDb } from "./db/web_db";
 import { LocalDb } from "./db/local_db";
+import { FileDb } from "./db/file_db";
 import Server from "./api/server";
 import LanguageLearner from "./plugin";
 import { t } from "./lang/helper";
@@ -37,6 +38,10 @@ export interface MyPluginSettings {
     review_database: string;
     col_delimiter: "," | "\t" | "|";
     auto_refresh_db: boolean;
+    // file db
+    use_fileDB: boolean;
+    word_folder:string;
+    only_fileDB:boolean;
     // review
     review_prons: "0" | "1";
     review_delimiter: string;
@@ -69,6 +74,10 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     review_database: "",
     col_delimiter: ",",
     auto_refresh_db: true,
+    // file db
+    use_fileDB: false,
+    word_folder:"",
+    only_fileDB:false,
     // reading
     default_paragraphs: "4",
     font_size: "15px",
@@ -100,6 +109,7 @@ export class SettingTab extends PluginSettingTab {
         this.querySettings(containerEl);
         this.indexedDBSettings(containerEl);
         this.textDBSettings(containerEl);
+        this.fileDBSettings(containerEl);
         this.readingSettings(containerEl);
         this.completionSettings(containerEl);
         this.reviewSettings(containerEl);
@@ -420,6 +430,91 @@ export class SettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     })
             );
+        
+
+    }
+
+    fileDBSettings(containerEl: HTMLElement) {
+        containerEl.createEl("h3", { text: t("Word Files Database") });
+
+        new Setting(containerEl)
+            .setName(t("Word Files Database"))
+            .setDesc(t("Use Word Files Database. Automatically write  non-ignored word information from the article into the corresponding word file after exiting reading mode"))
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.use_fileDB)
+                .onChange(async (value) => {
+                    this.plugin.settings.use_fileDB = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+
+        new Setting(containerEl)
+            .setName(t("Word Files Database Path"))
+            .setDesc(t("Choose a folder as word files for saving"))
+            .addText((text) =>
+                text
+                    .setValue(this.plugin.settings.word_folder)
+                    .onChange(async (path) => {
+                        this.plugin.settings.word_folder = path;
+                        await this.plugin.saveSettings();
+                    })
+            );
+            
+            new Setting(containerEl)
+            .setName(t("update Word Files Database"))
+            .setDesc(t("Import all non-ignored word information from the indexDB database into the corresponding word file"))
+            .addButton(button => button
+                .setButtonText(t("Update"))
+                .onClick(async (evt) => {
+                    if(this.plugin.settings.only_fileDB){
+                        new Notice('"仅使用单词文件库"设置已开启，无法更新');
+                    }else{
+                        await this.plugin.updateWordfiles();
+                        new Notice("已更新");
+                    }
+                })
+            );
+
+            new Setting(containerEl)
+            .setName(t("Update IndexDB Database"))
+            .setDesc(t("Update the indexDB database based on the frontmatter information of each word file (the ignored words will not be affected). Please operate with caution."))
+            .addButton(button => button
+                .setButtonText(t("Update"))
+                .onClick(async (evt) => {
+                    if(this.plugin.settings.only_fileDB){
+                        new Notice('"仅使用单词文件库"设置已开启，无法更新');
+                    }else{
+                    await this.plugin.updateIndexDB();
+                    new Notice("已更新");
+                }
+                })
+            );
+
+            new Setting(containerEl)
+            .setName(t("ONLY Use Word Files Database"))
+            .setDesc(t("System reads and writes non-ignored word information directly from the word file database, instead of the index database. Please operate with caution. (After activation, non-ignored word information in the index database will be deleted. After deactivation, non-ignored word information in the word file will be written to the index database.)"))
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.only_fileDB)
+                .onChange(async (only_fileDB) => {
+                    this.plugin.settings.only_fileDB = only_fileDB;
+                    if (only_fileDB) {
+                        var ignorwords = (await this.plugin.db.getAllExpressionSimple(true))
+                        .filter(item => item.status === 0)
+                        .flatMap(item => [item.expression, ...item.aliases]);
+                        this.plugin.db.destroyAll();
+                        this.plugin.db = new FileDb(this.plugin);
+                        this.plugin.db.open();
+                        this.plugin.db.postIgnoreWords(ignorwords.filter(item => item !== ""));
+                    } else {
+                        this.plugin.db = new LocalDb(this.plugin);
+                        this.plugin.db.open();
+                        this.plugin.updateIndexDB();
+                    }
+                    await this.plugin.saveSettings();
+                    this.display();
+                })
+            );
+
     }
 
     readingSettings(containerEl: HTMLElement) {

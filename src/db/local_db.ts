@@ -8,7 +8,7 @@ import {
     ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
 } from "./interface";
 import DbProvider from "./base";
-import WordDB from "./idb";
+import {WordDB,Expression} from "./idb";
 import Plugin from "@/plugin";
 
 
@@ -30,20 +30,66 @@ export class LocalDb extends DbProvider {
         this.idb.close();
     }
 
+
+
     // 寻找页面中已经记录过的单词和词组
     async getStoredWords(payload: ArticleWords): Promise<WordsPhrase> {
+        //查询存储的短语
         let storedPhrases = new Map<string, number>();
         await this.idb.expressions
             .where("t").equals("PHRASE")
-            .each(expr => storedPhrases.set(expr.expression, expr.status));
+            .each(expr => {
+                storedPhrases.set(expr.expression, expr.status)
+                if(expr.aliases){
+                    for(let item of expr.aliases){
+                        storedPhrases.set(item, expr.status)
+                    }
+                }
+            });
 
-        let storedWords = (await this.idb.expressions
-            .where("expression").anyOf(payload.words)
+        //查询存储的单词
+        // let storedWords = (await this.idb.expressions
+        //     .where("expression").anyOf(payload.words)
+        //     .toArray()
+        // ).map(expr => {
+        //     return { text: expr.expression, status: expr.status } as Word;
+        // });
+        // 查询 "expression" 字段中包含在 payload.words 中的记录
+        let storedWordsExpression = await this.idb.expressions
+        .where("expression").anyOf(payload.words)
+        .toArray();
+
+        // 查询aliases中 payload.words 中的英文单词的记录
+        let storedWordsMeaning = await this.idb.expressions
             .toArray()
-        ).map(expr => {
-            return { text: expr.expression, status: expr.status } as Word;
-        });
+            .then(expressions => {
+                return expressions
+                    .filter(expr => {
+                        if(expr.aliases&&expr.aliases.length > 0){
+                            return expr.aliases.some(word => payload.words.includes(word));
+                        }else{
+                            return;
+                        }
+                    })
+                    .flatMap(expr => {
+                        //let meanings = extractEnglishWords(expr.meaning);
+                        return expr.aliases.map(word => ({
+                            expression: word,  // 更新 expression 字段为匹配的英文单词
+                            status: expr.status
+                        }));
+                    });
+            });
+        // 合并并去重
+        let mergedResults = [...storedWordsExpression, ...storedWordsMeaning];
 
+        // 转换为 Word 类型数组
+        let storedWords = mergedResults.map(expr => ({
+        text: expr.expression,
+        status: expr.status
+        }) as Word);
+
+
+        //对文章进行搜索，找到匹配的表达式，并将结果映射为 { text, status, offset } 形式的 Phrase 对象数组，其中 offset 是匹配的起始位置。
         let ac = await createAutomaton([...storedPhrases.keys()]);
         let searchedPhrases = (await ac.search(payload.article)).map(match => {
             return { text: match[1], status: storedPhrases.get(match[1]), offset: match[0] } as Phrase;
@@ -58,7 +104,8 @@ export class LocalDb extends DbProvider {
             .where("expression").equals(expression).first();
 
         if (!expr) {
-            return null;
+            expr = await this.idb.expressions.filter(item => item.aliases?.includes(expression)).first();
+            if(!expr){return null;}
         }
 
         let sentences = await this.idb.sentences
@@ -73,6 +120,8 @@ export class LocalDb extends DbProvider {
             notes: expr.notes,
             sentences,
             tags: [...expr.tags.keys()],
+            aliases:expr.aliases,
+            date: expr.date,
         };
 
     }
@@ -94,10 +143,94 @@ export class LocalDb extends DbProvider {
                 tags: [...v.tags.keys()],
                 sen_num: v.sentences.size,
                 note_num: v.notes.length,
-                date: v.date
+                date: v.date,
+                aliases: v.aliases,
             };
         });
     }
+
+    async getExprall(expressions: string[]): Promise<ExpressionInfo[]> {
+        expressions = expressions.map(expression => expression.toLowerCase());
+
+        // 查询所有表达式的 expressions 和 aliases
+        let exprMap = new Map<string, Expression>();
+        let aliasesMap = new Map<string, Expression>();
+
+        // const promises = [
+        //     this.idb.expressions.where("expression").anyOf(expressions).each(expr => {
+        //         exprMap.set(expr.expression.toLowerCase(), expr);
+        //     })
+        // ];
+        // // 检查是否有别名
+        // const hasAliases = await this.idb.expressions.filter(item => item.aliases && item.aliases.length > 0).count();
+
+        // if (hasAliases > 0) {
+        //     promises.push(
+        //         this.idb.expressions.filter(item => item.aliases.some(alias => expressions.includes(alias))).each(expr => {
+        //             expr.aliases.forEach(alias => {
+        //                 aliasesMap.set(alias.toLowerCase(), expr);
+        //             });
+        //         })
+        //     );
+        // }
+
+        // // 等待所有 Promise 完成
+        // await Promise.all(promises);
+        //         await Promise.all([
+        //             this.idb.expressions.where("expression").anyOf(expressions).each(expr => {
+        //                 exprMap.set(expr.expression.toLowerCase(), expr);
+        //             }),
+        //             this.idb.expressions.filter(item => item.aliases.some(alias => expressions.includes(alias))).each(expr => {
+        //                 expr.aliases.forEach(alias => {
+        //                     aliasesMap.set(alias.toLowerCase(), expr);
+        //                 });
+        //             })
+        //         ]);
+        await Promise.all([
+            this.idb.expressions.where("expression").anyOf(expressions).each(expr => {
+                exprMap.set(expr.expression.toLowerCase(), expr);
+            }),
+            this.idb.expressions.filter(item => item.aliases && item.aliases.length > 0 && item.aliases.some(alias => expressions.includes(alias))).each(expr => {
+                expr.aliases.forEach(alias => {
+                    aliasesMap.set(alias.toLowerCase(), expr);
+                });
+            })
+        ]);
+        // 组装结果
+        let expressionInfos: ExpressionInfo[] = [];
+
+        for (let expression of expressions) {
+            let expr = exprMap.get(expression);
+            if (!expr) {
+                expr = aliasesMap.get(expression);
+            }
+
+            if (!expr) {
+                expressionInfos.push(null); // 如果没有找到匹配项，添加 null 到结果数组
+                continue; // 继续下一个表达式的处理
+            }
+
+            let sentences = await this.idb.sentences
+                .where("id").anyOf([...expr.sentences.values()])
+                .toArray();
+
+            expressionInfos.push({
+                expression: expr.expression,
+                meaning: expr.meaning,
+                status: expr.status,
+                t: expr.t,
+                notes: expr.notes,
+                sentences,
+                tags: [...expr.tags],
+                aliases: expr.aliases,
+                date: expr.date,
+            });
+        }
+
+        return expressionInfos;
+    }
+
+
 
     async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
         let unixStamp = moment.utc(time).unix();
@@ -120,6 +253,8 @@ export class LocalDb extends DbProvider {
                 notes: expr.notes,
                 sentences,
                 tags: [...expr.tags.keys()],
+                aliases: expr.aliases,
+                date: expr.date,
             });
         }
         return res;
@@ -140,6 +275,7 @@ export class LocalDb extends DbProvider {
                 note_num: expr.notes.length,
                 sen_num: expr.sentences.size,
                 date: expr.date,
+                aliases:expr.aliases,
             };
         });
 
@@ -171,7 +307,7 @@ export class LocalDb extends DbProvider {
             notes: payload.notes,
             sentences,
             tags: new Set<string>(payload.tags),
-            connections: new Map<string, string>(),
+            aliases: payload.aliases,
             date: moment().unix()
         };
         if (stored) {
@@ -195,7 +331,6 @@ export class LocalDb extends DbProvider {
     }
 
     async postIgnoreWords(payload: string[]): Promise<void> {
-
         await this.idb.expressions.bulkPut(
             payload.map(expr => {
                 return {
@@ -206,8 +341,8 @@ export class LocalDb extends DbProvider {
                     notes: [],
                     sentences: new Set(),
                     tags: new Set(),
-                    connections: new Map<string, string>(),
-                    date: moment().unix()
+                    aliases: [],
+                    date: moment().unix(),
                 };
             })
         );
@@ -274,6 +409,7 @@ export class LocalDb extends DbProvider {
     }
 
     async importDB(file: File) {
+        
         await this.idb.delete();
         await this.idb.open();
         await importInto(this.idb, file, {

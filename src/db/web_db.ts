@@ -37,6 +37,8 @@ export class WebDb extends DbProvider {
         }
     }
 
+
+    
     // 获取单词/词组的详细信息
     async getExpression(
         expression: string
@@ -192,7 +194,14 @@ export class WebDb extends DbProvider {
         }
     }
 
-
+    //未编写
+    async getExprall(expressions: string[]): Promise<ExpressionInfo[]> {
+        expressions = expressions.map(expression => expression.toLowerCase());
+        // 组装结果
+        let expressionInfos: ExpressionInfo[] = [];
+        return expressionInfos;
+    }
+    
     // 获取包括今天在内的7天内每一天的新单词量和累计单词量
     async countSeven(): Promise<WordCount[]> {
         let spans: Span[] = [];

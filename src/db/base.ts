@@ -13,6 +13,8 @@ abstract class DbProvider {
     abstract getExpression(expression: string): Promise<ExpressionInfo>;
     //获取一批单词的简略信息
     abstract getExpressionsSimple(expressions: string[]): Promise<ExpressionInfoSimple[]>;
+    //获取一批单词的全部信息，包括句子
+    abstract getExprall(expressions: string[]): Promise<ExpressionInfo[]>;
     // 某一时间之后添加的全部单词
     abstract getExpressionAfter(time: string): Promise<ExpressionInfo[]>;
     // 获取全部单词的简略信息
