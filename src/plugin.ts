@@ -678,7 +678,7 @@ export default class LanguageLearner extends Plugin {
     async createFM(cont:ExpressionInfo){
 
         const status = statusMap[cont.status];
-        const aliasesString = cont.aliases.length ? `aliases: \n${cont.aliases.map(line => `- ${line}`).join('\n')}` : '';
+        const aliasesString = cont.aliases ? `aliases: \n${cont.aliases.map(line => `- ${line}`).join('\n')}` : '';
         const tagsString = cont.tags.length ? `tags: \n${cont.tags.map(line => `- ${line}`).join('\n')}` : '';
         const notesString = cont.notes.length ? `notes: \n${cont.notes.map(line => `- '${line}'`).join('\n')}` : '';
         //const sentencesString = cont.sentences.length ? `sentences: \n${cont.sentences.map(sentence => `- ${sentence.text}-${sentence.trans}-${sentence.origin}`).join('\n')}` : 'sentences: \n';

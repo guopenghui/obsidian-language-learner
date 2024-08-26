@@ -134,9 +134,9 @@ export default {
     "update Word Files Database":"更新单词文件库",
     "Import all non-ignored word information from the indexDB database into the corresponding word file":"根据 IndexDB 数据库将每个非无视单词信息写入相应单词文件。",
     "Update IndexDB Database":"更新 IndexDB 数据库",
-    "Update the indexDB database based on the frontmatter information of each word file (the ignored words will not be affected). Please operate with caution.":"根据所有单词文件的 frontmatter 信息更新 IndexDB 数据库（保留无视单词）。请谨慎操作。",
+    "Update the indexDB database based on the frontmatter information of each word file (the ignored words will not be affected). Please operate with caution.":"根据所有单词文件的 frontmatter 信息更新 IndexDB 数据库（无视单词不受影响），可实现批量修改和删除 IndexDB 中单词的功能。请谨慎操作。",
     "Update":"更新",
-    "System reads and writes non-ignored word information directly from the word file database, instead of the index database. Please operate with caution. (After activation, non-ignored word information in the index database will be deleted. After deactivation, non-ignored word information in the word file will be written to the index database.)":"系统直接从单词文件数据库读取和写入非无视单词信息，而不是index数据库。请谨慎操作。（开启后将删除index数据库中的非无视单词信息，关闭后将根据单词文件的非无视单词信息写入index数据库）",
+    "System reads and writes non-ignored word information directly from the word file database, instead of the index database. Please operate with caution. (After activation, non-ignored word information in the index database will be deleted. After deactivation, non-ignored word information in the word file will be written to the index database.)":"系统直接从单词文件数据库读取和写入非无视单词信息，而不是index数据库。注意：开启后将删除index数据库中的非无视单词信息，关闭后将根据单词文件更新index数据库的非无视单词！",
     "ONLY Use Word Files Database":"仅使用单词文件库",
 
     "Reopen": "重启",
