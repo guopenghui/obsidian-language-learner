@@ -105,12 +105,16 @@ const themeConfig: GlobalThemeOverrides = {
     },
 };
 
+const localPrefix = require("electron").ipcRenderer.sendSync("file-url");
+// app.vault.adapter.getResourcePath("");
 let frontMatter = plugin.app.metadataCache.getFileCache(view.file).frontmatter;
 let audioSource = (frontMatter["langr-audio"] || "") as string;
 if (audioSource && audioSource.startsWith("~/")) {
-    const prefix = Platform.isDesktopApp ? "app://local/" : "http://localhost/_capacitor_file_";
+    const prefix = Platform.isDesktopApp ? localPrefix : "http://localhost/_capacitor_file_";
     audioSource =
         prefix + plugin.constants.basePath + audioSource.slice(1);
+}else {
+    audioSource = localPrefix + audioSource;
 }
 
 // 记笔记

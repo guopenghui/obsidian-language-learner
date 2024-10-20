@@ -18,7 +18,7 @@ import { READING_VIEW_TYPE, READING_ICON, ReadingView } from "./views/ReadingVie
 import { LearnPanelView, LEARN_ICON, LEARN_PANEL_VIEW } from "./views/LearnPanelView";
 import { StatView, STAT_ICON, STAT_VIEW_TYPE } from "./views/StatView";
 import { DataPanelView, DATA_ICON, DATA_PANEL_VIEW } from "./views/DataPanelView";
-import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
+// import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
 
 import { t } from "./lang/helper";
 import DbProvider from "./db/base";
@@ -87,7 +87,7 @@ export default class LanguageLearner extends Plugin {
         // 	callback: () => new Notice("hello!")
         // })
 
-        await this.replacePDF();
+        // await this.replacePDF();
 
         this.initStore();
 
@@ -120,9 +120,9 @@ export default class LanguageLearner extends Plugin {
 
         this.db.close();
         this.server?.close();
-        if (await app.vault.adapter.exists(".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html")) {
-            this.registerExtensions([PDF_FILE_EXTENSION], "pdf");
-        }
+        // if (await app.vault.adapter.exists(".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html")) {
+        //     this.registerExtensions([PDF_FILE_EXTENSION], "pdf");
+        // }
 
         this.vueApp.unmount();
         this.appEl.remove();
@@ -136,27 +136,27 @@ export default class LanguageLearner extends Plugin {
         };
     }
 
-    async replacePDF() {
-        if (await app.vault.adapter.exists(
-            ".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html"
-        )) {
-            this.registerView(VIEW_TYPE_PDF, (leaf) => {
-                return new PDFView(leaf);
-            });
+    // async replacePDF() {
+    //     if (await app.vault.adapter.exists(
+    //         ".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html"
+    //     )) {
+    //         this.registerView(VIEW_TYPE_PDF, (leaf) => {
+    //             return new PDFView(leaf);
+    //         });
 
-            (this.app as any).viewRegistry.unregisterExtensions([
-                PDF_FILE_EXTENSION,
-            ]);
-            this.registerExtensions([PDF_FILE_EXTENSION], VIEW_TYPE_PDF);
+    //         (this.app as any).viewRegistry.unregisterExtensions([
+    //             PDF_FILE_EXTENSION,
+    //         ]);
+    //         this.registerExtensions([PDF_FILE_EXTENSION], VIEW_TYPE_PDF);
 
-            this.registerDomEvent(window, "message", (evt) => {
-                if (evt.data.type === "search") {
-                    // if (evt.data.funckey || this.store.searchPinned)
-                    this.queryWord(evt.data.selection);
-                }
-            });
-        }
-    }
+    //         this.registerDomEvent(window, "message", (evt) => {
+    //             if (evt.data.type === "search") {
+    //                 // if (evt.data.funckey || this.store.searchPinned)
+    //                 this.queryWord(evt.data.selection);
+    //             }
+    //         });
+    //     }
+    // }
 
     initStore() {
         this.store.dark = document.body.hasClass("theme-dark");
@@ -433,19 +433,24 @@ export default class LanguageLearner extends Plugin {
                                     .getCache(state.state.file);
                                 if (cache?.frontmatter && cache.frontmatter[FRONT_MATTER_KEY]) {
                                     if (!pluginSelf.markdownButtons["reading"]) {
-                                        pluginSelf.markdownButtons["reading"] =
-                                            (this.view as MarkdownView).addAction(
-                                                "view",
-                                                t("Open as Reading View"),
-                                                () => {
-                                                    pluginSelf.setReadingView(this);
-                                                }
-                                            );
-                                        pluginSelf.markdownButtons["reading"].addClass("change-to-reading");
+                                        // 在软件初始化的时候，view上面可能没有 addAction 这个方法
+                                        setTimeout(() => {
+                                            pluginSelf.markdownButtons["reading"] =
+                                                (this.view as MarkdownView).addAction(
+                                                    "view",
+                                                    t("Open as Reading View"),
+                                                    () => {
+                                                        pluginSelf.setReadingView(this);
+                                                    }
+                                                );
+                                            pluginSelf.markdownButtons["reading"].addClass("change-to-reading");
+
+                                        })
                                     }
                                 } else {
+                                    // 在软件初始化的时候，view上面可能没有 actionsEl 这个字段
                                     (this.view.actionsEl as HTMLElement)
-                                        .querySelectorAll(".change-to-reading")
+                                        ?.querySelectorAll(".change-to-reading")
                                         .forEach(el => el.remove());
                                     // pluginSelf.markdownButtons["reading"]?.remove();
                                     pluginSelf.markdownButtons["reading"] = null;

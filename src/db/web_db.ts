@@ -10,6 +10,7 @@ import DbProvider from "./base";
 export class WebDb extends DbProvider {
     host: string;
     port: number;
+    prefix: string = "/lr";
     https: boolean;
     apiKey: string;
     
@@ -39,7 +40,7 @@ export class WebDb extends DbProvider {
         payload: ArticleWords
     ): Promise<WordsPhrase> {
         let request: RequestUrlParam = {
-            url: `${this.proto}://${this.host}:${this.port}/word_phrase`,
+            url: `${this.proto}://${this.host}:${this.port}${this.prefix}/word_phrase`,
             method: "POST",
             body: JSON.stringify(payload),
             contentType: "application/json",
@@ -61,7 +62,7 @@ export class WebDb extends DbProvider {
         expression: string
     ): Promise<ExpressionInfo> {
         let request: RequestUrlParam = {
-            url: `${this.proto}://${this.host}:${this.port}/word`,
+            url: `${this.proto}://${this.host}:${this.port}${this.prefix}/word`,
             method: "POST",
             body: JSON.stringify(expression.toLowerCase()),
             contentType: "application/json",
@@ -79,7 +80,7 @@ export class WebDb extends DbProvider {
     async getExpressionsSimple(expressions: string[]): Promise<ExpressionInfoSimple[]> {
         expressions = expressions.map(v => v.toLowerCase());
         let request: RequestUrlParam = {
-            url: `${this.proto}://${this.host}:${this.port}/words_simple`,
+            url: `${this.proto}://${this.host}:${this.port}${this.prefix}/words_simple`,
             method: "POST",
             body: JSON.stringify(expressions),
             contentType: "application/json",
@@ -99,7 +100,7 @@ export class WebDb extends DbProvider {
     async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
         let unixStamp = moment.utc(time).unix();
         let request: RequestUrlParam = {
-            url: `${this.proto}://${this.host}:${this.port}/words/after`,
+            url: `${this.proto}://${this.host}:${this.port}${this.prefix}/words/after`,
             method: "POST",
             body: JSON.stringify(unixStamp),
             contentType: "application/json",
@@ -121,7 +122,7 @@ export class WebDb extends DbProvider {
         let mode = ignores ? "all" : "no_ignore";
 
         let request: RequestUrlParam = {
-            url: `${this.proto}://${this.host}:${this.port}/words_simple/${mode}`,
+            url: `${this.proto}://${this.host}:${this.port}${this.prefix}/words_simple/${mode}`,
             method: "GET",
             headers: this.baseHeaders,
         };
@@ -138,7 +139,7 @@ export class WebDb extends DbProvider {
     // 添加或更新单词/词组的信息
     async postExpression(payload: ExpressionInfo): Promise<number> {
         let request: RequestUrlParam = {
-            url: `${this.proto}://${this.host}:${this.port}/update`,
+            url: `${this.proto}://${this.host}:${this.port}${this.prefix}/update`,
             method: "POST",
             body: JSON.stringify(payload),
             contentType: "application/json",
@@ -155,7 +156,7 @@ export class WebDb extends DbProvider {
     // 获取所有的tag
     async getTags(): Promise<string[]> {
         let request: RequestUrlParam = {
-            url: `${this.proto}://${this.host}:${this.port}/tags`,
+            url: `${this.proto}://${this.host}:${this.port}${this.prefix}/tags`,
             method: "GET",
             headers: this.baseHeaders,
         };
@@ -171,7 +172,7 @@ export class WebDb extends DbProvider {
     // 发送所有忽略的新词
     async postIgnoreWords(payload: string[]) {
         let request: RequestUrlParam = {
-            url: `${this.proto}://${this.host}:${this.port}/ignores`,
+            url: `${this.proto}://${this.host}:${this.port}${this.prefix}/ignores`,
             method: "POST",
             body: JSON.stringify(payload),
             contentType: "application/json",
@@ -188,7 +189,7 @@ export class WebDb extends DbProvider {
     // 尝试查询已存在的例句
     async tryGetSen(text: string): Promise<Sentence> {
         let request: RequestUrlParam = {
-            url: `${this.proto}://${this.host}:${this.port}/sentence`,
+            url: `${this.proto}://${this.host}:${this.port}${this.prefix}/sentence`,
             method: "POST",
             body: JSON.stringify(text),
             contentType: "application/json",
@@ -207,7 +208,7 @@ export class WebDb extends DbProvider {
     // 获取各种类型的单词/词组类型
     async getCount(): Promise<CountInfo> {
         let request: RequestUrlParam = {
-            url: `${this.proto}://${this.host}:${this.port}/count_all`,
+            url: `${this.proto}://${this.host}:${this.port}${this.prefix}/count_all`,
             method: "GET",
             headers: this.baseHeaders,
         };
@@ -235,7 +236,7 @@ export class WebDb extends DbProvider {
         });
 
         let request: RequestUrlParam = {
-            url: `${this.proto}://${this.host}:${this.port}/count_time`,
+            url: `${this.proto}://${this.host}:${this.port}${this.prefix}/count_time`,
             method: "POST",
             body: JSON.stringify(spans),
             contentType: "application/json",

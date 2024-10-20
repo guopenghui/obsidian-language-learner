@@ -77,8 +77,8 @@ export default {
     "Server Host": "Server Host",
     "Your server's host name (like 11.11.11.11 or baidu.com)": "Your server's host name (like 11.11.11.11 or baidu.com)",
     "Server Port": "Server Port",
-    'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
-        'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server',
+    'It should be same as "PORT" variable in .env file of server':
+        'It should be same as "PORT" variable in .env file of server',
     "Wrong port format": "Wrong port format",
 
     "Language": "Language",

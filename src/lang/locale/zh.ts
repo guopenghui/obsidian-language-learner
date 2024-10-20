@@ -76,8 +76,8 @@ export default {
     "Server Host": "服务器主机名",
     "Your server's host name (like 11.11.11.11 or baidu.com)": "主机名，类似 11.11.11.11 或 baidu.com",
     "Server Port": "服务器端口",
-    'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
-        '一个介于1024-65535之间的整数.这应该和服务器.env文件中的PORT字段一致',
+    'It should be same as "PORT" variable in .env file of server':
+        '这应该和服务器.env文件中的PORT字段一致',
     "Wrong port format": "端口格式不对",
 
     "Language": "语言选择",

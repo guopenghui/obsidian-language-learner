@@ -70,8 +70,8 @@ export default {
     "Use Server": "使用伺服器",
     "Use a seperated backend server": "使用單獨的後端伺服器(目前只對作者有用)",
     "Server Port": "伺服器通訊埠",
-    'An integer between 1024-65535. It should be same as "PORT" variable in .env file of server':
-        '一個介於1024-65535之間的整數，這應該和伺服器.env文件中的PORT欄位一致',
+    'It should be same as "PORT" variable in .env file of server':
+        '這應該和伺服器.env文件中的PORT欄位一致',
     "Wrong port format": "埠格式不對",
 
     "Language": "語言選擇",
