@@ -35,6 +35,8 @@ abstract class DbProvider {
     abstract importDB(data: any): Promise<void>;
     // 导出数据库
     abstract exportDB(): Promise<void>;
+    // json字符串数据库
+    abstract readDB(): Promise<string>;
 }
 
 
