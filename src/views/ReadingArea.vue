@@ -114,7 +114,7 @@ if (audioSource && audioSource.startsWith("~/")) {
     audioSource =
         prefix + plugin.constants.basePath + audioSource.slice(1);
 }else {
-    audioSource = localPrefix + audioSource;
+    audioSource = audioSource.startsWith("http") ? audioSource : localPrefix + audioSource;
 }
 
 // 记笔记

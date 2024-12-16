@@ -555,7 +555,7 @@ export default class LanguageLearner extends Plugin {
             let target = evt.target as HTMLElement;
             if (
                 target.tagName === "H4" &&
-                target.matchParent("#sr-flashcard-view")
+                target.matchParent(".sr-modal-content")
             ) {
                 let word = target.textContent;
                 let accent = this.settings.review_prons;

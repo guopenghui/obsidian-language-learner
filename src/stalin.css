@@ -1,10 +1,10 @@
 /* Input your styles */
 
 /* 复习卡片中的发音 */
-#sr-flashcard-view h4 {
+.sr-modal-content h4 {
     cursor: pointer;
 }
-#sr-flashcard-view h4:hover {
+.sr-modal-content h4:hover {
     color: deeppink;
     transition: color 0.3s ease;
 }
