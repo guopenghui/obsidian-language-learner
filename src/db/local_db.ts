@@ -289,7 +289,14 @@ export class LocalDb extends DbProvider {
             console.error("error exporting database");
         }
     }
-
+    async readDB() {
+        let blob = await exportDB(this.idb);
+        try {
+            return await blob.text();
+        } catch (e){
+            console.error("error reading database")
+        }
+    }
     async destroyAll() {
         return this.idb.delete();
     }

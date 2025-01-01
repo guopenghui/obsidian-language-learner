@@ -7,6 +7,7 @@ import {
     MarkdownView,
     Editor,
     TFile,
+    TFolder,
     normalizePath,
     Platform,
 } from "obsidian";
@@ -184,6 +185,21 @@ export default class LanguageLearner extends Plugin {
             name: t("Refresh Review Database"),
             callback: this.refreshReviewDb,
         });
+
+        // 注册备份数据库命令
+        this.addCommand({
+            id: "langr-backup-database",
+            name: t("Backup Local Database"),
+            callback: this.backupDb,
+        });
+
+        // 注册恢复数据库命令
+        this.addCommand({
+            id: "langr-recover-backup-database",
+            name: t("Recover Database From Backup"),
+            callback: this.recoverDB,
+        });
+
 
         // 注册查词命令
         this.addCommand({
@@ -387,6 +403,61 @@ export default class LanguageLearner extends Plugin {
 
         newText = "#flashcards\n\n" + newText;
         await this.app.vault.modify(db, newText);
+
+        this.saveSettings();
+    };
+
+    backupDb = async () => {
+        const backupFile_name = `${this.settings.db_name}_backup.json`
+        let backupFile = this.app.vault.getAbstractFileByPath(
+            backupFile_name
+        );
+        if (backupFile !== null ) {
+            if (backupFile instanceof TFolder){
+                new Notice("Invalid backup file path");
+                return;
+            }
+        }else{
+            backupFile = await this.app.vault.create(backupFile_name, '')
+        }
+        const db_json = await this.db.readDB();
+        let db = backupFile as TFile;
+        await this.app.vault.modify(db, db_json)
+        new Notice("Done");
+        this.saveSettings();
+    };
+
+    recoverDB = async () => {
+
+        let backupFile_name = `${this.settings.db_name}_backup.json`
+
+
+
+        let dataBase = this.app.vault.getAbstractFileByPath(
+            backupFile_name
+        );
+        if (!dataBase || "children" in dataBase) {
+            new Notice("Invalid backup path");
+            return;
+        }
+
+        let db = dataBase as TFile;
+        let text = await this.app.vault.read(db);
+        // Read the file as a string
+
+        // Create a Blob from the JSON string
+        const blob = new Blob([text], { type: 'application/json' });
+
+        // Create a File object from the Blob
+        const file = new File([blob], backupFile_name,
+        {
+            type: "application/json",
+        });
+        console.log(file)
+        // let db = backupFile as TFile;
+        // const db_json = await this.app.vault.read(db);
+        await this.db.importDB(file)
+        new Notice("Done");
 
         this.saveSettings();
     };
