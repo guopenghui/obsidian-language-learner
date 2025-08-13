@@ -155,6 +155,7 @@ let collumns = reactive<DataTableColumns<Row>>([
     {
         title: "Expr",
         key: "expr",
+        minWidth: 100,
         sorter: "default",
         filter(_, row) {
             if (!searchText.value) return true;
@@ -166,7 +167,7 @@ let collumns = reactive<DataTableColumns<Row>>([
     {
         title: "Status",
         key: "status",
-        width: "70",
+        minWidth: 100,
         defaultFilterOptionValues: statusMap.slice(1),
         filterOptions: [
             { label: t("Ignore"), value: t("Ignore") },
@@ -185,35 +186,37 @@ let collumns = reactive<DataTableColumns<Row>>([
         key: "meaning",
     },
     // 标签
-    {
-        title: "Tags",
-        key: "tags",
-        render(row) {
-            return row.tags.map((tag: string) =>
-                h(
-                    NTag,
-                    {
-                        style: { marginRight: "6px" },
-                        type: "info",
-                        size: "tiny",
-                    },
-                    { default: () => tag }
-                )
-            );
-        },
-        filter(value, row) {
-            if (selectedTags.value.length === 0) {
-                return true;
-            }
-            return mode.value === "and"
-                ? selectedTags.value.every((tag) => row.tags.contains(tag))
-                : selectedTags.value.some((tag) => row.tags.contains(tag));
-        },
-    },
+    // {
+    //     title: "Tags",
+    //     key: "tags",
+    //     minWidth: 100,
+    //     render(row) {
+    //         return row.tags.map((tag: string) =>
+    //             h(
+    //                 NTag,
+    //                 {
+    //                     style: { marginRight: "6px" },
+    //                     type: "info",
+    //                     size: "tiny",
+    //                 },
+    //                 { default: () => tag }
+    //             )
+    //         );
+    //     },
+    //     filter(value, row) {
+    //         if (selectedTags.value.length === 0) {
+    //             return true;
+    //         }
+    //         return mode.value === "and"
+    //             ? selectedTags.value.every((tag) => row.tags.contains(tag))
+    //             : selectedTags.value.some((tag) => row.tags.contains(tag));
+    //     },
+    // },
     // 修改日期
     {
         title: "Date",
         key: "date",
+        minWidth: 100,
         sorter(row1, row2) {
             return moment.utc(row1.date).unix() - moment.utc(row2.date).unix();
         },

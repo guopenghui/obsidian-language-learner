@@ -11,7 +11,7 @@
 				<!-- 单词或短语的含义(精简) -->
 				<NFormItem :label="t('Meaning')" :label-style="labelStyle" path="meaning">
 					<NInput size="small" v-model:value="model.meaning" :placeholder="t('A short definition')"
-						type="textarea" autosize />
+						type="textarea"  autosize />
 				</NFormItem>
 				<!-- 类别，可以是Word或Phrase -->
 				<NFormItem :label="t('Type')" :label-style="labelStyle" path="t">
@@ -29,11 +29,11 @@
 					</NRadioGroup>
 				</NFormItem>
 				<!-- 加一些tag, 可以用来搜索 -->
-				<NFormItem :label="t('Tags')" :label-style="labelStyle" path="tags">
+				<!-- <NFormItem :label="t('Tags')" :label-style="labelStyle" path="tags">
 					<NSelect size="small" v-model:value="model.tags" filterable multiple tag
 						:placeholder="t('Input or select some tags')" :loading="tagLoading" :options="tagOptions"
 						@search="tagSearch"></NSelect>
-				</NFormItem>
+				</NFormItem> -->
 				<!-- 可选,可以记多条笔记 -->
 				<NFormItem :label="t('Notes')" :label-style="labelStyle" path="tags">
 					<NDynamicInput v-model:value="model.notes" :create-button-props="{ size: 'small' }">
@@ -124,6 +124,8 @@ import {
 	getCurrentInstance,
 	computed,
 	CSSProperties,
+	watch,
+	nextTick,
 } from "vue";
 import {
 	NIcon,
@@ -152,6 +154,7 @@ import { ReadingView } from "./ReadingView";
 import Plugin from "@/plugin";
 import { search } from "@dict/youdao/engine";
 import store from "@/store";
+import { stripHtmlTags } from "@/utils/helpers";
 
 const view: LearnPanelView =
 	getCurrentInstance().appContext.config.globalProperties.view;
@@ -360,6 +363,16 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 	let storedSen: Sentence = null;
 	let defaultOrigin: string = null;
 	let filledTrans = null;
+	let meaningSearchRes = null;
+	try {
+		meaningSearchRes = await search(selection);
+	} catch (e) {
+		filledTrans = "";
+	}
+	let meaningFromSearch: string = null;
+	if (meaningSearchRes && meaningSearchRes.result.basic) {
+		meaningFromSearch = stripHtmlTags(meaningSearchRes.result.basic);
+	}
 
 	if (target) {
 		let sentenceEl = target.parentElement.hasClass("stns")
@@ -394,6 +407,7 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 	}
 
 	if (expr) {
+		console.log("Found in database:", expr);
 		if (sentenceText) {
 			if (!storedSen) {
 				expr.sentences = expr.sentences.concat({
@@ -411,12 +425,19 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 			}
 		}
 		model.value = expr;
+		if(model.value.status === 0) {
+			model.value.status = 1;
+			model.value.meaning = meaningFromSearch;
+			console.log("Model updated with existing expression:", model.value);	
+		}
+		
 		return;
 	} else {
+		console.log("Model updated with new expression:", model.value);	
 		if (!target) {
 			model.value = {
 				expression: selection,
-				meaning: "",
+				meaning: meaningFromSearch ?? "",
 				status: 1,
 				t: exprType,
 				tags: [],
@@ -428,7 +449,7 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 
 		model.value = {
 			expression: selection,
-			meaning: "",
+			meaning: meaningFromSearch ?? "",
 			status: 1,
 			t: exprType,
 			tags: [],
@@ -444,6 +465,27 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 				],
 		};
 	}
+});
+
+// 监听第二个事件：用于接收异步返回的释义
+useEvent(window, "obsidian-langr-meaning-updated", (evt: CustomEvent) => {
+    const { word, meaning } = evt.detail;
+    console.log("Received meaning update for word:", word, "meaning:", meaning);
+    // 关键修改：确保事件中的单词与当前面板的单词匹配
+    // 这可以避免当用户连续快速查词时，旧的释义覆盖新的释义
+	console.log("Current model expression:", model.value.expression);
+	console.log("Current model meaning:", model.value.meaning);
+	console.log("Current word:", word);
+	console.log("Current meaning:", meaning);
+	console.log("Model expression lower:", model.value.expression.toLowerCase());
+	console.log("Word lower:", word.toLowerCase());
+    if (model.value.expression && model.value.expression.toLowerCase() === word.toLowerCase()) {
+        // 如果有释义内容，就更新 model.meaning
+        if (meaning) {
+			console.log("Updating model.meaning with:", meaning);
+             model.value.meaning = stripHtmlTags(meaning);
+        }
+    }
 });
 
 </script>

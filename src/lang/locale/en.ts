@@ -92,6 +92,7 @@ export default {
     "Deutsch": "Deutsch",
     "Spanish": "Spanish",
 
+    "Generate Article": "Generate Article",
     "Translate": "Translate",
     "Translate Select": "Translate Select",
     "Translate Input": "Translate Input",

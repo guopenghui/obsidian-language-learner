@@ -3,7 +3,7 @@
         <NConfigProvider :theme="theme" :theme-overrides="themeConfig"
             style="height: 100%; display: flex; flex-direction: column">
             <!-- 功能区 -->
-            <div class="function-area">
+            <!-- <div class="function-area">
                 <audio controls v-if="audioSource" :src="audioSource" />
                 <div style="display: flex">
                     <button @click="activeNotes = true">做笔记</button>
@@ -23,7 +23,7 @@
                         结束阅读
                     </button>
                 </div>
-            </div>
+            </div> -->
             <!-- 阅读区 -->
             <div class="text-area" style="
                     flex: 1;
@@ -36,7 +36,7 @@
                     lineHeight: store.lineHeight,
                 }" v-html="renderedText" />
             <!-- 底栏 -->
-            <div class="pagination" style="
+            <!-- <div class="pagination" style="
                     padding: 10px 0;
                     border-top: 2px solid gray;
                     display: flex;
@@ -44,7 +44,7 @@
                 ">
                 <NPagination style="justify-content: center" v-model:page="page" v-model:page-size="pageSize"
                     :item-count="totalLines" show-size-picker :page-sizes="pageSizes" :page-slot="pageSlot" />
-            </div>
+            </div> -->
             <NDrawer v-model:show="activeNotes" :placement="'bottom'" :close-on-esc="true" :auto-focus="true"
                 :on-after-enter="afterNoteEnter" :on-after-leave="afterNoteLeave" to="#langr-reading"
                 :default-height="250" resizable>
@@ -69,6 +69,7 @@ import {
     onMounted,
     onUnmounted,
     watchEffect,
+    nextTick,
 } from "vue";
 import {
     NPagination,
@@ -211,6 +212,7 @@ let page = view.lastPos
 let renderedText = ref("");
 let psChange = ref(true); // 标志pageSize的改变
 let refreshHandle = ref(true);
+let isFirstLoad = ref(true);
 
 // pageSize变化应该使page同时进行调整以尽量保持原阅读位置
 // 同时page和pageSize的改变都应该引起langr-pos的改变，但应只修改一次
@@ -243,6 +245,14 @@ watch(
                 `${(p - 1) * pageSize.value + 1}`
             );
         }
+
+        // --- 优化点：在内容渲染完成后调用 addIgnores ---
+        // 确保 renderedText 已经渲染到 DOM，并且子元素已就绪
+        await nextTick();
+        if (isFirstLoad.value) {
+            addIgnores();
+            isFirstLoad.value = false; // 调用后将标志设置为 false，防止再次调用
+        }
     },
     { immediate: true }
 );
@@ -260,7 +270,7 @@ async function addIgnores() {
     });
     await plugin.db.postIgnoreWords([...ignore_words]);
     // this.setViewData(this.data)
-    refreshHandle.value = !refreshHandle.value;
+    // refreshHandle.value = !refreshHandle.value;
     dispatchEvent(new CustomEvent("obsidian-langr-refresh-stat"));
 
     if (page.value * pageSize.value < totalLines) {

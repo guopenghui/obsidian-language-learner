@@ -25,7 +25,7 @@ import { ref, watch, nextTick } from 'vue'
 import Collins from "./YDCollins.vue"
 import { search, YoudaoResultLex } from "./engine"
 import { useLoading } from "@dict/uses"
-import { playAudio } from "@/utils/helpers"
+import { playAudio, stripHtmlTags } from "@/utils/helpers"
 
 // import Plugin from "../plugin"
 // const plugin: Plugin = getCurrentInstance().appContext.config.globalProperties.plugin

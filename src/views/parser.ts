@@ -12,9 +12,7 @@ const STATUS_MAP = ["ignore", "learning", "familiar", "known", "learned"];
 type AnyNode = Root | Content | Content[];
 
 export class TextParser {
-    // 记录短语位置
     phrases: Phrase[] = [];
-    // 记录单词状态
     words: Map<string, Word> = new Map<string, Word>();
     pIdx: number = 0;
     plugin: Plugin;
@@ -29,7 +27,10 @@ export class TextParser {
     }
 
     async parse(data: string) {
-        let newHTML = await this.text2HTML(data.trim());
+        // --- 修改点 1：清理输入数据 ---
+        // 移除仅包含空白字符的行，确保段落能被正确分割
+        const cleanedData = data.trim().replace(/^[ \t\r\f\v\u00a0]+$/gm, "");
+        let newHTML = await this.text2HTML(cleanedData);
         return newHTML;
     }
 
@@ -58,7 +59,6 @@ export class TextParser {
         this.pIdx = 0;
         this.words.clear();
 
-        // 查找文本中的已知词组，用于构造ast中的PhraseNode
         this.phrases = (
             await this.plugin.db.getStoredWords({
                 article: text.toLowerCase(),
@@ -68,13 +68,11 @@ export class TextParser {
 
         const ast = this.processor.parse(text);
 
-        // 获得文章中去重后的单词
         let wordSet: Set<string> = new Set();
         visit(ast, "WordNode", (word) => {
             wordSet.add(toString(word).toLowerCase());
         });
 
-        // 查询这些单词的status
         let stored = await this.plugin.db.getStoredWords({
             article: "",
             words: [...wordSet],
@@ -109,7 +107,6 @@ export class TextParser {
         return res;
     }
 
-    // Plugin：在retextEnglish基础上，把AST上一些单词包裹成短语
     addPhrases() {
         let selfThis = this;
         return function (option = {}) {
@@ -148,17 +145,25 @@ export class TextParser {
 
             if (q === -1) {
                 this.pIdx++;
-                return;
+                // 如果找不到结尾，为了避免死循环，需要递增pIdx并检查下一个短语
+                if (this.pIdx >= this.phrases.length) return;
+                continue; // 继续在当前 children 中查找下一个短语
             }
+            
             let phrase = children.slice(p, q + 1);
-            children.splice(p, q - p + 1, {
-                type: "PhraseNode",
-                children: phrase,
-                position: {
-                    start: { ...phrase.first().position.start },
-                    end: { ...phrase.last().position.end },
-                },
-            } as any);
+            
+            // --- 修改点 2：修复数组调用 ---
+            // 使用标准的数组索引来获取位置信息
+            if (phrase.length > 0) {
+                 children.splice(p, q - p + 1, {
+                    type: "PhraseNode",
+                    children: phrase,
+                    position: {
+                        start: { ...phrase[0].position.start },
+                        end: { ...phrase[phrase.length - 1].position.end },
+                    },
+                } as any);
+            }
 
             this.pIdx++;
 
@@ -170,7 +175,6 @@ export class TextParser {
         }
     }
 
-    // Compiler部分: 在AST转换为string时包裹上相应标签
     stringfy2HTML() {
         let selfThis = this;
         return function () {
@@ -186,7 +190,9 @@ export class TextParser {
 
     toHTMLString(node: AnyNode): string {
         if (node.hasOwnProperty("value")) {
-            return (node as Literal).value;
+            // 对HTML特殊字符进行转义，防止XSS
+            const value = (node as Literal).value;
+            return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
         if (node.hasOwnProperty("children")) {
             let n = node as Parent;
@@ -198,18 +204,18 @@ export class TextParser {
                         ? STATUS_MAP[this.words.get(textLower).status]
                         : "new";
 
-                    return /[0-9\u4e00-\u9fa5]/.test(text) // 不把数字当做单词
+                    return /[0-9\u4e00-\u9fa5]/.test(text)
                         ? `<span class="other">${text}</span>`
                         : `<span class="word ${status}">${text}</span>`;
                 }
                 case "PhraseNode": {
                     let childText = toString(n.children);
                     let text = this.toHTMLString(n.children);
-                    // 获取词组的status
                     let phrase = this.phrases.find(
                         (p) => p.text === childText.toLowerCase()
                     );
-                    let status = STATUS_MAP[phrase.status];
+                    // 添加一个保护，以防找不到短语
+                    let status = phrase ? STATUS_MAP[phrase.status] : "ignore";
 
                     return `<span class="phrase ${status}">${text}</span>`;
                 }
@@ -219,9 +225,14 @@ export class TextParser {
                     )}</span>`;
                 }
                 case "ParagraphNode": {
+                    // 对于空的ParagraphNode，返回一个空的<p>标签或者什么都不返回
+                    if (n.children.length === 0) {
+                        return ""; // 或者 "<p></p>"
+                    }
                     return `<p>${this.toHTMLString(n.children)}</p>`;
                 }
                 default: {
+                    // 通常是 RootNode
                     return `<div class="article">${this.toHTMLString(
                         n.children
                     )}</div>`;
@@ -232,5 +243,7 @@ export class TextParser {
             let nodes = node as Content[];
             return nodes.map((n) => this.toHTMLString(n)).join("");
         }
+        // 添加一个默认返回值以防万一
+        return "";
     }
 }

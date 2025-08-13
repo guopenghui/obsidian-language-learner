@@ -1,5 +1,3 @@
-@charset "UTF-8";
-
 /* src/stalin.css */
 .sr-modal-content h4 {
   cursor: pointer;
@@ -56,7 +54,7 @@
   flex: 1;
 }
 .dict-item header.dict-item-header button {
-  color: #eceff4;
+  color: rgb(236, 239, 244);
   width: 19px;
   height: 19px;
   background: 0 0;
@@ -69,7 +67,7 @@
   box-shadow: none;
 }
 .dict-item header.dict-item-header button .fold-arrow {
-  transition: transform .4s;
+  transition: transform 0.4s;
   padding: 3px;
   fill: gray;
 }
@@ -115,7 +113,7 @@
 }
 .dict-item.open .fold-arrow {
   transform: rotate(-90deg);
-  transition: transform .4s;
+  transition: transform 0.4s;
 }
 .dict-item.open:not(.expand) .dict-item-body {
   max-height: var(--13dedc3a-defaultHeight);
@@ -129,7 +127,7 @@
 }
 #youdao .pron {
   margin-right: 15px;
-  color: #ff1493;
+  color: deeppink;
   font-size: 1.1em;
   cursor: pointer;
 }
@@ -140,17 +138,17 @@
 #youdao h2,
 #youdao h3,
 #youdao h4 {
-  margin-top: .2em;
-  margin-bottom: .2em;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
 }
 #youdao p {
-  margin-top: .2em;
-  margin-bottom: .2em;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
 }
 #youdao ul {
   padding-left: 20px;
-  margin-top: .2em;
-  margin-bottom: .2em;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
 }
 #youdao ul,
 #youdao ol,
@@ -162,10 +160,10 @@
   margin-right: 5px;
 }
 #youdao .collins .collinsMajorTrans .additional {
-  color: #ffa07a;
+  color: lightsalmon;
 }
 #youdao .collins .exampleLists {
-  margin: 5px 0;
+  margin: 5px 0 5px 0px;
   padding-left: 20px;
   border-left: 1px solid #d9d9d9;
 }
@@ -181,7 +179,7 @@
   margin-left: 10px;
 }
 #youdao .discrimination .wt-container {
-  margin-top: .5em;
+  margin-top: 0.5em;
 }
 .theme-light #youdao .collins .collinsMajorTrans,
 .theme-light #youdao .discrimination .wt-container {
@@ -232,9 +230,9 @@
 }
 #cambridge .dxref {
   padding: 1px 5px;
-  color: #fff;
+  color: white;
   font-weight: 700;
-  font-size: .8em;
+  font-size: 0.8em;
   text-align: center;
   background-color: #444;
   border-radius: 8px;
@@ -263,7 +261,7 @@
 }
 #cambridge li.dexamp.eg::marker {
   text-transform: none;
-  color: #000;
+  color: black;
 }
 #cambridge .db {
   font-weight: 700;
@@ -275,8 +273,8 @@
 }
 #cambridge .daccord {
   margin: 10px 0;
-  background-color: #fff8e4d7;
-  color: #000;
+  background-color: rgba(255, 248, 228, 0.8431372549);
+  color: black;
   border-radius: 3px;
 }
 #cambridge .daccord header {
@@ -287,13 +285,13 @@
 #cambridge .daccord section i {
   margin-right: 3px;
 }
-#cambridge .daccord section i:before {
+#cambridge .daccord section i::before {
   content: "+";
 }
 #cambridge .daccord section > :last-child {
   display: none;
 }
-#cambridge .daccord section.expand i:before {
+#cambridge .daccord section.expand i::before {
   content: "-";
 }
 #cambridge .daccord section.expand > :last-child {
@@ -309,7 +307,7 @@
   padding-left: 20px;
 }
 #jukuu ul.jukuu-sens li.jukuu-sen {
-  margin: .5em 0;
+  margin: 0.5em 0;
 }
 #jukuu ul.jukuu-sens li.jukuu-sen p {
   margin: 0;
@@ -321,7 +319,7 @@
   color: olive;
 }
 #jukuu ul.jukuu-sens li.jukuu-sen .jukuu-src {
-  font-size: .9em;
+  font-size: 0.9em;
   text-align: right;
 }
 #hjdict {
@@ -340,11 +338,11 @@
   padding: 0;
 }
 #hjdict p {
-  margin: .5em 0;
+  margin: 0.5em 0;
 }
 #hjdict p.detail-source span {
-  font-size: .8em;
-  color: #fff;
+  font-size: 0.8em;
+  color: white;
   line-height: 1.2;
   display: inline-block;
   border-radius: 2px;
@@ -392,7 +390,7 @@
 }
 #hjdict .detail-groups dt {
   font-size: 1.1em;
-  margin-bottom: .8em;
+  margin-bottom: 0.8em;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -411,7 +409,7 @@
   font-size: 1em;
   font-weight: 400;
   line-height: 1.2;
-  margin: 0 0 .5em;
+  margin: 0 0 0.5em;
   padding: 0;
 }
 #deepl p {
@@ -422,7 +420,7 @@
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-size: .8em;
+  font-size: 0.8em;
   user-select: text;
   display: flex;
   flex-direction: column;
@@ -441,30 +439,6 @@
 }
 .is-mobile #langr-search input[type=text] {
   padding: 0;
-}
-.count-bar {
-  border: 2px solid black;
-  height: 20px;
-  width: 80%;
-  display: flex;
-  text-align: center;
-  color: #000;
-  cursor: pointer;
-  line-height: 1em;
-  border-radius: 10px;
-}
-.count-bar .b1 {
-  background-color: #add8e6bb;
-  border-top-left-radius: 10px;
-  border-bottom-left-radius: 10px;
-}
-.count-bar .b2 {
-  background-color: #ffa600b4;
-}
-.count-bar .b3 {
-  background-color: #d3d3d3be;
-  border-top-right-radius: 10px;
-  border-bottom-right-radius: 10px;
 }
 #langr-reading {
   user-select: none;
@@ -486,7 +460,7 @@
   border-radius: 4px;
 }
 #langr-reading .text-area span.word:hover {
-  border-color: #00bfff;
+  border-color: deepskyblue;
 }
 #langr-reading .text-area span.phrase {
   background-color: transparent;
@@ -497,31 +471,31 @@
   border-radius: 4px;
 }
 #langr-reading .text-area span.phrase:hover {
-  border-color: #00bfff;
+  border-color: deepskyblue;
 }
 #langr-reading .text-area span.stns {
   border: 1px solid transparent;
 }
 #langr-reading .text-area span .new {
-  background-color: #add8e644;
+  background-color: rgba(173, 216, 230, 0.2666666667);
 }
 #langr-reading .text-area span .learning {
-  background-color: #ff980055;
+  background-color: rgba(255, 152, 0, 0.3333333333);
 }
 #langr-reading .text-area span .familiar {
-  background-color: #ffeb3c55;
+  background-color: rgba(255, 235, 60, 0.3333333333);
 }
 #langr-reading .text-area span .known {
-  background-color: #9eda5855;
+  background-color: rgba(158, 218, 88, 0.3333333333);
 }
 #langr-reading .text-area span .learned {
-  background-color: #4cb05155;
+  background-color: rgba(76, 176, 81, 0.3333333333);
 }
 #langr-reading .text-area span.other {
   user-select: text;
 }
 #langr-reading .text-area .select {
-  background-color: #90ee9060;
+  background-color: rgba(144, 238, 144, 0.3764705882);
   padding-top: 3px;
   padding-bottom: 3px;
   cursor: pointer;
@@ -564,20 +538,26 @@
   width: 26px;
 }
 #langr-learn-panel .n-dynamic-input .n-button-group button:nth-child(1) {
-  border-radius: 34px 34px 0 0 !important;
+  border-top-left-radius: 34px !important;
+  border-top-right-radius: 34px !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
 }
 #langr-learn-panel .n-dynamic-input .n-button-group button:nth-child(2) {
-  border-radius: 0 0 34px 34px !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: 34px !important;
+  border-bottom-right-radius: 34px !important;
 }
 .word-more h2 {
-  margin: .5em 0;
+  margin: 0.5em 0;
 }
 .word-more .word-notes {
   user-select: text;
 }
 .word-more .word-notes p {
   white-space: pre-line;
-  margin: .5em 5px;
+  margin: 0.5em 5px;
 }
 .word-more .word-sens {
   user-select: text;
@@ -588,7 +568,7 @@
   border-radius: 5px;
 }
 .word-more .word-sens .word-sen p {
-  margin: .5em 5px;
+  margin: 0.5em 5px;
 }
 .word-more .word-sens .word-sen p:first-child {
   font-style: italic;
@@ -610,11 +590,11 @@
   justify-content: center;
 }
 #langr-data .data-more h2 {
-  margin: .5em 0;
+  margin: 0.5em 0;
 }
 #langr-data .data-more .data-notes p {
   white-space: pre-line;
-  margin: .5em 5px;
+  margin: 0.5em 5px;
 }
 #langr-data .data-more .data-sens .data-sen {
   margin-bottom: 5px;
@@ -622,7 +602,7 @@
   border-radius: 5px;
 }
 #langr-data .data-more .data-sens .data-sen p {
-  margin: .5em 5px;
+  margin: 0.5em 5px;
 }
 #langr-data .data-more .data-sens .data-sen p:first-child {
   font-style: italic;
@@ -658,7 +638,7 @@
   justify-content: center;
 }
 #popup-search .pop-handle .pin-button:hover {
-  background-color: #8080806a;
+  background-color: rgba(128, 128, 128, 0.415);
 }
 #popup-search .pop-handle .pin-button.pinned svg {
   transform: rotate(45deg);

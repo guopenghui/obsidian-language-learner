@@ -9,6 +9,7 @@ import {
     TFile,
     normalizePath,
     Platform,
+    requestUrl,
 } from "obsidian";
 import { around } from "monkey-around";
 import { createApp, App as VueApp } from "vue";
@@ -204,6 +205,12 @@ export default class LanguageLearner extends Plugin {
                 modal.open();
             },
         });
+        this.addCommand({
+            id: "langr-generate-article",
+            name: t("Generate Article"),
+            hotkeys: [{ modifiers: ['Alt'], key: 'g' }],
+            callback: this.generateArticle,
+        });
     }
 
     registerCustomViews() {
@@ -328,6 +335,197 @@ export default class LanguageLearner extends Plugin {
         this.app.vault.modify(db, text);
     };
 
+    generateArticle = async () => {
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!activeView || !activeView.file) {
+            new Notice("Please open a Markdown file first.");
+            return;
+        }
+
+        const file = activeView.file;
+        let fileContent = await this.app.vault.read(file);
+        const url = this.app.metadataCache.getFileCache(file)?.frontmatter?.['langr-article-url'];
+
+        if (!url) {
+            new Notice("Missing 'langr-article-url' in front matter.");
+            return;
+        }
+
+        const articlePlaceholder = '^^^article';
+        const wordsPlaceholder = '^^^words';
+
+        if (!fileContent.includes(articlePlaceholder) || !fileContent.includes(wordsPlaceholder)) {
+            new Notice(`Missing required placeholders: ${articlePlaceholder} and ${wordsPlaceholder}.`);
+            return;
+        }
+
+        try {
+            const response = await requestUrl({ url });
+
+            if (response.status !== 200) {
+                new Notice(`Failed to fetch URL. Status: ${response.status}`);
+                return;
+            }
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(response.text, 'text/html');
+
+            // --- 新的标题提取逻辑 ---
+            const titleElement = doc.querySelector('title');
+            let newTitle = null;
+            if (titleElement) {
+                const titleText = titleElement.textContent.trim();
+                const parts = titleText.split('/');
+                if (parts.length > 1) {
+                    newTitle = parts[parts.length - 1].trim();
+                } else {
+                    newTitle = titleText;
+                }
+            }
+
+            if (newTitle) {
+                newTitle = newTitle.replace(/[.!?。！？]$/, '');
+                
+                const parentPath = file.parent.path === '/' ? '' : file.parent.path;
+                const newFilePath = `${parentPath}/${newTitle}.md`;
+                
+                try {
+                    // await 会等待 Promise 完成，如果失败，就会跳到 catch 块
+                    await this.app.vault.rename(file, newFilePath);
+                } catch (e) {
+                    // 使用 new Notice() 显示一个错误通知
+                    new Notice(`Error: ${e.message}`);
+                    console.error("Error:", e);
+                    return;
+                }
+                
+                const originValue = `《${newTitle}》`;
+                
+                let frontMatterRegex = /^---\n([\s\S]*?)\n---/;
+                let newFrontMatter = `langr-origin: ${originValue}`;
+                
+                if (frontMatterRegex.test(fileContent)) {
+                    fileContent = fileContent.replace(frontMatterRegex, (match, p1) => {
+                        if (!p1.includes('langr-origin:')) {
+                            return `---\n${p1}\n${newFrontMatter}\n---`;
+                        } else {
+                            return match.replace(/langr-origin: .*/, newFrontMatter);
+                        }
+                    });
+                } else {
+                    fileContent = `---\n${newFrontMatter}\n---\n\n${fileContent}`;
+                }
+            }
+
+            const parentDivSelector = ".widget.widget-richtext > div";
+            const parentDiv = doc.querySelector(parentDivSelector) as HTMLElement;
+            
+            if (!parentDiv) {
+                new Notice("Could not find the content container element.");
+                return;
+            }
+            
+            const evaluateXPath = (xpath: string, contextNode: Node = doc): Node | null => {
+                const result = doc.evaluate(xpath, contextNode, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                return result.singleNodeValue;
+            };
+
+            const startElementXPath = "//h3[contains(text(), 'Vocabulary')]";
+            const startElement = evaluateXPath(startElementXPath) as Element;
+
+            if (!startElement) {
+                new Notice("Could not find the 'VOCABULARY' section. Website structure may have changed.");
+                return;
+            }
+
+            let markdownContent = '';
+            let currentNode: Element | null = startElement;
+
+            const processChildren = (element: Element): string => {
+                let childrenOutput = '';
+                element.childNodes.forEach(child => {
+                    // console.log('Processing child:', child);
+                    if (child.nodeType === Node.TEXT_NODE) {
+                        // console.log('Processing text node:', child.textContent);
+                        if( child.textContent.trim() !== '') {
+                            childrenOutput += child.textContent;    
+                        }
+                    } else if (child.nodeType === Node.ELEMENT_NODE) {
+                        const subElement = child as Element;
+                        // console.log('Processing element node:',subElement.tagName, subElement.innerHTML);
+                        switch (subElement.tagName) {
+                            case 'STRONG':
+                                // 检查是否是 '<strong>&nbsp;</strong>'
+                                if (subElement.innerHTML.trim() === '&nbsp;') {
+                                    break; // 直接忽略
+                                }
+                                // 检查是否是 '<strong><br></strong>'
+                                if (subElement.firstElementChild && subElement.firstElementChild.tagName === 'BR' && subElement.children.length === 1) {
+                                    childrenOutput += '\n\n'; // 只添加换行，不加粗
+                                    break;
+                                }
+
+                                const strongContent = processChildren(subElement);
+                                // console.log('Strong content:', strongContent);
+                                if(strongContent === "TRANSCRIPT"){
+                                    childrenOutput += `### Transcipt\n\n`;
+                                } else {
+                                    childrenOutput += `${strongContent}`;
+                                }
+                                break;
+                            case 'BR':
+                                childrenOutput += '\n\n';
+                                break;
+                            default:
+                                childrenOutput += processChildren(subElement);
+                                break;
+                        }
+                    }
+                    // console.log('After processing:', childrenOutput);
+                });
+                return childrenOutput;
+            };
+
+            while (currentNode) {
+                if (currentNode.tagName === 'H3') {
+                    markdownContent += `### Vocabulary\n\n`;
+                } else if (currentNode.tagName === 'P') {
+                    const processedText = processChildren(currentNode);
+                    markdownContent += `${processedText.trim()}\n\n`;
+                }
+                
+                currentNode = currentNode.nextElementSibling;
+                if (!currentNode || !parentDiv.contains(currentNode)) {
+                    break;
+                }
+            }
+            
+            if (!markdownContent) {
+                new Notice("Extracted article content is empty.");
+                return;
+            }
+
+            const placeholderStartIndex = fileContent.indexOf(articlePlaceholder) + articlePlaceholder.length;
+            const placeholderEndIndex = fileContent.indexOf(wordsPlaceholder);
+
+            if (placeholderStartIndex >= placeholderEndIndex) {
+                new Notice("Placeholder order is incorrect. `^^^article` must come before `^^^words`.");
+                return;
+            }
+
+            const newContent = fileContent.substring(0, placeholderStartIndex) +
+                             `\n\n${markdownContent.trim()}\n\n` +
+                             fileContent.substring(placeholderEndIndex);
+
+            await this.app.vault.modify(file, newContent);
+            new Notice("Article content successfully generated and inserted!");
+
+        } catch (error) {
+            console.error("Failed to generate article:", error);
+            new Notice("An error occurred. Check the console for details.");
+        }
+    };
+
     refreshReviewDb = async () => {
         if (!this.settings.review_database) {
             return;
@@ -336,19 +534,42 @@ export default class LanguageLearner extends Plugin {
         let dataBase = this.app.vault.getAbstractFileByPath(
             this.settings.review_database
         );
+        // console.log("refreshReviewDb", this.settings.review_database);
         if (!dataBase || "children" in dataBase) {
             new Notice("Invalid word database path");
             return;
         }
 
+        // console.log("database", dataBase);
         let db = dataBase as TFile;
         let text = await this.app.vault.read(db);
+        // console.log("text : ", text);
         let oldRecord = {} as { [K in string]: string };
+        //这段逻辑猜测可能是Spaced Repetition的记录信息
         text.match(/#word(\n.+)+\n(<!--SR.*?-->)/g)
-            ?.map((v) => v.match(/#### (.+)[\s\S]+(<!--SR.*-->)/))
+            ?.map((v) => v.match(/单词: (.+)[\s\S]+(<!--SR.*-->)/))
             ?.forEach((v) => {
                 oldRecord[v[1]] = v[2];
             });
+        // console.log("oldRecord", oldRecord);
+
+        let oldAnkiCardIdRecords = {} as { [K in string]: string };
+        // 新增的处理anki card id的逻辑
+        text.match(/#word(\n.+)+\n(<!--ID.*?-->)/g)
+            ?.map((v) => v.match(/单词: (.+)[\s\S]+(<!--ID.*-->)/))
+            ?.forEach((v) => {
+                oldAnkiCardIdRecords[v[1]] = v[2];
+            });
+
+        // The `?.` checks if the match result is null or undefined.
+        // If it is, the expression evaluates to null or undefined.
+        // The `??` then provides the default value "English".
+        let deckName = text.match(/TARGET DECK: (.+?)\n/)?.[1] ?? "English";
+
+        // The rest of your original logic to handle empty or "null" strings
+        if (deckName.trim() === "" || deckName.trim() === "null") {
+        deckName = "English";
+        }
 
         // let data = await this.db.getExpressionAfter(this.settings.last_sync)
         let data = await this.db.getExpressionAfter("1970-01-01T00:00:00Z");
@@ -356,36 +577,52 @@ export default class LanguageLearner extends Plugin {
             // new Notice("Nothing new")
             return;
         }
+        console.log("data: ", data);
 
         data.sort((a, b) => a.expression.localeCompare(b.expression));
 
         let newText = data.map((word) => {
             let notes = word.notes.length === 0
                 ? ""
-                : "**Notes**:\n" + word.notes.join("\n").trim() + "\n";
+                : word.notes.join("\n\n").trim();
             let sentences = word.sentences.length === 0
                 ? ""
-                : "**Sentences**:\n" +
-                word.sentences.map((sen) => {
+                : word.sentences.map((sen) => {
                     return (
                         `*${sen.text.trim()}*` + "\n" +
                         (sen.trans ? sen.trans.trim() + "\n" : "") +
-                        (sen.origin ? sen.origin.trim() : "")
+                        (sen.origin ? "----------------------------" + sen.origin.trim() : "")
                     );
-                }).join("\n").trim() + "\n";
+                }).join("\n\n").trim();
 
+            // 下面是我改动的输出格式，适配
             return (
                 `#word\n` +
-                `#### ${word.expression}\n` +
-                `${this.settings.review_delimiter}\n` +
-                `${word.meaning}\n` +
-                `${notes}` +
-                `${sentences}` +
-                (oldRecord[word.expression] ? oldRecord[word.expression] + "\n" : "")
+                "START\n" +
+                "import_word_from_obsidian\n" + 
+                `单词: ${word.expression}\n` +
+                `释义: ${word.meaning}\n` +
+                `例句: ${sentences}\n` +
+                `笔记: ${notes}\n` +
+                (oldRecord[word.expression] ? oldRecord[word.expression] + "\n" : "") +
+                (oldAnkiCardIdRecords[word.expression] ? oldAnkiCardIdRecords[word.expression] + "\n" : "")+
+                "END\n"
             );
+
+            // 原有的输出格式
+            // return (
+            //     `#word\n` +
+            //     `#### ${word.expression}\n` +
+            //     `${this.settings.review_delimiter}\n` +
+            //     `${word.meaning}\n` +
+            //     `${notes}` +
+            //     `${sentences}` +
+            //     (oldRecord[word.expression] ? oldRecord[word.expression] + "\n" : "") +
+            //     (oldAnkiCardIdRecords[word.expression] ? oldAnkiCardIdRecords[word.expression] + "\n" : "")
+            // );
         }).join("\n") + "\n";
 
-        newText = "#flashcards\n\n" + newText;
+        newText = "#flashcards\n\n" + "TARGET DECK: " + deckName + "\n\n" + newText;
         await this.app.vault.modify(db, newText);
 
         this.saveSettings();

@@ -91,6 +91,7 @@ export default {
     "Deutsch": "德",
     "Spanish": "西",
 
+    "Generate Article": "生成文章",
     "Translate": "查词",
     "Translate Select": "选中查词",
     "Translate Input": "输入查词",

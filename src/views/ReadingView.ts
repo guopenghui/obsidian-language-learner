@@ -33,7 +33,8 @@ export class ReadingView extends TextFileView {
 
     async setViewData(data: string, clear?: boolean) {
         this.text = data;
-
+        // console.log("this.text", this.text);
+        
         if (this.firstInit) {
             let lastPos = await this.plugin.frontManager.getFrontMatter(this.file, "langr-pos");
             this.lastPos = parseInt(lastPos);
