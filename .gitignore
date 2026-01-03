@@ -12,6 +12,7 @@ node_modules
 # They should be uploaded to GitHub releases instead.
 main.js
 /main.css
+/styles.css
 
 # Exclude sourcemaps
 *.map
@@ -24,3 +25,6 @@ data.json
 
 # pdf
 pdf
+
+# Windows nul device file artifact
+nul

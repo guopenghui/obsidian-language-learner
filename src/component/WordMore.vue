@@ -2,12 +2,12 @@
     <div class="word-more">
         <div class="word-notes" v-if="(notes.length > 0)">
             <h2>Notes:</h2>
-            <p v-for="n in notes">{{ n }}</p>
+            <p v-for="n in notes" :key="n">{{ n }}</p>
         </div>
         <div class="word-sens" v-if="(sentences.length > 0)">
             <h2>Sentences:</h2>
-            <div class="word-sen" v-for="sen in sentences">
-                <p v-html="sen.text"></p>
+            <div class="word-sen" v-for="sen in sentences" :key="sen.id || sen.sentence">
+                <p v-html="sen.sentence"></p>
                 <p v-html="sen.trans"></p>
                 <p v-html="sen.origin"></p>
             </div>
@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang='ts'>
-import { ref, getCurrentInstance } from 'vue';
+import {getCurrentInstance, ref, watch, onMounted} from 'vue';
 import PluginType from "@/plugin";
 
 const plugin = getCurrentInstance().appContext.config.globalProperties.plugin as PluginType;
@@ -25,20 +25,40 @@ const props = defineProps<{
     word: string;
 }>();
 
-let { sentences, notes } = await plugin.db.getExpression(props.word);
+const sentences = ref<any[]>([]);
+const notes = ref<string[]>([]);
 
-sentences.forEach((_, i) => {
-    sentences[i].text = highlight(sentences[i].text, props.word);
-});
-
-function highlight(text: string, word: string) {
-    const expr = word.toLowerCase();
-    const Expr = word[0].toUpperCase() + word.slice(1);
-    text = text.replace(expr, `<em>${expr}</em>`);
-    text = text.replace(Expr, `<em>${Expr}</em>`);
-    return text;
+async function load() {
+    try {
+        console.log("load word more", props.word);
+        const data = await plugin.storage.DB().getExpression(props.word);
+        notes.value = data?.notes || [];
+        sentences.value = (data?.sentences || []).map((sen: any) => {
+            return {
+                ...sen,
+                sentence: highlight(sen.sentence, props.word)
+            };
+        });
+    } catch (error) {
+        sentences.value = [];
+        notes.value = [];
+    }
 }
 
+watch(() => props.word, () => { load(); }, { immediate: true });
+onMounted(() => { load(); });
+
+function highlight(text: string, word: string) {
+    if (!text) return text;
+
+    const expr = word.toLowerCase();
+
+    // 使用全局正则表达式进行替换，避免只替换第一个匹配项
+    const exprRegex = new RegExp(`(${expr})`, 'gi');
+    text = text.replace(exprRegex, '<em>$1</em>');
+
+    return text;
+}
 </script>
 
 <style lang="scss">

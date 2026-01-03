@@ -1,0 +1,41 @@
+/**
+ * 单词学习状态颜色 CSS 变量
+ * 统一管理 ReadingArea 和 DataPanel 的状态颜色
+ */
+
+:root {
+    /* Ignore - 灰色 */
+    --status-ignore-main: #d1d5db;
+    --status-ignore-bg: rgba(209, 213, 219, 0.27);
+    --status-ignore-border: rgba(209, 213, 219, 0.4);
+
+    /* Learning - 橙色 */
+    --status-learning-main: #f59e0b;
+    --status-learning-bg: rgba(245, 158, 11, 0.33);
+    --status-learning-border: rgba(245, 158, 11, 0.4);
+
+    /* Familiar - 蓝色 */
+    --status-familiar-main: #3b82f6;
+    --status-familiar-bg: rgba(59, 130, 246, 0.33);
+    --status-familiar-border: rgba(59, 130, 246, 0.4);
+
+    /* Known - 绿色 */
+    --status-known-main: #22c55e;
+    --status-known-bg: rgba(34, 197, 94, 0.33);
+    --status-known-border: rgba(34, 197, 94, 0.4);
+
+    /* Learned - 深绿色 */
+    --status-learned-main: #10b981;
+    --status-learned-bg: rgba(16, 185, 129, 0.33);
+    --status-learned-border: rgba(16, 185, 129, 0.4);
+}
+
+/* 暗色主题适配（可选，如果需要特殊处理） */
+.theme-dark {
+    /* 在暗色主题下可以调整颜色透明度等 */
+}
+
+/* 亮色主题适配（可选，如果需要特殊处理） */
+.theme-light {
+    /* 在亮色主题下可以调整颜色透明度等 */
+}

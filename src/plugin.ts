@@ -1,52 +1,49 @@
 import {
-    Notice,
-    Plugin,
-    Menu,
-    WorkspaceLeaf,
-    ViewState,
-    MarkdownView,
     Editor,
-    TFile,
-    normalizePath,
+    MarkdownView,
+    Menu,
+    Notice,
     Platform,
+    Plugin,
+    TFile,
+    ViewState,
+    WorkspaceLeaf,
 } from "obsidian";
-import { around } from "monkey-around";
-import { createApp, App as VueApp } from "vue";
+import {around} from "monkey-around";
+import {App as VueApp, createApp} from "vue";
 
-import { SearchPanelView, SEARCH_ICON, SEARCH_PANEL_VIEW } from "./views/SearchPanelView";
-import { READING_VIEW_TYPE, READING_ICON, ReadingView } from "./views/ReadingView";
-import { LearnPanelView, LEARN_ICON, LEARN_PANEL_VIEW } from "./views/LearnPanelView";
-import { StatView, STAT_ICON, STAT_VIEW_TYPE } from "./views/StatView";
-import { DataPanelView, DATA_ICON, DATA_PANEL_VIEW } from "./views/DataPanelView";
-import { PDFView, PDF_FILE_EXTENSION, VIEW_TYPE_PDF } from "./views/PDFView";
+import {SEARCH_ICON, SEARCH_PANEL_VIEW, SearchPanelView} from "./views/SearchPanelView";
+import {READING_ICON, READING_VIEW_TYPE, ReadingView} from "./views/ReadingView";
+import {LEARN_ICON, LEARN_PANEL_VIEW, LearnPanelView} from "./views/LearnPanelView";
+import {STAT_ICON, STAT_VIEW_TYPE, StatView} from "./views/StatView";
+import {DATA_ICON, DATA_PANEL_VIEW, DataPanelView} from "./views/DataPanelView";
+// import {PDF_FILE_EXTENSION, PDFView, VIEW_TYPE_PDF} from "./views/PDFView";
 
-import { t } from "./lang/helper";
-import DbProvider from "./db/base";
-import { WebDb } from "./db/web_db";
-import { LocalDb } from "./db/local_db";
-import { TextParser } from "./views/parser";
-import { FrontMatterManager } from "./utils/frontmatter";
-import Server from "./api/server";
+import {t} from "./lang/helper";
+import {TextParser} from "./views/parser";
+import {FrontMatterManager} from "./utils/frontmatter";
+// import Server from "./api/server";
 
-import { DEFAULT_SETTINGS, MyPluginSettings, SettingTab } from "./settings";
+import {DEFAULT_SETTINGS, MyPluginSettings, SettingTab} from "./settings";
 import store from "./store";
-import { playAudio } from "./utils/helpers";
-import type { Position } from "./constant";
-import { InputModal } from "./modals"
+import {playAudio} from "./utils/helpers";
+import type {Position} from "./constant";
+import {InputModal} from "./modals"
 
 import Global from "./views/Global.vue";
-
+import {ExpressionInfoSimple, WordType} from "@/storage/interface";
+import { StorageProvider } from "./storage/provider";
 
 
 export const FRONT_MATTER_KEY: string = "langr";
 
 export default class LanguageLearner extends Plugin {
-    constants: { basePath: string; platform: "mobile" | "desktop"; };
+    constants: { platform: "mobile" | "desktop"; };
     settings: MyPluginSettings;
     appEl: HTMLElement;
     vueApp: VueApp;
-    db: DbProvider;
-    server: Server;
+    storage: StorageProvider;
+    // server: Server;
     parser: TextParser;
     markdownButtons: Record<string, HTMLElement> = {};
     frontManager: FrontMatterManager;
@@ -59,26 +56,24 @@ export default class LanguageLearner extends Plugin {
 
         this.registerConstants();
 
-        // 打开数据库
-        this.db = this.settings.use_server
-            ? new WebDb(
-                this.settings.host,
-                this.settings.port,
-                this.settings.use_https,
-                this.settings.api_key
-                )
-            : new LocalDb(this);
-        await this.db.open();
+        // // 打开数据库
+        // this.db = this.settings.use_server
+        //     ? new WebDb(this.settings.port)
+        //     : new LocalDb(this);
+        // await this.db.open();
+
+        this.storage = new StorageProvider(this);
+        await this.storage.drive(this.settings.storage.storage_type);
 
         // 设置解析器
         this.parser = new TextParser(this);
         this.frontManager = new FrontMatterManager(this.app);
 
         // 打开内置服务器
-        this.server = this.settings.self_server
-            ? new Server(this, this.settings.self_port)
-            : null;
-        await this.server?.start();
+        // this.server = this.settings.self_server
+        //     ? new Server(this, this.settings.self_port)
+        //     : null;
+        // await this.server?.start();
 
         // test
         // this.addCommand({
@@ -87,7 +82,7 @@ export default class LanguageLearner extends Plugin {
         // 	callback: () => new Notice("hello!")
         // })
 
-        await this.replacePDF();
+        // await this.replacePDF()
 
         this.initStore();
 
@@ -105,7 +100,7 @@ export default class LanguageLearner extends Plugin {
         );
 
         // 创建全局app用于各种浮动元素
-        this.appEl = document.body.createDiv({ cls: "langr-app" });
+        this.appEl = document.body.createDiv({cls: "langr-app"});
         this.vueApp = createApp(Global);
         this.vueApp.config.globalProperties.plugin = this;
         this.vueApp.mount(this.appEl);
@@ -118,11 +113,11 @@ export default class LanguageLearner extends Plugin {
         this.app.workspace.detachLeavesOfType(STAT_VIEW_TYPE);
         this.app.workspace.detachLeavesOfType(READING_VIEW_TYPE);
 
-        this.db.close();
-        this.server?.close();
-        if (await app.vault.adapter.exists(".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html")) {
-            this.registerExtensions([PDF_FILE_EXTENSION], "pdf");
-        }
+        this.storage?.destroyed();
+        // this.server?.close();
+        // if (await app.vault.adapter.exists(".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html")) {
+        //     this.registerExtensions([PDF_FILE_EXTENSION], "pdf");
+        // }
 
         this.vueApp.unmount();
         this.appEl.remove();
@@ -131,32 +126,31 @@ export default class LanguageLearner extends Plugin {
 
     registerConstants() {
         this.constants = {
-            basePath: normalizePath((this.app.vault.adapter as any).basePath),
             platform: Platform.isMobile ? "mobile" : "desktop",
         };
     }
 
-    async replacePDF() {
-        if (await app.vault.adapter.exists(
-            ".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html"
-        )) {
-            this.registerView(VIEW_TYPE_PDF, (leaf) => {
-                return new PDFView(leaf);
-            });
+    // async replacePDF() {
+    //     if (await app.vault.adapter.exists(
+    //         ".obsidian/plugins/obsidian-language-learner/pdf/web/viewer.html"
+    //     )) {
+    //         this.registerView(VIEW_TYPE_PDF, (leaf) => {
+    //             return new PDFView(leaf);
+    //         });
 
-            (this.app as any).viewRegistry.unregisterExtensions([
-                PDF_FILE_EXTENSION,
-            ]);
-            this.registerExtensions([PDF_FILE_EXTENSION], VIEW_TYPE_PDF);
+    //         (this.app as any).viewRegistry.unregisterExtensions([
+    //             PDF_FILE_EXTENSION,
+    //         ]);
+    //         this.registerExtensions([PDF_FILE_EXTENSION], VIEW_TYPE_PDF);
 
-            this.registerDomEvent(window, "message", (evt) => {
-                if (evt.data.type === "search") {
-                    // if (evt.data.funckey || this.store.searchPinned)
-                    this.queryWord(evt.data.selection);
-                }
-            });
-        }
-    }
+    //         this.registerDomEvent(window, "message", (evt) => {
+    //             if (evt.data.type === "search") {
+    //                 // if (evt.data.funckey || this.store.searchPinned)
+    //                 this.queryWord(evt.data.selection);
+    //             }
+    //         });
+    //     }
+    // }
 
     initStore() {
         this.store.dark = document.body.hasClass("theme-dark");
@@ -190,7 +184,7 @@ export default class LanguageLearner extends Plugin {
             id: "langr-search-word-select",
             name: t("Translate Select"),
             callback: () => {
-                let selection = window.getSelection().toString().trim();
+                const selection = window.getSelection().toString().trim();
                 this.queryWord(selection);
             },
         });
@@ -254,7 +248,7 @@ export default class LanguageLearner extends Plugin {
                 state: leaf.view.getState(),
                 //popstate: true,
             } as ViewState,
-            { focus }
+            {focus}
         );
     }
 
@@ -279,7 +273,7 @@ export default class LanguageLearner extends Plugin {
             return;
         }
 
-        let dataBase = this.app.vault.getAbstractFileByPath(
+        const dataBase = this.app.vault.getAbstractFileByPath(
             this.settings.word_database
         );
         if (!dataBase || dataBase.hasOwnProperty("children")) {
@@ -287,12 +281,13 @@ export default class LanguageLearner extends Plugin {
             return;
         }
         // 获取所有非无视单词的简略信息
-        let words = await this.db.getAllExpressionSimple(false);
+        const resp = await this.storage.DB().getAllExpressionSimple(false);
+        const words = resp.data as ExpressionInfoSimple[];
 
-        let classified: number[][] = Array(5)
+        const classified: number[][] = Array(5)
             .fill(0)
-            .map((_) => []);
-        words.forEach((word, i) => {
+            .map(_ => []);
+        words.forEach((word: ExpressionInfoSimple, i: number) => {
             classified[word.status].push(i);
         });
 
@@ -304,10 +299,10 @@ export default class LanguageLearner extends Plugin {
             t("Learned"),
         ];
 
-        let del = this.settings.col_delimiter;
+        const del = this.settings.col_delimiter;
 
         // 正向查询
-        let classified_texts = classified.map((w, idx) => {
+        const classified_texts = classified.map((w, idx) => {
             return (
                 `#### ${statusMap[idx]}\n` +
                 w.map((i) => `${words[i].expression}${del}    ${words[i].meaning}`)
@@ -315,16 +310,16 @@ export default class LanguageLearner extends Plugin {
             );
         });
         classified_texts.shift();
-        let word2Meaning = classified_texts.join("\n");
+        const word2Meaning = classified_texts.join("\n");
 
         // 反向查询
-        let meaning2Word = classified
+        const meaning2Word = classified
             .flat()
             .map((i) => `${words[i].meaning}  ${del}  ${words[i].expression}`)
             .join("\n");
 
-        let text = word2Meaning + "\n\n" + "#### 反向查询\n" + meaning2Word;
-        let db = dataBase as TFile;
+        const text = word2Meaning + "\n\n" + "#### 反向查询\n" + meaning2Word;
+        const db = dataBase as TFile;
         this.app.vault.modify(db, text);
     };
 
@@ -333,7 +328,7 @@ export default class LanguageLearner extends Plugin {
             return;
         }
 
-        let dataBase = this.app.vault.getAbstractFileByPath(
+        const dataBase = this.app.vault.getAbstractFileByPath(
             this.settings.review_database
         );
         if (!dataBase || "children" in dataBase) {
@@ -341,9 +336,9 @@ export default class LanguageLearner extends Plugin {
             return;
         }
 
-        let db = dataBase as TFile;
-        let text = await this.app.vault.read(db);
-        let oldRecord = {} as { [K in string]: string };
+        const db = dataBase as TFile;
+        const text = await this.app.vault.read(db);
+        const oldRecord = {} as { [K in string]: string };
         text.match(/#word(\n.+)+\n(<!--SR.*?-->)/g)
             ?.map((v) => v.match(/#### (.+)[\s\S]+(<!--SR.*-->)/))
             ?.forEach((v) => {
@@ -351,7 +346,7 @@ export default class LanguageLearner extends Plugin {
             });
 
         // let data = await this.db.getExpressionAfter(this.settings.last_sync)
-        let data = await this.db.getExpressionAfter("1970-01-01T00:00:00Z");
+        const data = await this.storage.DB().getExpressionAfter("1970-01-01T00:00:00Z");
         if (data.length === 0) {
             // new Notice("Nothing new")
             return;
@@ -360,25 +355,31 @@ export default class LanguageLearner extends Plugin {
         data.sort((a, b) => a.expression.localeCompare(b.expression));
 
         let newText = data.map((word) => {
-            let notes = word.notes.length === 0
+            const notes = word.notes.length === 0
                 ? ""
                 : "**Notes**:\n" + word.notes.join("\n").trim() + "\n";
-            let sentences = word.sentences.length === 0
+            const sentences = word.sentences.length === 0
                 ? ""
                 : "**Sentences**:\n" +
                 word.sentences.map((sen) => {
                     return (
-                        `*${sen.text.trim()}*` + "\n" +
+                        `*${sen.sentence.trim()}*` + "\n" +
                         (sen.trans ? sen.trans.trim() + "\n" : "") +
                         (sen.origin ? sen.origin.trim() : "")
                     );
-                }).join("\n").trim() + "\n";
+                }).join("\n").trim() + "\n\n";
+
+            let title = `## ${word.title} \n\n`;
+            if (word.t === WordType.PHRASE) {
+               title =  `## ${word.title}\n\n`;
+            }
 
             return (
                 `#word\n` +
-                `#### ${word.expression}\n` +
-                `${this.settings.review_delimiter}\n` +
-                `${word.meaning}\n` +
+                title+
+                `${word.expression}\n` +
+                `${this.settings.review_delimiter.repeat(2)}\n` +
+                `${word.meaning}\n\n` +
                 `${notes}` +
                 `${sentences}` +
                 (oldRecord[word.expression] ? oldRecord[word.expression] + "\n" : "")
@@ -393,18 +394,17 @@ export default class LanguageLearner extends Plugin {
 
     // 在MardownView的扩展菜单加一个转为Reading模式的选项
     registerReadingToggle = () => {
-        const pluginSelf = this;
-        pluginSelf.register(
+        this.register(
             around(MarkdownView.prototype, {
                 onPaneMenu(next) {
                     return function (m: Menu) {
                         const file = this.file;
                         const cache = file.cache
-                            ? pluginSelf.app.metadataCache.getFileCache(file)
+                            ? this.app.metadataCache.getFileCache(file)
                             : null;
 
                         if (!file ||
-                            !cache?.frontmatter ||
+                            !cache?.frontmatter || 
                             !cache?.frontmatter[FRONT_MATTER_KEY]
                         ) {
                             return next.call(this, m);
@@ -413,7 +413,9 @@ export default class LanguageLearner extends Plugin {
                         m.addItem((item) => {
                             item.setTitle(t("Open as Reading View"))
                                 .setIcon(READING_ICON)
-                                .onClick(() => { pluginSelf.setReadingView(this.leaf); });
+                                .onClick(() => {
+                                    this.setReadingView(this.leaf);
+                                });
                         });
 
                         next.call(this, m);
@@ -423,35 +425,47 @@ export default class LanguageLearner extends Plugin {
         );
 
         // 增加标题栏切换阅读模式和mardown模式的按钮
-        pluginSelf.register(
+        const self = this; // eslint-disable-line @typescript-eslint/no-this-alias
+        this.register(
             around(WorkspaceLeaf.prototype, {
                 setViewState(next) {
                     return function (state: ViewState, ...rest: any[]): Promise<void> {
                         return (next.apply(this, [state, ...rest]) as Promise<void>).then(() => {
-                            if (state.type === "markdown" && state.state?.file) {
-                                const cache = pluginSelf.app.metadataCache
+                            // 只在 MarkdownView 类型的 leaf 上执行
+                            if (state.type === "markdown" && state.state?.file && this.view instanceof MarkdownView) {
+                                const cache = this.app.metadataCache
                                     .getCache(state.state.file);
                                 if (cache?.frontmatter && cache.frontmatter[FRONT_MATTER_KEY]) {
-                                    if (!pluginSelf.markdownButtons["reading"]) {
-                                        pluginSelf.markdownButtons["reading"] =
-                                            (this.view as MarkdownView).addAction(
-                                                "view",
-                                                t("Open as Reading View"),
-                                                () => {
-                                                    pluginSelf.setReadingView(this);
-                                                }
-                                            );
-                                        pluginSelf.markdownButtons["reading"].addClass("change-to-reading");
+                                    if (!this.markdownButtons) {
+                                        this.markdownButtons = {};
+                                    }
+                                    if (!this.markdownButtons["reading"]) {
+                                        // 在软件初始化的时候，view上面可能没有 addAction 这个方法
+                                        setTimeout(() => {
+                                            this.markdownButtons["reading"] =
+                                                (this.view as MarkdownView).addAction(
+                                                    "view",
+                                                    t("Open as Reading View"),
+                                                    () => {
+                                                        self.setReadingView(this);
+                                                    }
+                                                );
+                                            this.markdownButtons["reading"].addClass("change-to-reading");
+
+                                        })
                                     }
                                 } else {
                                     (this.view.actionsEl as HTMLElement)
-                                        .querySelectorAll(".change-to-reading")
+                                        ?.querySelectorAll(".change-to-reading")
                                         .forEach(el => el.remove());
-                                    // pluginSelf.markdownButtons["reading"]?.remove();
-                                    pluginSelf.markdownButtons["reading"] = null;
+                                    if (this.markdownButtons) {
+                                        this.markdownButtons["reading"] = null;
+                                    }
                                 }
                             } else {
-                                pluginSelf.markdownButtons["reading"] = null;
+                                if (this.markdownButtons) {
+                                    this.markdownButtons["reading"] = null;
+                                }
                             }
                         });
                     };
@@ -472,12 +486,12 @@ export default class LanguageLearner extends Plugin {
         }
 
         dispatchEvent(new CustomEvent('obsidian-langr-search', {
-            detail: { selection: word, target, evtPosition }
+            detail: {selection: word, target, evtPosition}
         }));
 
         if (this.settings.auto_pron) {
-            let accent = this.settings.review_prons;
-            let wordUrl =
+            const accent = this.settings.review_prons;
+            const wordUrl =
                 `http://dict.youdao.com/dictvoice?type=${accent}&audio=` +
                 encodeURIComponent(word);
             playAudio(wordUrl);
@@ -486,7 +500,7 @@ export default class LanguageLearner extends Plugin {
 
     // 管理所有的右键菜单
     registerContextMenu() {
-        let addMemu = (mu: Menu, selection: string) => {
+        const addMemu = (mu: Menu, selection: string) => {
             mu.addItem((item) => {
                 item.setTitle(t("Search word"))
                     .setIcon("info")
@@ -500,7 +514,7 @@ export default class LanguageLearner extends Plugin {
             this.app.workspace.on(
                 "editor-menu",
                 (menu: Menu, editor: Editor, view: MarkdownView) => {
-                    let selection = editor.getSelection();
+                    const selection = editor.getSelection();
                     if (selection || selection.trim().length === selection.length) {
                         addMemu(menu, selection);
                     }
@@ -514,7 +528,7 @@ export default class LanguageLearner extends Plugin {
                 if (!selection) return;
 
                 evt.preventDefault();
-                let menu = new Menu();
+                const menu = new Menu();
 
                 addMemu(menu, selection);
 
@@ -534,11 +548,11 @@ export default class LanguageLearner extends Plugin {
                     && !(this.store.searchPinned && !target.matchParent("#langr-search,#langr-learn-panel"))
                 ) return;
 
-                let selection = window.getSelection().toString().trim();
+                const selection = window.getSelection().toString().trim();
                 if (!selection) return;
 
                 evt.stopImmediatePropagation();
-                this.queryWord(selection, null, { x: evt.pageX, y: evt.pageY });
+                this.queryWord(selection, null, {x: evt.pageX, y: evt.pageY});
                 return;
             }
         });
@@ -547,14 +561,14 @@ export default class LanguageLearner extends Plugin {
     // 管理所有的鼠标左击
     registerLeftClick() {
         this.registerDomEvent(document.body, "click", (evt) => {
-            let target = evt.target as HTMLElement;
+            const target = evt.target as HTMLElement;
             if (
                 target.tagName === "H4" &&
-                target.matchParent("#sr-flashcard-view")
+                target.matchParent(".sr-modal-content")
             ) {
-                let word = target.textContent;
-                let accent = this.settings.review_prons;
-                let wordUrl =
+                const word = target.textContent;
+                const accent = this.settings.review_prons;
+                const wordUrl =
                     `http://dict.youdao.com/dictvoice?type=${accent}&audio=` +
                     encodeURIComponent(word);
                 playAudio(wordUrl);
@@ -563,13 +577,13 @@ export default class LanguageLearner extends Plugin {
     }
 
     async loadSettings() {
-        let settings: { [K in string]: any } = Object.assign(
+        const settings: { [K in string]: any } = Object.assign(
             {},
             DEFAULT_SETTINGS
         );
-        let data = (await this.loadData()) || {};
-        for (let key in DEFAULT_SETTINGS) {
-            let k = key as keyof typeof DEFAULT_SETTINGS;
+        const data = (await this.loadData()) || {};
+        for (const key in DEFAULT_SETTINGS) {
+            const k = key as keyof typeof DEFAULT_SETTINGS;
             if (data[k] === undefined) {
                 continue;
             }

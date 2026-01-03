@@ -12,6 +12,12 @@ export default {
 
     // DataPanelView.ts
     "Data Panel": "单词列表",
+    "Edit": "编辑",
+
+    "Remove": "移除",
+    "Cancel": "取消",
+    "Success": "成功",
+    "Fail": "失败",
 
     // SearchPanelView.ts
     "Search Panel": "查词面板",
@@ -129,7 +135,9 @@ export default {
 
 
     "IndexDB Database": "IndexDB 数据库",
+    "Database Type": "数据库类型",
     "Database Name": "数据库名称",
+    "Database Dir": "数据库目录",
     "Reopen": "重启",
     // "Change": "Change",
     "Reopen DB after changing database name": "切换数据库后点击按钮重启数据库",
@@ -137,11 +145,40 @@ export default {
     "Warning: Import will override current database": "警告: 导入会覆盖掉当前的数据库",
     "Import": "导入",
     "Export": "导出",
-    "Get all ignores": "获取所有无视单词",
-    "Get all non-ignores": "获取所有非无视单词",
+    "Export as CSV": "导出为 CSV",
+    "Export as JSON": "导出为 JSON",
+    "No data to export": "没有数据可导出",
     "Copied to the clipboard": "已复制到剪贴板",
+    "Export Ignores": "导出护理单词",
     "Export Word": "导出单词",
     "Export Word and Phrase": "导出单词和短语",
+    "Words exported successfully": "单词导出成功",
+    "Failed to export": "导出失败",
+    "Failed to load data": "加载数据失败",
+    "Failed to load data. Please try again.": "加载数据失败，请重试。",
+    "Retry": "重试",
+    "Reset Filters": "重置筛选",
+    "View Details": "查看详情",
+    "Details": "详情",
+    "Today": "今天",
+    "Yesterday": "昨天",
+    "Added Date": "添加日期",
+    "Add Note": "添加笔记",
+    "Add Sentence": "添加例句",
+    "words": "单词",
+    "word": "单词",
+    "Copy": "复制",
+    "Copy All": "全部复制",
+    "No notes or sentences for this word": "该单词没有笔记或例句",
+    "Notes copied": "笔记已复制",
+    "Sentences copied": "例句已复制",
+    "All content copied": "全部内容已复制",
+    "Failed to copy": "复制失败",
+    "Failed to load word details": "加载单词详情失败",
+    "Close": "关闭",
+    "Showing {0} of {1} words": "显示 {0}/{1} 个单词",
+    "No words match the selected tags.": "没有匹配所选标签的单词。",
+    "No words found. Try adjusting your filters.": "未找到单词。请尝试调整筛选条件。",
 
     "Reading Mode": "阅读模式",
     "Default Paragraphs": "每页默认段数",
@@ -169,5 +206,25 @@ export default {
     "As Server": "成为服务器",
     "Self as Server": "开启服务器功能",
     "Make plugin a server and interact with chrome extension": "插件打开一个服务器提供api，由此可以与谷歌浏览器插件交互",
-    "when changing port, you should restart the server": "如果改变端口，请重启服务器"
+    "when changing port, you should restart the server": "如果改变端口，请重启服务器",
+
+    "Jot down Notes": "做笔记",
+    "Complete reading and proceed to the next page": "结束阅读并转入下一页",
+    "Complete reading": "结束阅读",
+
+    // Import format selection
+    "Import from File": "从文件导入",
+    "File Format": "文件格式",
+    "Select the format of the file to import": "选择要导入的文件格式",
+    "JSON format: Array of word objects with expression, meaning, status, type, tags, etc.": "JSON 格式：单词对象数组，包含 expression、meaning、status、type、tags 等字段",
+    "CSV format: Expression,Meaning,Status,Type,Tags,Date": "CSV 格式：Expression,Meaning,Status,Type,Tags,Date",
+    "SQLite3 format: A .sqlite or .db database file exported from this plugin": "SQLite3 格式：从本插件导出的 .sqlite 或 .db 数据库文件",
+    "Select File": "文件",
+    "Choose File": "选择文件",
+    "Please select a file first": "请先选择文件",
+    "Import successful": "导入成功",
+    "Import failed: {0}": "导入失败：{0}",
+    "Importing SQLite3 database to IndexedDB is not supported. Please export your data from the source in JSON format instead.": "不支持将 SQLite3 数据库导入到 IndexedDB。请从源数据导出 JSON 格式。",
+    "Importing CSV to IndexedDB is not directly supported. Please use JSON format or switch to SQLite3 storage.": "不支持直接将 CSV 导入到 IndexedDB。请使用 JSON 格式或切换到 SQLite3 存储。",
+    "Unsupported format: {0}": "不支持的格式：{0}"
 };

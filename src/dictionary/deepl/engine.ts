@@ -10,7 +10,7 @@ const langMap: Record<string, string> = {
 };
 
 export async function search(text: string, lang: string = ""): Promise<string | undefined> {
-    let target = (/[\u4e00-\u9fa5]/.test(text) && !/[\u0800-\u4e00]/.test(text)) // chinese
+    const target = (/[\u4e00-\u9fa5]/.test(text) && !/[\u0800-\u4e00]/.test(text)) // chinese
         ? langMap[lang] || "ZH"
         : "ZH";
     const payload = {
@@ -27,7 +27,7 @@ export async function search(text: string, lang: string = ""): Promise<string | 
     };
 
     try {
-        let res = (await requestUrl(data)).json;
+        const res = (await requestUrl(data)).json;
         if (res.code !== 200) throw new Error("Deeplx api source error.");
 
         return res.data;

@@ -15,6 +15,7 @@ export class SearchPanelView extends ItemView {
         super(leaf);
         this.plugin = plugin;
     }
+
     getViewType(): string {
         return SEARCH_PANEL_VIEW;
     }

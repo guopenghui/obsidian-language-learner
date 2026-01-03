@@ -20,9 +20,11 @@ interface WordsPhrase {
 }
 
 interface Sentence {
-    text: string;
     trans: string;
     origin: string;
+    expression: string
+    sentence: string
+    date?: number | string
 }
 
 interface ExpressionInfo {
@@ -33,6 +35,8 @@ interface ExpressionInfo {
     tags: string[];
     notes: string[];
     sentences: Sentence[];
+    connections: string[];
+    date: number | string;
 }
 
 interface ExpressionInfoSimple {
@@ -43,7 +47,7 @@ interface ExpressionInfoSimple {
     tags: string[];
     note_num: number;
     sen_num: number;
-    date: number;
+    date: number | string;
 }
 
 interface CountInfo {
@@ -62,8 +66,25 @@ interface WordCount {
     accumulated: number[];
 }
 
+interface ReviewWord {
+    title: string;
+    expression: string;
+    meaning: string;
+    status: number;
+    t: string;
+    tags: string[];
+    notes: string[];
+    sentences: Sentence[];
+}
+
+export enum WordType {
+    WORD = 'WORD',
+    PHRASE = 'PHRASE'
+}
+
 
 export type {
     ArticleWords, Word, Phrase, WordsPhrase, Sentence,
-    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
+    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span,
+    ReviewWord
 };

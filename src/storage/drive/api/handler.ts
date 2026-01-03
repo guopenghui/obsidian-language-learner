@@ -1,13 +1,18 @@
-import { requestUrl, RequestUrlParam, moment } from "obsidian";
+import {moment, requestUrl, RequestUrlParam} from "obsidian";
 import {
-    ArticleWords, Word, Phrase, WordsPhrase, Sentence,
-    ExpressionInfo, ExpressionInfoSimple, CountInfo, WordCount, Span
-} from "./interface";
+    ArticleWords,
+    CountInfo,
+    ExpressionInfo,
+    ExpressionInfoSimple, ReviewWord,
+    Sentence,
+    Span,
+    WordCount,
+    WordsPhrase
+} from "@/storage/interface";
+import StorageDrive, {Paginate, PaginateResult, SortParams} from "@/storage/drive";
 
-import DbProvider from "./base";
 
-
-export class WebDb extends DbProvider {
+export class ApiStorageDrive extends StorageDrive {
     host: string;
     port: number;
     https: boolean;
@@ -30,9 +35,11 @@ export class WebDb extends DbProvider {
         this.apiKey = apiKey;
     }
 
-    async open() { }
+    async open() {
+    }
 
-    close() { }
+    close() {
+    }
 
     // 寻找页面中已经记录过的单词和词组
     async getStoredWords(
@@ -96,7 +103,7 @@ export class WebDb extends DbProvider {
 
 
     // 获取某一时间之后的所有单词的详细信息
-    async getExpressionAfter(time: string): Promise<ExpressionInfo[]> {
+    async getExpressionAfter(time: string): Promise<ReviewWord[]> {
         let unixStamp = moment.utc(time).unix();
         let request: RequestUrlParam = {
             url: `${this.proto}://${this.host}:${this.port}/words/after`,
@@ -116,8 +123,11 @@ export class WebDb extends DbProvider {
 
     // 通过status查询单词/词组,获取简略信息
     async getAllExpressionSimple(
-        ignores?: boolean
-    ): Promise<ExpressionInfoSimple[]> {
+        ignores?: boolean,
+        sort?:SortParams,
+        search?: {[key: string]: never},
+        paginate?: Paginate
+    ): Promise<PaginateResult<ExpressionInfoSimple[]>> {
         let mode = ignores ? "all" : "no_ignore";
 
         let request: RequestUrlParam = {
@@ -129,7 +139,12 @@ export class WebDb extends DbProvider {
         try {
             let response = await requestUrl(request);
 
-            return response.json;
+            return {
+                data: response.json,
+                total: 0,
+                page: 0,
+                pageSize: 0
+            };
         } catch (e) {
             console.warn("Error while getting all simple data from server." + e);
         }
@@ -245,15 +260,22 @@ export class WebDb extends DbProvider {
         try {
             let res = await requestUrl(request);
             return res.json;
-        } catch (e) { }
+        } catch (e) {
+        }
     }
 
-    async importDB() { }
+    async importDB(data: any, format: 'json' | 'csv' | 'sqlite3') {
+    }
 
-    async exportDB() { }
+    async exportDB() {
+    }
 
     async destroyAll() {
         // 什么也没有发生
+    }
+
+    removeExpression(id: string | number): Promise<boolean> {
+        return Promise.resolve(false);
     }
 
 }
