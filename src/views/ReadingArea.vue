@@ -158,6 +158,9 @@ function onMouseOver(e: MouseEvent) {
 // 拆分文本
 let lines = view.text.split("\n");
 let segments = view.divide(lines);
+if (!segments["article"]) {
+    segments["article"] = { start: 0, end: lines.length };
+}
 
 let article = lines.slice(segments["article"].start, segments["article"].end);
 let totalLines = article.length;
