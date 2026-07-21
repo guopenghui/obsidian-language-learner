@@ -14,7 +14,7 @@ export class FrontMatterManager {
         let res = {} as FrontMatter;
         let text = await this.app.vault.read(file);
 
-        let match = text.match(/^\n*---\n([\s\S]+)\n---/);
+        let match = text.match(/^\n*---\n([\s\S]+?)\n---/);
         if (match) {
             res = parseYaml(match[1]);
         }
@@ -28,12 +28,12 @@ export class FrontMatterManager {
         }
 
         let text = await this.app.vault.read(file);
-        let match = text.match(/^\n*---\n([\s\S]+)\n---/);
+        let match = text.match(/^\n*---\n([\s\S]+?)\n---/);
 
         let newText = "";
         let newFront = stringifyYaml(fm);
         if (match) {
-            newText = text.replace(/^\n*---\n([\s\S]+)\n---/, `---\n${newFront}---`);
+            newText = text.replace(/^\n*---\n([\s\S]+?)\n---/, `---\n${newFront}---`);
         } else {
             newText = `---\n${newFront}---\n\n` + text;
         }
