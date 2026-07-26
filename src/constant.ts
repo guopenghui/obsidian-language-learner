@@ -21,6 +21,12 @@ interface EventMap extends GlobalEventHandlersEventMap {
         status: number,
     }>;
     "obsidian-langr-refresh-stat": CustomEvent<{}>;
+    "obsidian-langr-lemma-toggle": CustomEvent<{
+        source: "learn" | "search",
+        word: string,
+        original: string,
+        lemma: string,
+    }>;
 }
 
 

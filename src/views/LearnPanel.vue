@@ -8,6 +8,17 @@
 				<NFormItem :label="t('Expression')" :label-style="labelStyle" path="expression">
 					<NInput size="small" v-model:value="model.expression" :placeholder="t('A word or a phrase')" />
 				</NFormItem>
+				<!-- 词形还原提示（独立于 NFormItem，避免 feedback slot 在无校验消息时不渲染） -->
+				<div v-if="lemmaToggle" class="lemma-hint">
+					<span class="lemma-original">原文: {{ lemmaToggle.original }}</span>
+					<NButton size="tiny" tertiary type="primary" @click="toggleLemma">
+						{{
+							(model.expression || '').toLowerCase() === lemmaToggle.lemma
+								? '↩ 改回原文'
+								: '↩ 改回原型'
+						}}
+					</NButton>
+				</div>
 				<!-- 单词或短语的含义(精简) -->
 				<NFormItem :label="t('Meaning')" :label-style="labelStyle" path="meaning">
 					<NInput size="small" v-model:value="model.meaning" :placeholder="t('A short definition')"
@@ -147,6 +158,7 @@ import {
 import { ExpressionInfo, Sentence } from "@/db/interface";
 import { t } from "@/lang/helper";
 import { useEvent } from "@/utils/use";
+import { tryLemmatize } from "@/utils/lemmatize";
 import { LearnPanelView } from "./LearnPanelView";
 import { ReadingView } from "./ReadingView";
 import Plugin from "@/plugin";
@@ -197,6 +209,10 @@ let model = ref<ExpressionInfo>({
 	notes: [],
 	sentences: [],
 });
+
+// 原型切换状态：用户从查词触发新增时，如果发生了词形还原，
+// 存 { original, lemma }，用户点"改回原文/改回原型"按钮时整体切
+let lemmaToggle = ref<{ original: string; lemma: string } | null>(null);
 
 // 表单检查规则
 let rules = {
@@ -347,10 +363,25 @@ async function submit() {
 // 查询词汇时自动填充新词表单
 useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 	let selection = evt.detail.selection as string;
-	let expr = await plugin.db.getExpression(selection);
+
+	// === 词形还原：ran → run / children → child / went → go / faster → fast ===
+	// 只对单词（无空格）生效；短语保留原样
+	// 多词或带空格的 selection 直接跳过
+	let lemmaInfo: { lemma: string; changed: boolean; original: string } = {
+		lemma: selection,
+		changed: false,
+		original: selection,
+	};
+	if (selection && !/\s/.test(selection.trim())) {
+		lemmaInfo = tryLemmatize(selection);
+	}
+	const displayExpr = lemmaInfo.changed ? lemmaInfo.lemma : selection;
+
+	// 用原型去数据库查重；如果库里已有 run，那即便用户点的是 ran，也应该加载 run 的记录
+	let expr = await plugin.db.getExpression(displayExpr);
 
 	let exprType = "WORD";
-	if (selection.trim().contains(" ")) {
+	if (displayExpr.trim().contains(" ")) {
 		exprType = "PHRASE";
 	}
 
@@ -411,11 +442,22 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 			}
 		}
 		model.value = expr;
+		// 库里已有记录（原型命中） — 保留切换按钮
+		// 这样用户点 weighed 进来看到 weigh 这条已有记录时，
+		// 还能切回 weighed（按 Save 会存一条新记录 weighed）
+		lemmaToggle.value = lemmaInfo.changed
+			? { original: lemmaInfo.original, lemma: lemmaInfo.lemma }
+			: null;
 		return;
 	} else {
+		// 发生了还原：记录 { original, lemma }，供切换按钮使用
+		lemmaToggle.value = lemmaInfo.changed
+			? { original: lemmaInfo.original, lemma: lemmaInfo.lemma }
+			: null;
+
 		if (!target) {
 			model.value = {
-				expression: selection,
+				expression: displayExpr,
 				meaning: "",
 				status: 1,
 				t: exprType,
@@ -427,7 +469,7 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 		}
 
 		model.value = {
-			expression: selection,
+			expression: displayExpr,
 			meaning: "",
 			status: 1,
 			t: exprType,
@@ -445,6 +487,34 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 		};
 	}
 });
+
+// 「改回原文 / 改回原型」切换 — 整体切回原值（只动 expression 字段，meaning/sentences 等保持）
+function toggleLemma() {
+	if (!lemmaToggle.value) return;
+	const { original, lemma } = lemmaToggle.value;
+	const current = (model.value.expression || "").toLowerCase();
+	const target = current === lemma ? original : lemma;
+	model.value.expression = target;
+	// 通知另一面板（SearchPanel）一起切
+	dispatchEvent(new CustomEvent("obsidian-langr-lemma-toggle", {
+		detail: { source: "learn", word: target, original, lemma },
+	}));
+}
+
+// 监听 SearchPanel 的切换事件 — 同步更新这边的 expression
+const onLemmaToggleFromSearch = (evt: Event) => {
+	const e = evt as CustomEvent;
+	if (!e || !e.detail || e.detail.source === "learn") return;
+	const { word: newWord, original, lemma } = e.detail as {
+		source: string; word: string; original: string; lemma: string;
+	};
+	if (!newWord) return;
+	model.value.expression = newWord;
+	lemmaToggle.value = { original, lemma };
+};
+
+// 注册跨面板联动监听（learn → search 方向）
+useEvent(window, "obsidian-langr-lemma-toggle", onLemmaToggleFromSearch);
 
 </script>
 
@@ -476,6 +546,19 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 				border-bottom-left-radius: 34px !important;
 				border-bottom-right-radius: 34px !important;
 			}
+		}
+	}
+
+	// 词形还原提示
+	.lemma-hint {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 12px;
+		color: var(--text-muted);
+
+		.lemma-original {
+			font-style: italic;
 		}
 	}
 }

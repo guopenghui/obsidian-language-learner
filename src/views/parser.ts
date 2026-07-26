@@ -29,7 +29,10 @@ export class TextParser {
     }
 
     async parse(data: string) {
-        let newHTML = await this.text2HTML(data.trim());
+        // 移除输入中的 HTML 标签（<mark>、<a> 等），
+        // 否则 retext-english 会把它们当作文本节点混进 AST
+        const cleaned = (data ?? "").replace(/<\/?[a-z][^>]*>/gi, "");
+        let newHTML = await this.text2HTML(cleaned.trim());
         return newHTML;
     }
 

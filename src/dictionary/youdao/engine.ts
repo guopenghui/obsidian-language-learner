@@ -9,6 +9,7 @@ import {
   removeChild,
   fetchDirtyDOM
 } from '../helpers';
+import { maybeCopyTranslation } from '@/utils/youdao-clipboard';
 
 export const getSrcPage = (text: string) =>
   'https://dict.youdao.com/w/' + encodeURIComponent(text.replace(/\s+/g, ' '));
@@ -65,7 +66,17 @@ export const search = async (
   )
     .catch(handleNetWorkError)
     .then(doc => checkResult(doc, options))
-    .catch(handleNoResult);
+    .catch(handleNoResult)
+    .then((res: any) => {
+      // 短句查词时，把"机器翻译"结果自动复制到剪贴板
+      // — 方便用户做翻译题时直接粘贴
+      try {
+        maybeCopyTranslation(text, res);
+      } catch (e) {
+        // 不能让剪贴板失败影响正常查词
+      }
+      return res;
+    });
 };
 
 function checkResult(
