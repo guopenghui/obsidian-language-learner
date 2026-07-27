@@ -1,26 +1,30 @@
 <template>
     <div id="langr-search" @click="handleClick">
         <NConfigProvider :theme="theme" :theme-overrides="themeConfig">
-            <div class="search-bar">
-                <NButtonGroup size="small">
-                    <NButton tag="div" :disabled="historyIndex <= 0" @click="switchHistory('prev')">{{ `<` }} </NButton>
-                    <NButton tag="div" :disabled="historyIndex >= lastHistory" @click="switchHistory('next')">{{ ">" }}
-                    </NButton>
+            <div class="search-bar" style="display:flex;">
+                <NButtonGroup size="tiny">
+                    <NButton :disabled="historyIndex <= 0" @click="switchHistory('prev')">{{ `<` }} </NButton>
+                            <NButton :disabled="historyIndex >= lastHistory" @click="switchHistory('next')">{{ ">" }}
+                            </NButton>
                 </NButtonGroup>
-                <NInput size="small" type="text" placeholder="输入单词" v-model:value="inputWord" style="flex:1;"
+                <NInput size="tiny" type="text" placeholder="输入单词" v-model:value="inputWord" style="flex:1;"
                     @keydown.enter="handleSearch" />
-                <NButton tag="div" circle size="small" @click="handleSearch" aria-label="Search">
-                    <template #icon>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </template>
+                <NButton size="tiny" @click="handleSearch" style="margin-left:5px;">{{ t("Search") }}</NButton>
+            </div>
+            <!-- 词形还原提示（与 LearnPanel 联动） -->
+            <div v-if="lemmaToggle" class="lemma-hint">
+                <span class="lemma-original">原文: {{ lemmaToggle.original }}</span>
+                <NButton size="tiny" tertiary type="primary" @click="toggleLemma">
+                    {{
+                        (word || '').toLowerCase() === lemmaToggle.lemma
+                            ? '↩ 改回原文'
+                            : '↩ 改回原型'
+                    }}
                 </NButton>
             </div>
         </NConfigProvider>
         <div class="dict-area" style="overflow:auto;">
-            <DictItem v-for="(cp, i) in components" :loading="loadings[i]" :name="cp.name" :key="cp.id" :id="cp.id">
+            <DictItem v-for="(cp, i) in components" :loading="loadings[i]" :name="cp.name" :id="cp.id">
                 <KeepAlive>
                     <Component @loading="loading" :is="cp.type" :word="word" v-show="shows[i]"></Component>
                 </KeepAlive>
@@ -30,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, computed, watch, onMounted, onUnmounted, getCurrentInstance } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted, getCurrentInstance } from "vue";
 import { NConfigProvider, NButton, NButtonGroup, NInput, darkTheme, GlobalThemeOverrides } from "naive-ui";
 
 import DictItem from "./DictItem.vue";
@@ -38,6 +42,7 @@ import { t } from "@/lang/helper";
 import PluginType from "@/plugin";
 import { dicts } from "@dict/list";
 import { playAudio } from "@/utils/helpers";
+import { lookupLemmaViaCambridge } from "@/utils/lookupLemma";
 
 const plugin = getCurrentInstance().appContext.config.globalProperties.plugin as PluginType;
 
@@ -45,12 +50,12 @@ const themeConfig: GlobalThemeOverrides = {
 
 };
 
-let components = shallowRef([]);
+let components = ref([]);
 let map: { [K in string]: number } = {};
 let loadings = ref<boolean[]>([]);
 let shows = ref<boolean[]>([]);
 watch(() => plugin.store.dictsChange, () => {
-    let collection = Object.keys(dicts)
+    let collection = Object.keys(plugin.settings.dictionaries)
         .map((dict: keyof typeof dicts) => {
             return {
                 id: dict,
@@ -99,6 +104,8 @@ function switchHistory(direction: "prev" | "next") {
     );
     word.value = history[historyIndex.value];
     inputWord.value = history[historyIndex.value];
+    // 历史回放：没有足够上下文知道当时是否有 lemma 切换，保守清空
+    lemmaToggle.value = null;
 }
 function appendHistory() {
     if (historyIndex.value < history.length - 1) {
@@ -111,14 +118,22 @@ function appendHistory() {
 
 let inputWord = ref("");
 let word = ref("");
+
+// 词形还原状态 — 与 LearnPanel 通过 obsidian-langr-lemma-toggle 事件联动
+let lemmaToggle = ref<{ original: string; lemma: string } | null>(null);
+
 const onSearch = async (evt: CustomEvent) => {
-    let text = evt.detail.selection;
-    word.value = text;
+    let text = (evt.detail.selection || "") as string;
+    // 从阅读区查词触发时，应用词形还原（与 LearnPanel 行为一致）
+    await applyLookupLemma(text);
     appendHistory();
 };
 
 function handleSearch() {
+    // 用户手动按 Enter / Search — 不做自动还原（保留用户输入的原样）
+    // 但如果之前有 lemma 切换（例如从阅读区点过来的），用户主动搜索说明他想要别的，清空
     word.value = inputWord.value;
+    lemmaToggle.value = null;
     appendHistory();
 }
 
@@ -134,19 +149,76 @@ function handleClick(evt: MouseEvent) {
     else if (target.tagName === "A") {
         evt.preventDefault();
         evt.stopPropagation();
-        word.value = target.textContent;
-        inputWord.value = target.textContent;
+        // 点击词典结果里的链接：用户明确想看那个词，不做还原
+        const text = (target.textContent || "").trim();
+        word.value = text;
+        inputWord.value = text;
+        lemmaToggle.value = null;
         appendHistory();
     }
 }
 
+/**
+ * 应用查词触发的词形还原（仅对单词生效，短语保留原样）
+ * - 发生还原：存 { original, lemma }，把 word/inputWord 设为 lemma（词典去查原型）
+ * - 未还原：清空 lemmaToggle
+ * - 走剑桥词典 API：变形词搜索时剑桥会自动重定向到原型词条，
+ *   返回的 html 里 .headword 就是原型
+ */
+async function applyLookupLemma(text: string) {
+    if (text && !/\s/.test(text.trim())) {
+        const lemma = await lookupLemmaViaCambridge(text);
+        if (lemma && lemma.toLowerCase() !== text.toLowerCase()) {
+            lemmaToggle.value = { original: text, lemma };
+            word.value = lemma;
+            inputWord.value = lemma;
+            return;
+        }
+    }
+    lemmaToggle.value = null;
+    word.value = text;
+    inputWord.value = text;
+}
+
+/**
+ * 切换原文 / 原型，同时通知 LearnPanel 一起变
+ */
+function toggleLemma() {
+    if (!lemmaToggle.value) return;
+    const { original, lemma } = lemmaToggle.value;
+    const current = (word.value || "").toLowerCase();
+    const target = current === lemma ? original : lemma;
+    word.value = target;
+    inputWord.value = target;
+    // 通知另一面板
+    dispatchEvent(new CustomEvent("obsidian-langr-lemma-toggle", {
+        detail: { source: "search", word: target, original, lemma },
+    }));
+}
+
+/**
+ * 监听 LearnPanel 的切换事件 — 同步更新这边的 word/inputWord
+ */
+const onLemmaToggleFromLearn = (evt: CustomEvent) => {
+    if (!evt || !evt.detail || evt.detail.source === "search") return;
+    const { word: newWord, original, lemma } = evt.detail as {
+        source: string; word: string; original: string; lemma: string;
+    };
+    if (!newWord) return;
+    word.value = newWord;
+    inputWord.value = newWord;
+    lemmaToggle.value = { original, lemma };
+};
+
 
 onMounted(() => {
     addEventListener('obsidian-langr-search', onSearch);
+    addEventListener('obsidian-langr-lemma-toggle', onLemmaToggleFromLearn);
 });
 
 onUnmounted(() => {
     removeEventListener('obsidian-langr-search', onSearch);
+    removeEventListener('obsidian-langr-lemma-toggle', onLemmaToggleFromLearn);
 });
 </script>
 
@@ -155,42 +227,34 @@ onUnmounted(() => {
     height: 100%;
     width: 100%;
     overflow: hidden;
-    font-size: 0.9em;
+    font-size: 0.8em;
     user-select: text;
     display: flex;
     flex-direction: column;
 
     .search-bar {
-        padding: 4px;
+        margin-bottom: 5px;
+
+        button {
+            margin-right: 5px;
+        }
+    }
+
+    .lemma-hint {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--text-muted);
+        padding: 2px 4px 4px 4px;
+
+        .lemma-original {
+            font-style: italic;
+        }
     }
 
     .dict-area {
         flex: 1;
-        padding-left: 4px;
-        overflow-y: auto;
-        scrollbar-gutter: stable;
-        scrollbar-width: thin;
-        scrollbar-color: var(--scrollbar-thumb-bg, rgba(128, 128, 128, 0.25)) transparent;
-
-        &::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background-color: var(--scrollbar-thumb-bg, rgba(128, 128, 128, 0.25));
-            border-radius: 3px;
-
-            &:hover {
-                background-color: var(--scrollbar-active-thumb-bg, rgba(128, 128, 128, 0.45));
-            }
-        }
-
-        &::-webkit-scrollbar-track {
-            background: transparent;
-        }
     }
 }
 
